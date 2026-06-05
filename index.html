@@ -242,9 +242,11 @@
       <div class="card">
         <div class="field">
           <label>📷 รูปถ่ายสิ่งที่พบ</label>
-          <input type="file" id="photo" accept="image/*" capture="environment" style="display:none">
-          <div id="photoControls">
-            <button type="button" class="btn-photo" id="photoBtn">📷 ถ่ายรูป / เลือกรูป</button>
+          <input type="file" id="photoCam" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="photoGal" accept="image/*" style="display:none">
+          <div id="photoControls" style="display:flex; gap:8px;">
+            <button type="button" class="btn-photo" id="photoCamBtn" style="flex:1;">📷 ถ่ายรูป</button>
+            <button type="button" class="btn-photo" id="photoGalBtn" style="flex:1;">🖼️ จากเครื่อง</button>
           </div>
           <div id="photoPreviewWrap" style="display:none; margin-top:10px;">
             <img id="photoPreview" alt="preview">
@@ -521,37 +523,44 @@
       if (e.key === 'Enter') { e.preventDefault(); addCustomCategory(); }
     });
 
-    // ----- photo capture -----
-    var photoInput = document.getElementById('photo');
-    var photoBtn = document.getElementById('photoBtn');
+    // ----- photo capture (กล้อง + แกลเลอรี) -----
+    var photoCam = document.getElementById('photoCam');
+    var photoGal = document.getElementById('photoGal');
+    var photoCamBtn = document.getElementById('photoCamBtn');
+    var photoGalBtn = document.getElementById('photoGalBtn');
     var photoPreview = document.getElementById('photoPreview');
     var photoPreviewWrap = document.getElementById('photoPreviewWrap');
     var photoControls = document.getElementById('photoControls');
     var photoDataUrl = null;
     var lastReport = null;
 
-    photoBtn.addEventListener('click', function () { photoInput.click(); });
+    photoCamBtn.addEventListener('click', function () { photoCam.click(); });
+    photoGalBtn.addEventListener('click', function () { photoGal.click(); });
     document.getElementById('photoRemoveBtn').addEventListener('click', clearPhoto);
-    photoInput.addEventListener('change', function () {
-      var file = photoInput.files && photoInput.files[0];
+
+    function handlePick(input, btn, origLabel) {
+      var file = input.files && input.files[0];
       if (!file) return;
-      photoBtn.textContent = '⏳ กำลังย่อรูป...';
+      btn.textContent = '⏳ กำลังย่อรูป...';
       resizeImage(file, 1280, 0.7, function (dataUrl) {
-        photoBtn.textContent = '📷 ถ่ายรูป / เลือกรูป';
+        btn.textContent = origLabel;
         if (!dataUrl) { showAlert('error', 'อ่านรูปไม่ได้ ลองใหม่'); return; }
         photoDataUrl = dataUrl;
         photoPreview.src = dataUrl;
         photoPreviewWrap.style.display = '';
         photoControls.style.display = 'none';
       });
-    });
+    }
+    photoCam.addEventListener('change', function () { handlePick(photoCam, photoCamBtn, '📷 ถ่ายรูป'); });
+    photoGal.addEventListener('change', function () { handlePick(photoGal, photoGalBtn, '🖼️ จากเครื่อง'); });
 
     function clearPhoto() {
       photoDataUrl = null;
-      photoInput.value = '';
+      photoCam.value = '';
+      photoGal.value = '';
       photoPreview.src = '';
       photoPreviewWrap.style.display = 'none';
-      photoControls.style.display = '';
+      photoControls.style.display = 'flex';
     }
 
     function resizeImage(file, maxDim, quality, cb) {
