@@ -348,7 +348,6 @@
         <h2 style="margin:4px 0 2px; font-size:18px; color:#dc2626;">📲 แชร์แอปให้ทีม</h2>
         <div style="font-size:13px; color:#6b7280; margin-bottom:16px;">ให้เพื่อนสแกน QR นี้เพื่อเปิดแอป</div>
         <div id="qrBox"></div>
-        <div class="qr-url" id="qrUrl"></div>
         <div class="qr-steps">
           1. เปิดกล้องมือถือ → สแกน QR<br>
           2. แตะลิงก์ → เปิดในเบราว์เซอร์<br>
@@ -791,7 +790,6 @@
       }
       if (page === 'dash') loadDashboard(false);
       if (page === 'qr') {
-        document.getElementById('qrUrl').textContent = SHARE_URL;
         document.getElementById('qrMsg').textContent = '';
         renderQr();
       }
