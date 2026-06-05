@@ -300,7 +300,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn" id="submitBtn">📨 ส่ง + แชร์ไป LINE / Telegram</button>
+      <button type="submit" class="btn" id="submitBtn">📨 ส่งรายงาน + แชร์</button>
       <button type="button" class="btn-share" id="shareBtn" style="display:none">📤 แชร์รายงานล่าสุดอีกครั้ง</button>
     </form>
     </div>
@@ -843,7 +843,7 @@
       google.script.run
         .withSuccessHandler(function (res) {
           submitBtn.disabled = false;
-          submitBtn.textContent = '📨 ส่งรายงาน';
+          submitBtn.textContent = '📨 ส่งรายงาน + แชร์';
           if (res && res.ok) {
             var msg = '✅ ' + res.message + ' (row ' + res.rowIndex + ')';
             if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
@@ -885,7 +885,7 @@
         })
         .withFailureHandler(function (err) {
           submitBtn.disabled = false;
-          submitBtn.textContent = '📨 ส่งรายงาน';
+          submitBtn.textContent = '📨 ส่งรายงาน + แชร์';
           showAlert('error', '❌ ' + err);
         })
         .saveReport(data);
