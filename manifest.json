@@ -1,7 +1,7 @@
 {
-  "name": "รายงานสิ่งแปลกปลอม",
-  "short_name": "QC Report",
-  "description": "ระบบรายงานสิ่งแปลกปลอม (QC) สำหรับโรงงาน",
+  "name": "QCControl",
+  "short_name": "QCControl",
+  "description": "QCControl - ระบบรายงานสิ่งแปลกปลอม (QC) สำหรับโรงงาน",
   "lang": "th",
   "start_url": "./index.html",
   "scope": "./",
