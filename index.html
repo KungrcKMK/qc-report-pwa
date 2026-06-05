@@ -664,12 +664,17 @@
       var text = buildShareTextFromData(d);
       var photo = (d.photo && d.photo.dataUrl) ? d.photo.dataUrl : null;
 
+      // ⭐ คัดลอกข้อความเสมอ — เพราะ LINE/Messenger มักตัดข้อความทิ้งตอนแชร์รูป
+      // ผู้ใช้กด paste ในแชตได้ทันทีหลังแชร์รูปเสร็จ
+      copyText(text);
+
       // 1) แชร์พร้อมรูป (มีรูป + เครื่องรองรับแนบไฟล์)
       if (photo && navigator.canShare) {
         try {
           var file = new File([dataURLtoBlob(photo)], 'qc-photo.jpg', { type: 'image/jpeg' });
           if (navigator.canShare({ files: [file] })) {
             navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text, files: [file] }).catch(function () {});
+            showAlert('info', '📋 ข้อความถูกคัดลอกแล้ว — ถ้าผู้รับเห็นแต่รูป ให้วาง (paste) ในแชตได้เลย');
             return;
           }
         } catch (e) { /* ตกไปแชร์แบบข้อความ */ }
@@ -678,13 +683,12 @@
       // 2) แชร์เฉพาะข้อความ
       if (navigator.share) {
         navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
-        if (photo) showAlert('info', 'แชร์ข้อความแล้ว — เครื่องนี้แนบรูปอัตโนมัติไม่ได้ ส่งรูปจากแกลเลอรีเองได้เลย');
+        if (photo) showAlert('info', 'แชร์ข้อความแล้ว — เครื่องนี้แนบรูปไม่ได้ ส่งรูปจากแกลเลอรีเอง');
         return;
       }
 
-      // 3) ไม่มี Web Share → คัดลอกข้อความ
-      var ok = copyText(text);
-      showAlert('info', ok ? '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย' : 'อุปกรณ์นี้แชร์ไม่ได้');
+      // 3) ไม่มี Web Share → แค่คัดลอก
+      showAlert('info', '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
     }
 
     document.getElementById('shareBtn').addEventListener('click', shareReport);
