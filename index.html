@@ -364,6 +364,7 @@
   <script>
     // ===== API config + google.script.run shim (เรียก Apps Script ผ่าน fetch) =====
     var APP_URL = "https://script.google.com/macros/s/AKfycbwUPZYPy1i1_rhkfpZfDCe0J2ja1W6anuzeuY5pgqe7zXQjazkNluuksfpSpNUqPfcpxw/exec";
+    var SHARE_URL = (location.origin + location.pathname).replace(/index\.html$/, '');
     (function () {
       var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };
       var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'ping'];
@@ -682,17 +683,15 @@
     function renderQr() {
       if (qrRendered) return;
       var box = document.getElementById('qrBox');
-      if (!APP_URL) { box.innerHTML = '<div style="color:#991b1b; font-size:13px;">ยังไม่ได้ deploy เป็น Web App<br>(QR จะใช้ได้หลัง deploy)</div>'; return; }
       if (!window.QRCode) { box.innerHTML = '<div style="color:#991b1b; font-size:13px;">โหลด QR ไม่ได้ (ต้องมีเน็ต)</div>'; return; }
-      new QRCode(box, { text: APP_URL, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(box, { text: SHARE_URL, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
       qrRendered = true;
     }
 
     function shareAppLink() {
-      if (!APP_URL) return;
       if (navigator.share) {
-        navigator.share({ title: 'แอปรายงานสิ่งแปลกปลอม', text: 'เปิดลิงก์นี้เพื่อรายงานสิ่งแปลกปลอม', url: APP_URL }).catch(function () {});
-      } else if (copyText(APP_URL)) {
+        navigator.share({ title: 'QCControl', text: 'เปิดลิงก์นี้เพื่อรายงานสิ่งแปลกปลอม (QCControl)', url: SHARE_URL }).catch(function () {});
+      } else if (copyText(SHARE_URL)) {
         document.getElementById('qrMsg').textContent = '📋 คัดลอกลิงก์แล้ว — วางส่งให้เพื่อนได้เลย';
       }
     }
@@ -709,7 +708,7 @@
       }
       if (page === 'dash') loadDashboard(false);
       if (page === 'qr') {
-        document.getElementById('qrUrl').textContent = APP_URL || '(deploy ก่อนเพื่อรับ URL)';
+        document.getElementById('qrUrl').textContent = SHARE_URL;
         document.getElementById('qrMsg').textContent = '';
         renderQr();
       }

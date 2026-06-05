@@ -1,5 +1,7 @@
-/* Service Worker - offline shell (cache-first สำหรับ static, network สำหรับ API) */
-var CACHE = 'qc-shell-v1';
+/* Service Worker - QCControl
+   navigation/HTML = network-first (อัปเดตทันทีเมื่อมีเน็ต, ใช้ cache เมื่อ offline)
+   static อื่นๆ = cache-first */
+var CACHE = 'qc-shell-v2';
 var SHELL = [
   './',
   './index.html',
@@ -29,25 +31,35 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var url = new URL(e.request.url);
 
-  // API calls (Apps Script) → ผ่านเน็ตตรงๆ ไม่ cache ข้อมูล dynamic
+  // API (Apps Script) → เน็ตตรงๆ ไม่ cache ข้อมูล dynamic
   if (url.hostname.indexOf('script.google') !== -1 ||
       url.hostname.indexOf('googleusercontent') !== -1) {
-    return; // ปล่อยให้ browser fetch ตามปกติ
+    return;
   }
 
-  // static shell → cache-first, fallback network, แล้ว cache เพิ่ม
+  // หน้าเว็บ/HTML → network-first (ได้ของใหม่เสมอเมื่อออนไลน์)
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put('./index.html', copy); });
+        return res;
+      }).catch(function () {
+        return caches.match('./index.html').then(function (m) { return m || caches.match(e.request); });
+      })
+    );
+    return;
+  }
+
+  // static อื่นๆ → cache-first
   e.respondWith(
     caches.match(e.request).then(function (cached) {
-      if (cached) return cached;
-      return fetch(e.request).then(function (res) {
+      return cached || fetch(e.request).then(function (res) {
         if (e.request.method === 'GET' && res && res.status === 200) {
           var copy = res.clone();
           caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
         }
         return res;
-      }).catch(function () {
-        // offline + ไม่มีใน cache → ถ้าเป็นหน้า ให้ fallback index
-        if (e.request.mode === 'navigate') return caches.match('./index.html');
       });
     })
   );
