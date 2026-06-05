@@ -650,45 +650,103 @@
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
+    // ตัดบรรทัดข้อความไทย (ไม่มีช่องว่าง) ตามความกว้าง canvas
+    function wrapText(ctx, text, maxW) {
+      var lines = [], line = '';
+      for (var i = 0; i < text.length; i++) {
+        var t = line + text.charAt(i);
+        if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = text.charAt(i); }
+        else line = t;
+      }
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    // สร้าง "การ์ดรายงาน" เป็นรูปเดียว (ข้อความ + รูป อยู่ในภาพ → LINE ตัดข้อความไม่ได้)
+    function renderReportCard(d, cb) {
+      var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 170;
+      var entries = ['🔍 พบ: ' + (d.categories && d.categories.length ? d.categories.join(', ') : '-')];
+      if (d.product) entries.push('🍯 ใน: ' + d.product);
+      if (d.supplier) entries.push('🏭 ซัพพรายเออร์: ' + d.supplier);
+      if (d.stage) entries.push('⚙️ จุดที่พบ: ' + d.stage);
+      var qty = [d.quantity, d.unit].filter(Boolean).join(' ');
+      if (qty) entries.push('📏 จำนวน: ' + qty);
+      if (d.reporter) entries.push('👤 ผู้พบ: ' + d.reporter);
+      if (d.note) entries.push('📝 หมายเหตุ: ' + d.note);
+
+      function finish(photoImg) {
+        var meas = document.createElement('canvas').getContext('2d');
+        meas.font = FS + 'px sans-serif';
+        var maxW = W - PAD * 2, rows = [];
+        entries.forEach(function (e) { wrapText(meas, e, maxW).forEach(function (ln) { rows.push(ln); }); });
+
+        var bodyTop = headerH + 40;
+        var afterBody = bodyTop + rows.length * LH + 12;
+        var pw = W - PAD * 2, ph = 0;
+        if (photoImg) ph = Math.round(pw * photoImg.height / photoImg.width);
+        var footerTop = afterBody + (photoImg ? ph + 28 : 0);
+        var H = footerTop + 62;
+
+        var c = document.createElement('canvas'); c.width = W; c.height = H;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+        var g = ctx.createLinearGradient(0, 0, W, headerH);
+        g.addColorStop(0, '#dc2626'); g.addColorStop(1, '#ea580c');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, headerH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 46px sans-serif'; ctx.fillText('🚨 รายงานสิ่งแปลกปลอม', PAD, 76);
+        ctx.font = '30px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 128);
+
+        ctx.fillStyle = '#1f2937'; ctx.font = FS + 'px sans-serif';
+        var y = bodyTop + FS;
+        rows.forEach(function (ln) { ctx.fillText(ln, PAD, y); y += LH; });
+
+        if (photoImg) ctx.drawImage(photoImg, PAD, afterBody, pw, ph);
+
+        ctx.fillStyle = '#9ca3af'; ctx.font = '26px sans-serif';
+        ctx.fillText('QCControl', PAD, footerTop + 38);
+
+        try { cb(c.toDataURL('image/jpeg', 0.85)); } catch (e) { cb(null); }
+      }
+
+      if (d.photo && d.photo.dataUrl) {
+        var im = new Image();
+        im.onload = function () { finish(im); };
+        im.onerror = function () { finish(null); };
+        im.src = d.photo.dataUrl;
+      } else { finish(null); }
+    }
+
+    function shareTextFallback(text) {
+      if (navigator.share) navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
+      else showAlert('info', '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
+    }
+
     function shareReport() {
       var d = currentFormData();
       var formHasData = d.product || (d.categories && d.categories.length);
-      // ถ้าฟอร์มว่าง (เพิ่งกดส่ง ฟอร์มถูกล้าง) แต่มีรายงานล่าสุด → แชร์รายงานล่าสุด
       if (!formHasData && lastReport) d = lastReport;
-
       if (!d.reporter && !d.product && (!d.categories || d.categories.length === 0)) {
         showAlert('error', 'กรอกข้อมูลก่อนแชร์');
         return;
       }
 
       var text = buildShareTextFromData(d);
-      var photo = (d.photo && d.photo.dataUrl) ? d.photo.dataUrl : null;
+      copyText(text);  // เก็บข้อความจริงใน clipboard เป็นตัวสำรอง
 
-      // ⭐ คัดลอกข้อความเสมอ — เพราะ LINE/Messenger มักตัดข้อความทิ้งตอนแชร์รูป
-      // ผู้ใช้กด paste ในแชตได้ทันทีหลังแชร์รูปเสร็จ
-      copyText(text);
-
-      // 1) แชร์พร้อมรูป (มีรูป + เครื่องรองรับแนบไฟล์)
-      if (photo && navigator.canShare) {
-        try {
-          var file = new File([dataURLtoBlob(photo)], 'qc-photo.jpg', { type: 'image/jpeg' });
-          if (navigator.canShare({ files: [file] })) {
-            navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text, files: [file] }).catch(function () {});
-            showAlert('info', '📋 ข้อความถูกคัดลอกแล้ว — ถ้าผู้รับเห็นแต่รูป ให้วาง (paste) ในแชตได้เลย');
-            return;
-          }
-        } catch (e) { /* ตกไปแชร์แบบข้อความ */ }
-      }
-
-      // 2) แชร์เฉพาะข้อความ
-      if (navigator.share) {
-        navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
-        if (photo) showAlert('info', 'แชร์ข้อความแล้ว — เครื่องนี้แนบรูปไม่ได้ ส่งรูปจากแกลเลอรีเอง');
-        return;
-      }
-
-      // 3) ไม่มี Web Share → แค่คัดลอก
-      showAlert('info', '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
+      // แชร์เป็น "การ์ดรูปเดียว" ที่มีทั้งข้อความ + รูป → ทุกแอปเก็บครบ ไม่ตัดข้อความ
+      renderReportCard(d, function (card) {
+        if (card && navigator.canShare) {
+          try {
+            var file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
+            if (navigator.canShare({ files: [file] })) {
+              navigator.share({ files: [file], text: text, title: 'รายงานสิ่งแปลกปลอม' }).catch(function () {});
+              return;
+            }
+          } catch (e) { /* ตกไป fallback */ }
+        }
+        shareTextFallback(text);
+      });
     }
 
     document.getElementById('shareBtn').addEventListener('click', shareReport);
