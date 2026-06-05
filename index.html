@@ -300,8 +300,8 @@
         </div>
       </div>
 
-      <button type="submit" class="btn" id="submitBtn">📨 ส่งรายงาน</button>
-      <button type="button" class="btn-share" id="shareBtn">📤 แชร์รายงาน → LINE / Telegram</button>
+      <button type="submit" class="btn" id="submitBtn">📨 ส่ง + แชร์ไป LINE / Telegram</button>
+      <button type="button" class="btn-share" id="shareBtn" style="display:none">📤 แชร์รายงานล่าสุดอีกครั้ง</button>
     </form>
     </div>
 
@@ -849,12 +849,16 @@
             if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
             showAlert('success', msg);
 
-            // จำรายงานนี้ไว้สำหรับปุ่มแชร์ (ฟอร์มจะถูก reset แต่ข้อมูลที่เพิ่งส่งยังแชร์ได้)
+            // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง
             lastReport = {
               reporter: data.reporter, product: data.product, categories: data.categories,
               stage: data.stage, supplier: data.supplier, quantity: data.quantity, unit: data.unit,
               note: data.note, photo: data.photo, time: fmtNow()
             };
+            // เด้ง share sheet อัตโนมัติทันทีหลังบันทึกสำเร็จ
+            shareReport();
+            // โชว์ปุ่ม "แชร์อีกครั้ง" เผื่อ user ยกเลิก share sheet แล้วอยากแชร์ทีหลัง
+            document.getElementById('shareBtn').style.display = '';
 
             // อัปเดต dropdown ทันทีสำหรับค่าใหม่
             var nf = res.newFields || {};
