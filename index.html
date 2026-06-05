@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>รายงานสิ่งแปลกปลอม</title>
+  <meta name="theme-color" content="#dc2626">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="QC Report">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "Sarabun", "Prompt", sans-serif;
+      margin: 0; padding: 0;
+      background: #f5f7fa;
+      color: #1f2937;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .container { max-width: 540px; margin: 0 auto; padding: 16px; }
+    .header {
+      position: relative;
+      background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);
+      color: white;
+      padding: 20px 16px;
+      text-align: center;
+      border-radius: 0 0 16px 16px;
+      margin: -16px -16px 16px;
+    }
+    .nav-btn {
+      position: absolute; top: 14px; right: 14px;
+      background: rgba(255,255,255,0.22); color: white;
+      border: none; border-radius: 8px; padding: 7px 11px;
+      font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .nav-btn:active { background: rgba(255,255,255,0.35); }
+    #qrBox { display: flex; justify-content: center; padding: 8px; }
+    #qrBox img, #qrBox canvas { width: 220px !important; height: 220px !important; }
+    .qr-url { margin-top: 14px; font-size: 11px; color: #374151; word-break: break-all; background: #f3f4f6; padding: 9px; border-radius: 8px; }
+    .qr-steps { margin-top: 14px; text-align: left; font-size: 13px; line-height: 1.9; color: #374151; }
+    .qr-steps b { color: #dc2626; }
+    .qr-msg { margin-top: 10px; font-size: 13px; color: #065f46; min-height: 18px; }
+
+    .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .tab {
+      flex: 1; padding: 10px 4px; border: none; border-radius: 10px;
+      background: #fff; color: #6b7280; font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .tab.active { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; }
+    .period-sel { display: flex; gap: 6px; margin-bottom: 14px; }
+    .period-sel button { flex: 1; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; font-family: inherit; font-size: 13px; font-weight: 600; color: #6b7280; cursor: pointer; }
+    .period-sel button.active { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
+    .dash-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: #374151; }
+    .stat-big { font-size: 34px; font-weight: 800; color: #dc2626; text-align: center; line-height: 1.1; }
+    .stat-label { text-align: center; font-size: 13px; color: #6b7280; }
+    .bar-row { margin-bottom: 8px; }
+    .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; color: #374151; }
+    .bar-track { height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #dc2626, #ea580c); border-radius: 4px; }
+    .score-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f3f4f6; }
+    .score-row:last-child { border-bottom: none; }
+    .score-rank { font-size: 18px; width: 30px; text-align: center; }
+    .score-name { flex: 1; font-weight: 600; font-size: 14px; color: #374151; }
+    .score-count { font-weight: 700; color: #dc2626; font-size: 14px; }
+    .recent-row { font-size: 13px; padding: 7px 0; border-bottom: 1px solid #f3f4f6; color: #374151; }
+    .recent-row:last-child { border-bottom: none; }
+    .recent-row .rt { color: #9ca3af; font-size: 11px; }
+    .dash-empty { text-align: center; color: #9ca3af; padding: 24px 0; font-size: 14px; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    .header .sub { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 12px;
+    }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #374151;
+    }
+    label .req { color: #dc2626; }
+    select, input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      background: white;
+      color: #1f2937;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 20px;
+      padding-right: 36px;
+    }
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .combo-new { margin-top: 8px; }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .chk {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+      font-size: 14px;
+    }
+    .chk input { margin-right: 8px; accent-color: #dc2626; transform: scale(1.2); }
+    .chk.active { border-color: #dc2626; background: #fef2f2; color: #dc2626; font-weight: 600; }
+
+    .add-row { display: flex; gap: 8px; margin-top: 8px; }
+    .add-row input { flex: 1; }
+    .btn-add {
+      flex: 0 0 auto;
+      padding: 0 18px;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-add:active { opacity: 0.8; }
+
+    .btn-photo {
+      width: 100%; padding: 14px;
+      background: white; color: #dc2626;
+      border: 1.5px dashed #dc2626; border-radius: 8px;
+      font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .btn-photo:active { background: #fef2f2; }
+    #photoPreview { width: 100%; border-radius: 8px; border: 1.5px solid #e5e7eb; display: block; }
+    .btn-remove {
+      margin-top: 8px; width: 100%; padding: 9px;
+      background: #fee2e2; color: #991b1b;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .btn-remove:active { opacity: 0.8; }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #dc2626, #ea580c);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-share {
+      width: 100%; margin-top: 10px; padding: 13px;
+      background: white; color: #0f766e;
+      border: 1.5px solid #0f766e; border-radius: 10px;
+      font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+    }
+    .btn-share:active { background: #f0fdfa; }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      display: none;
+      white-space: pre-line;
+    }
+    .alert.show { display: block; }
+    .alert.success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .alert.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .alert.info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+
+    .loading { display: none; text-align: center; padding: 20px; color: #6b7280; }
+    .loading.show { display: block; }
+    .spinner {
+      display: inline-block; width: 20px; height: 20px;
+      border: 3px solid #e5e7eb; border-top-color: #dc2626;
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+      vertical-align: middle; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer { text-align: center; font-size: 12px; color: #9ca3af; margin-top: 20px; padding-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚨 รายงานสิ่งแปลกปลอม</h1>
+      <div class="sub">ระบบรายงานสิ่งแปลกปลอม</div>
+    </div>
+
+    <div class="tabs">
+      <button type="button" class="tab active" data-page="form">📝 รายงาน</button>
+      <button type="button" class="tab" data-page="dash">📊 สรุป</button>
+      <button type="button" class="tab" data-page="qr">📲 แชร์</button>
+    </div>
+
+    <div id="formPage">
+    <div id="alert" class="alert"></div>
+
+    <div id="loadingOptions" class="loading show">
+      <div class="spinner"></div>กำลังโหลด...
+    </div>
+
+    <form id="form" style="display:none">
+      <div class="card">
+        <div class="field">
+          <label>📷 รูปถ่ายสิ่งที่พบ</label>
+          <input type="file" id="photo" accept="image/*" capture="environment" style="display:none">
+          <div id="photoControls">
+            <button type="button" class="btn-photo" id="photoBtn">📷 ถ่ายรูป / เลือกรูป</button>
+          </div>
+          <div id="photoPreviewWrap" style="display:none; margin-top:10px;">
+            <img id="photoPreview" alt="preview">
+            <button type="button" class="btn-remove" id="photoRemoveBtn">🗑 ลบรูป</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>👤 ผู้พบ <span class="req">*</span></label>
+          <select id="reporter" required><option value="">-- เลือก --</option></select>
+          <input type="text" id="reporterNew" class="combo-new" placeholder="พิมพ์ชื่อผู้พบใหม่" style="display:none">
+        </div>
+
+        <div class="field">
+          <label>🍯 ผลิตภัณฑ์ / วัตถุดิบ <span class="req">*</span></label>
+          <select id="product" required><option value="">-- เลือก --</option></select>
+          <input type="text" id="productNew" class="combo-new" placeholder="พิมพ์ชื่อผลิตภัณฑ์/วัตถุดิบใหม่" style="display:none">
+        </div>
+
+        <div class="field">
+          <label>🔍 สิ่งแปลกปลอม (เลือกได้หลายอัน) <span class="req">*</span></label>
+          <div id="categories" class="checkbox-grid"></div>
+          <div class="add-row">
+            <input type="text" id="categoryNew" placeholder="เพิ่มสิ่งแปลกปลอมใหม่">
+            <button type="button" class="btn-add" id="categoryAddBtn">➕</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>⚙️ กระบวนการที่พบ</label>
+          <select id="stage"><option value="">-- ไม่ระบุ --</option></select>
+          <input type="text" id="stageNew" class="combo-new" placeholder="พิมพ์กระบวนการใหม่" style="display:none">
+        </div>
+
+        <div class="field">
+          <label>🏭 ซัพพรายเออร์ (ถ้ารู้)</label>
+          <select id="supplier"><option value="">-- ไม่ระบุ --</option></select>
+          <input type="text" id="supplierNew" class="combo-new" placeholder="พิมพ์ชื่อซัพพรายเออร์ใหม่" style="display:none">
+        </div>
+
+        <div class="field">
+          <label>📏 จำนวน / หน่วย</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="quantity" inputmode="decimal" placeholder="จำนวน เช่น 3" style="flex:1;">
+            <select id="unit" style="flex:1;"><option value="">-- หน่วย --</option></select>
+          </div>
+          <input type="text" id="unitNew" class="combo-new" placeholder="พิมพ์หน่วยใหม่ เช่น เส้น" style="display:none">
+        </div>
+
+        <div class="field">
+          <label>📝 หมายเหตุ</label>
+          <textarea id="note" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">📨 ส่งรายงาน</button>
+      <button type="button" class="btn-share" id="shareBtn">📤 แชร์ไป LINE / Telegram</button>
+    </form>
+    </div>
+
+    <div id="dashPage" style="display:none">
+      <div id="dashLoading" class="loading show"><div class="spinner"></div>กำลังโหลดสรุป...</div>
+      <div id="dashContent" style="display:none">
+        <div class="period-sel">
+          <button type="button" data-period="day" class="active">วันนี้</button>
+          <button type="button" data-period="week">7 วัน</button>
+          <button type="button" data-period="month">30 วัน</button>
+        </div>
+        <div class="card">
+          <div class="stat-big" id="totalReports">0</div>
+          <div class="stat-label">รายงานทั้งหมด (<span id="periodLabel">วันนี้</span>)</div>
+        </div>
+        <div class="card">
+          <div class="dash-title">🏭 สกอร์บอร์ดซัพพรายเออร์ยอดแย่</div>
+          <div id="scoreboard"></div>
+        </div>
+        <div class="card">
+          <div class="dash-title">🔍 สิ่งแปลกปลอมที่พบบ่อย</div>
+          <div id="catBars"></div>
+        </div>
+        <div class="card">
+          <div class="dash-title">🍯 ผลิตภัณฑ์/วัตถุดิบที่เจอปัญหา</div>
+          <div id="prodBars"></div>
+        </div>
+        <div class="card">
+          <div class="dash-title">⚙️ กระบวนการที่พบ</div>
+          <div id="stageBars"></div>
+        </div>
+        <div class="card">
+          <div class="dash-title">🕒 รายงานล่าสุด</div>
+          <div id="recentList"></div>
+        </div>
+        <button type="button" class="btn-share" id="dashRefreshBtn">🔄 รีเฟรชข้อมูล</button>
+      </div>
+    </div>
+
+    <div id="qrPage" style="display:none">
+      <div class="card" style="text-align:center;">
+        <h2 style="margin:4px 0 2px; font-size:18px; color:#dc2626;">📲 แชร์แอปให้ทีม</h2>
+        <div style="font-size:13px; color:#6b7280; margin-bottom:16px;">ให้เพื่อนสแกน QR นี้เพื่อเปิดแอป</div>
+        <div id="qrBox"></div>
+        <div class="qr-url" id="qrUrl"></div>
+        <div class="qr-steps">
+          1. เปิดกล้องมือถือ → สแกน QR<br>
+          2. แตะลิงก์ → เปิดในเบราว์เซอร์<br>
+          3. เมนู → <b>"เพิ่มในหน้าจอหลัก"</b> → ได้ไอคอนแอป
+        </div>
+        <div class="qr-msg" id="qrMsg"></div>
+        <button type="button" class="btn-share" id="qrShareBtn">📤 แชร์ลิงก์แอป</button>
+        <button type="button" class="btn" id="qrBackBtn" style="margin-top:10px;">⬅️ กลับไปกรอกฟอร์ม</button>
+      </div>
+    </div>
+
+    <div class="footer">QC Report v4 · Powered by Google Apps Script</div>
+  </div>
+
+  <script>
+    // ===== API config + google.script.run shim (เรียก Apps Script ผ่าน fetch) =====
+    var APP_URL = "https://script.google.com/macros/s/AKfycbwUPZYPy1i1_rhkfpZfDCe0J2ja1W6anuzeuY5pgqe7zXQjazkNluuksfpSpNUqPfcpxw/exec";
+    (function () {
+      var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };
+      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'ping'];
+      function makeRunner() {
+        var success = null, failure = null;
+        var api = {
+          withSuccessHandler: function (cb) { success = cb; return api; },
+          withFailureHandler: function (cb) { failure = cb; return api; }
+        };
+        ACTIONS.forEach(function (action) {
+          api[action] = function (arg) {
+            var p;
+            if (GET_ACTIONS[action]) {
+              p = fetch(APP_URL + '?action=' + action).then(function (r) { return r.json(); });
+            } else {
+              // POST แบบ text/plain (default ของ fetch) เพื่อเลี่ยง CORS preflight
+              p = fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: action, data: arg }) })
+                    .then(function (r) { return r.json(); });
+            }
+            p.then(function (res) { if (success) success(res); })
+             .catch(function (err) { if (failure) failure(String((err && err.message) || err)); });
+          };
+        });
+        return api;
+      }
+      window.google = window.google || {};
+      window.google.script = window.google.script || {};
+      Object.defineProperty(window.google.script, 'run', { configurable: true, get: makeRunner });
+    })();
+
+    var alertEl = document.getElementById('alert');
+    var form = document.getElementById('form');
+    var loadingEl = document.getElementById('loadingOptions');
+    var submitBtn = document.getElementById('submitBtn');
+
+    var COMBO_FIELDS = ['reporter', 'product', 'stage', 'supplier', 'unit'];
+    var NEW_VALUE = '__new__';
+
+    function showAlert(type, msg) {
+      alertEl.className = 'alert show ' + type;
+      alertEl.textContent = msg;
+      window.scrollTo(0, 0);
+      if (type === 'success') setTimeout(function () { alertEl.classList.remove('show'); }, 5000);
+    }
+
+    function fillSelect(id, items) {
+      var sel = document.getElementById(id);
+      (items || []).forEach(function (it) {
+        var opt = document.createElement('option');
+        opt.value = it; opt.textContent = it; sel.appendChild(opt);
+      });
+    }
+
+    function initCombo(id, label) {
+      var sel = document.getElementById(id);
+      var opt = document.createElement('option');
+      opt.value = NEW_VALUE; opt.textContent = label;
+      sel.appendChild(opt);
+      var txt = document.getElementById(id + 'New');
+      sel.addEventListener('change', function () {
+        if (sel.value === NEW_VALUE) { txt.style.display = ''; txt.focus(); }
+        else txt.style.display = 'none';
+      });
+    }
+
+    function comboValue(id) {
+      var sel = document.getElementById(id);
+      if (sel.value === NEW_VALUE) return document.getElementById(id + 'New').value.trim();
+      return sel.value;
+    }
+
+    function comboEnsureOption(id, name) {
+      if (!name) return;
+      var sel = document.getElementById(id);
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === name) return;
+      }
+      var newOpt = sel.querySelector('option[value="' + NEW_VALUE + '"]');
+      var opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sel.insertBefore(opt, newOpt);
+    }
+
+    // ----- categories (multi-select) -----
+    function addCategoryChip(name, checked) {
+      name = String(name).trim();
+      if (!name) return null;
+      var grid = document.getElementById('categories');
+      var lbl = document.createElement('label');
+      lbl.className = 'chk' + (checked ? ' active' : '');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = name; cb.checked = !!checked;
+      cb.addEventListener('change', function () { lbl.classList.toggle('active', cb.checked); });
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(name));
+      grid.appendChild(lbl);
+      return cb;
+    }
+
+    function fillCheckboxes(items) {
+      (items || []).forEach(function (it) { addCategoryChip(it, false); });
+    }
+
+    function addCustomCategory() {
+      var inp = document.getElementById('categoryNew');
+      var name = inp.value.trim();
+      if (!name) return;
+      var boxes = document.querySelectorAll('#categories input[type=checkbox]');
+      for (var i = 0; i < boxes.length; i++) {
+        if (boxes[i].value.toLowerCase() === name.toLowerCase()) {
+          boxes[i].checked = true;
+          boxes[i].parentNode.classList.add('active');
+          inp.value = '';
+          return;
+        }
+      }
+      addCategoryChip(name, true);
+      inp.value = '';
+    }
+
+    function getCheckedCategories() {
+      var boxes = document.querySelectorAll('#categories input[type=checkbox]:checked');
+      var result = [];
+      for (var i = 0; i < boxes.length; i++) result.push(boxes[i].value);
+      return result;
+    }
+
+    function onOptionsLoaded(opts) {
+      loadingEl.classList.remove('show');
+      form.style.display = '';
+      if (opts.products.length === 0) {
+        showAlert('info', 'ยังไม่มีข้อมูลใน Sheet - กรุณา run setupV2Spreadsheet ก่อน');
+      }
+      fillSelect('reporter', opts.workers);
+      fillSelect('product', opts.products);
+      fillSelect('stage', opts.stages);
+      fillSelect('supplier', opts.suppliers);
+      fillSelect('unit', opts.units);
+      initCombo('reporter', '➕ ชื่ออื่น (พิมพ์เอง)');
+      initCombo('product', '➕ พิมพ์เอง');
+      initCombo('stage', '➕ พิมพ์เอง');
+      initCombo('supplier', '➕ พิมพ์เอง');
+      initCombo('unit', '➕ พิมพ์เอง');
+      fillCheckboxes(opts.categories);
+    }
+
+    function onOptionsError(err) {
+      loadingEl.classList.remove('show');
+      showAlert('error', 'โหลดข้อมูลไม่ได้: ' + err);
+    }
+
+    document.getElementById('categoryAddBtn').addEventListener('click', addCustomCategory);
+    document.getElementById('categoryNew').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addCustomCategory(); }
+    });
+
+    // ----- photo capture -----
+    var photoInput = document.getElementById('photo');
+    var photoBtn = document.getElementById('photoBtn');
+    var photoPreview = document.getElementById('photoPreview');
+    var photoPreviewWrap = document.getElementById('photoPreviewWrap');
+    var photoControls = document.getElementById('photoControls');
+    var photoDataUrl = null;
+
+    photoBtn.addEventListener('click', function () { photoInput.click(); });
+    document.getElementById('photoRemoveBtn').addEventListener('click', clearPhoto);
+    photoInput.addEventListener('change', function () {
+      var file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      photoBtn.textContent = '⏳ กำลังย่อรูป...';
+      resizeImage(file, 1280, 0.7, function (dataUrl) {
+        photoBtn.textContent = '📷 ถ่ายรูป / เลือกรูป';
+        if (!dataUrl) { showAlert('error', 'อ่านรูปไม่ได้ ลองใหม่'); return; }
+        photoDataUrl = dataUrl;
+        photoPreview.src = dataUrl;
+        photoPreviewWrap.style.display = '';
+        photoControls.style.display = 'none';
+      });
+    });
+
+    function clearPhoto() {
+      photoDataUrl = null;
+      photoInput.value = '';
+      photoPreview.src = '';
+      photoPreviewWrap.style.display = 'none';
+      photoControls.style.display = '';
+    }
+
+    function resizeImage(file, maxDim, quality, cb) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var w = img.width, h = img.height;
+          if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else if (h >= w && h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          try { cb(canvas.toDataURL('image/jpeg', quality)); }
+          catch (err) { cb(null); }
+        };
+        img.onerror = function () { cb(null); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function () { cb(null); };
+      reader.readAsDataURL(file);
+    }
+
+    google.script.run
+      .withSuccessHandler(onOptionsLoaded)
+      .withFailureHandler(onOptionsError)
+      .getOptions();
+
+    // ----- share to LINE / Telegram / etc. -----
+    function buildShareText() {
+      var reporter = comboValue('reporter');
+      var product = comboValue('product');
+      var cats = getCheckedCategories();
+      var stage = comboValue('stage');
+      var supplier = comboValue('supplier');
+      var quantity = document.getElementById('quantity').value.trim();
+      var unit = comboValue('unit');
+      var note = document.getElementById('note').value.trim();
+
+      var lines = ['🚨 รายงานสิ่งแปลกปลอม'];
+      if (reporter) lines.push('👤 ผู้พบ: ' + reporter);
+      if (product) lines.push('🍯 ผลิตภัณฑ์/วัตถุดิบ: ' + product);
+      if (cats.length) lines.push('🔍 พบ: ' + cats.join(', '));
+      if (stage) lines.push('⚙️ กระบวนการ: ' + stage);
+      if (supplier) lines.push('🏭 ซัพพรายเออร์: ' + supplier);
+      var qty = [quantity, unit].filter(Boolean).join(' ');
+      if (qty) lines.push('📏 จำนวน: ' + qty);
+      if (note) lines.push('📝 หมายเหตุ: ' + note);
+      return lines.join('\n');
+    }
+
+    function dataURLtoBlob(dataUrl) {
+      var arr = dataUrl.split(',');
+      var mime = arr[0].match(/:(.*?);/)[1];
+      var bstr = atob(arr[1]);
+      var n = bstr.length;
+      var u8 = new Uint8Array(n);
+      while (n--) u8[n] = bstr.charCodeAt(n);
+      return new Blob([u8], { type: mime });
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        return true;
+      }
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        return true;
+      } catch (e) { return false; }
+    }
+
+    function downloadPhoto() {
+      if (!photoDataUrl) return;
+      var a = document.createElement('a');
+      a.href = photoDataUrl; a.download = 'qc-photo.jpg';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function shareReport() {
+      var reporter = comboValue('reporter');
+      var product = comboValue('product');
+      var cats = getCheckedCategories();
+      if (!reporter && !product && cats.length === 0) {
+        showAlert('error', 'กรอกข้อมูลก่อนแชร์');
+        return;
+      }
+
+      var text = buildShareText();
+
+      // 1) แชร์พร้อมรูป (มีรูป + เครื่องรองรับแนบไฟล์)
+      if (photoDataUrl && navigator.canShare) {
+        try {
+          var file = new File([dataURLtoBlob(photoDataUrl)], 'qc-photo.jpg', { type: 'image/jpeg' });
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text, files: [file] }).catch(function () {});
+            return;
+          }
+        } catch (e) { /* ตกไปแชร์แบบข้อความ */ }
+      }
+
+      // 2) แชร์เฉพาะข้อความ (เครื่องรองรับ share แต่แนบรูปไม่ได้)
+      if (navigator.share) {
+        navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
+        if (photoDataUrl) showAlert('info', 'แชร์ข้อความแล้ว — เครื่องนี้แนบรูปอัตโนมัติไม่ได้ ส่งรูปจากแกลเลอรีเองได้เลย');
+        return;
+      }
+
+      // 3) ไม่มี Web Share → คัดลอกข้อความ (+ ดาวน์โหลดรูปถ้ามี ให้แนบเอง)
+      var ok = copyText(text);
+      if (photoDataUrl) {
+        downloadPhoto();
+        showAlert('info', '📋 คัดลอกข้อความ + บันทึกรูปแล้ว — วางข้อความและแนบรูปใน LINE / Telegram');
+      } else {
+        showAlert('info', ok ? '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย' : 'อุปกรณ์นี้แชร์ไม่ได้');
+      }
+    }
+
+    document.getElementById('shareBtn').addEventListener('click', shareReport);
+
+    // ----- QR / แชร์แอป -----
+    var qrRendered = false;
+
+    function renderQr() {
+      if (qrRendered) return;
+      var box = document.getElementById('qrBox');
+      if (!APP_URL) { box.innerHTML = '<div style="color:#991b1b; font-size:13px;">ยังไม่ได้ deploy เป็น Web App<br>(QR จะใช้ได้หลัง deploy)</div>'; return; }
+      if (!window.QRCode) { box.innerHTML = '<div style="color:#991b1b; font-size:13px;">โหลด QR ไม่ได้ (ต้องมีเน็ต)</div>'; return; }
+      new QRCode(box, { text: APP_URL, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+      qrRendered = true;
+    }
+
+    function shareAppLink() {
+      if (!APP_URL) return;
+      if (navigator.share) {
+        navigator.share({ title: 'แอปรายงานสิ่งแปลกปลอม', text: 'เปิดลิงก์นี้เพื่อรายงานสิ่งแปลกปลอม', url: APP_URL }).catch(function () {});
+      } else if (copyText(APP_URL)) {
+        document.getElementById('qrMsg').textContent = '📋 คัดลอกลิงก์แล้ว — วางส่งให้เพื่อนได้เลย';
+      }
+    }
+
+    // ----- tab navigation (รายงาน / สรุป / แชร์) -----
+    function switchPage(page) {
+      var map = { form: 'formPage', dash: 'dashPage', qr: 'qrPage' };
+      Object.keys(map).forEach(function (k) {
+        document.getElementById(map[k]).style.display = (k === page) ? '' : 'none';
+      });
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-page') === page);
+      }
+      if (page === 'dash') loadDashboard(false);
+      if (page === 'qr') {
+        document.getElementById('qrUrl').textContent = APP_URL || '(deploy ก่อนเพื่อรับ URL)';
+        document.getElementById('qrMsg').textContent = '';
+        renderQr();
+      }
+      window.scrollTo(0, 0);
+    }
+
+    var tabEls = document.querySelectorAll('.tab');
+    for (var ti = 0; ti < tabEls.length; ti++) {
+      tabEls[ti].addEventListener('click', function () { switchPage(this.getAttribute('data-page')); });
+    }
+    document.getElementById('qrBackBtn').addEventListener('click', function () { switchPage('form'); });
+    document.getElementById('qrShareBtn').addEventListener('click', shareAppLink);
+
+    // ----- dashboard (สรุป) -----
+    var dashData = null;
+    var currentPeriod = 'day';
+
+    function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+
+    function loadDashboard(force) {
+      if (dashData && !force) { renderDashboard(); return; }
+      document.getElementById('dashLoading').classList.add('show');
+      document.getElementById('dashContent').style.display = 'none';
+      google.script.run
+        .withSuccessHandler(function (d) {
+          dashData = d;
+          document.getElementById('dashLoading').classList.remove('show');
+          document.getElementById('dashContent').style.display = '';
+          renderDashboard();
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('dashLoading').classList.remove('show');
+          document.getElementById('dashContent').style.display = '';
+          document.getElementById('scoreboard').innerHTML = '<div class="dash-empty">โหลดไม่ได้: ' + esc(err) + '</div>';
+        })
+        .getDashboard();
+    }
+
+    function renderBars(id, items, emptyMsg) {
+      var el = document.getElementById(id);
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">' + emptyMsg + '</div>'; return; }
+      var max = items[0].count || 1;
+      el.innerHTML = items.map(function (it) {
+        var pct = Math.max(6, Math.round((it.count / max) * 100));
+        return '<div class="bar-row"><div class="bar-label"><span>' + esc(it.name) + '</span><span>' + it.count + '</span></div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div></div>';
+      }).join('');
+    }
+
+    function renderScoreboard(items) {
+      var el = document.getElementById('scoreboard');
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มีข้อมูลซัพพรายเออร์ในช่วงนี้</div>'; return; }
+      var medals = ['🥇', '🥈', '🥉'];
+      el.innerHTML = items.map(function (it, i) {
+        var rank = i < 3 ? medals[i] : (i + 1) + '.';
+        return '<div class="score-row"><div class="score-rank">' + rank + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' ครั้ง</div></div>';
+      }).join('');
+    }
+
+    function renderRecent(items) {
+      var el = document.getElementById('recentList');
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มีรายงาน</div>'; return; }
+      el.innerHTML = items.map(function (r) {
+        var sup = r.supplier ? ' · 🏭 ' + esc(r.supplier) : '';
+        return '<div class="recent-row"><span class="rt">' + esc(r.time) + '</span> ' + esc(r.product) + ' — ' + esc(r.categories) + sup + '</div>';
+      }).join('');
+    }
+
+    function renderDashboard() {
+      if (!dashData) return;
+      var p = dashData.periods[currentPeriod];
+      document.getElementById('periodLabel').textContent = p.label;
+      document.getElementById('totalReports').textContent = p.total;
+      renderScoreboard(p.suppliers);
+      renderBars('catBars', p.categories, 'ไม่มีข้อมูล');
+      renderBars('prodBars', p.products, 'ไม่มีข้อมูล');
+      renderBars('stageBars', p.stages, 'ไม่มีข้อมูล');
+      renderRecent(dashData.recent);
+    }
+
+    var periodBtns = document.querySelectorAll('.period-sel button');
+    for (var pi = 0; pi < periodBtns.length; pi++) {
+      periodBtns[pi].addEventListener('click', function () {
+        for (var j = 0; j < periodBtns.length; j++) periodBtns[j].classList.remove('active');
+        this.classList.add('active');
+        currentPeriod = this.getAttribute('data-period');
+        renderDashboard();
+      });
+    }
+    document.getElementById('dashRefreshBtn').addEventListener('click', function () { loadDashboard(true); });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var data = {
+        reporter: comboValue('reporter'),
+        product: comboValue('product'),
+        categories: getCheckedCategories(),
+        stage: comboValue('stage'),
+        supplier: comboValue('supplier'),
+        quantity: document.getElementById('quantity').value.trim(),
+        unit: comboValue('unit'),
+        note: document.getElementById('note').value,
+        photo: photoDataUrl ? { dataUrl: photoDataUrl } : null
+      };
+
+      if (!data.reporter) {
+        showAlert('error', document.getElementById('reporter').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผู้พบ' : 'กรุณาเลือกผู้พบ');
+        return;
+      }
+      if (!data.product) {
+        showAlert('error', document.getElementById('product').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผลิตภัณฑ์/วัตถุดิบ' : 'กรุณาเลือกผลิตภัณฑ์/วัตถุดิบ');
+        return;
+      }
+      if (data.categories.length === 0) { showAlert('error', 'กรุณาเลือกสิ่งแปลกปลอมอย่างน้อย 1 อย่าง'); return; }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ กำลังส่ง...';
+      showAlert('info', data.photo ? 'กำลังบันทึก + อัปโหลดรูป...' : 'กำลังบันทึก...');
+
+      google.script.run
+        .withSuccessHandler(function (res) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '📨 ส่งรายงาน';
+          if (res && res.ok) {
+            var msg = '✅ ' + res.message + ' (row ' + res.rowIndex + ')';
+            if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
+            showAlert('success', msg);
+
+            // อัปเดต dropdown ทันทีสำหรับค่าใหม่
+            var nf = res.newFields || {};
+            if (nf.reporter) comboEnsureOption('reporter', data.reporter);
+            if (nf.product) comboEnsureOption('product', data.product);
+            if (nf.stage) comboEnsureOption('stage', data.stage);
+            if (nf.supplier) comboEnsureOption('supplier', data.supplier);
+            if (nf.unit) comboEnsureOption('unit', data.unit);
+
+            // reset แต่เก็บผู้พบไว้ (คนเดิมมักรายงานหลายครั้ง)
+            var keepReporter = data.reporter;
+            form.reset();
+            COMBO_FIELDS.forEach(function (id) {
+              document.getElementById(id + 'New').style.display = 'none';
+            });
+            document.getElementById('reporter').value = keepReporter;
+            document.querySelectorAll('#categories .chk').forEach(function (el) {
+              el.classList.remove('active');
+            });
+            clearPhoto();
+          } else {
+            showAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด'));
+          }
+        })
+        .withFailureHandler(function (err) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '📨 ส่งรายงาน';
+          showAlert('error', '❌ ' + err);
+        })
+        .saveReport(data);
+    });
+  </script>
+
+  <script>
+    // ===== PWA: register service worker (offline shell) =====
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function (e) {
+          console.warn('SW register failed:', e);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
