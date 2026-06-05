@@ -301,7 +301,7 @@
       </div>
 
       <button type="submit" class="btn" id="submitBtn">📨 ส่งรายงาน</button>
-      <button type="button" class="btn-share" id="shareBtn">📤 แชร์ไป LINE / Telegram</button>
+      <button type="button" class="btn-share" id="shareBtn">📤 แชร์รายงาน → LINE / Telegram</button>
     </form>
     </div>
 
@@ -528,6 +528,7 @@
     var photoPreviewWrap = document.getElementById('photoPreviewWrap');
     var photoControls = document.getElementById('photoControls');
     var photoDataUrl = null;
+    var lastReport = null;
 
     photoBtn.addEventListener('click', function () { photoInput.click(); });
     document.getElementById('photoRemoveBtn').addEventListener('click', clearPhoto);
@@ -580,26 +581,39 @@
       .getOptions();
 
     // ----- share to LINE / Telegram / etc. -----
-    function buildShareText() {
-      var reporter = comboValue('reporter');
-      var product = comboValue('product');
-      var cats = getCheckedCategories();
-      var stage = comboValue('stage');
-      var supplier = comboValue('supplier');
-      var quantity = document.getElementById('quantity').value.trim();
-      var unit = comboValue('unit');
-      var note = document.getElementById('note').value.trim();
+    function fmtNow() {
+      var d = new Date();
+      function p(n) { return (n < 10 ? '0' : '') + n; }
+      return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
 
-      var lines = ['🚨 รายงานสิ่งแปลกปลอม'];
-      if (reporter) lines.push('👤 ผู้พบ: ' + reporter);
-      if (product) lines.push('🍯 ผลิตภัณฑ์/วัตถุดิบ: ' + product);
-      if (cats.length) lines.push('🔍 พบ: ' + cats.join(', '));
-      if (stage) lines.push('⚙️ กระบวนการ: ' + stage);
-      if (supplier) lines.push('🏭 ซัพพรายเออร์: ' + supplier);
-      var qty = [quantity, unit].filter(Boolean).join(' ');
+    function currentFormData() {
+      return {
+        reporter: comboValue('reporter'),
+        product: comboValue('product'),
+        categories: getCheckedCategories(),
+        stage: comboValue('stage'),
+        supplier: comboValue('supplier'),
+        quantity: document.getElementById('quantity').value.trim(),
+        unit: comboValue('unit'),
+        note: document.getElementById('note').value.trim(),
+        photo: photoDataUrl ? { dataUrl: photoDataUrl } : null
+      };
+    }
+
+    // เรียงเป็นลำดับเรื่องราว: พบอะไร → ในอะไร → จากใคร → จุดไหน → จำนวน → ใครเจอ → หมายเหตุ
+    function buildShareTextFromData(d) {
+      var lines = ['🚨 รายงานสิ่งแปลกปลอม', '🗓 ' + (d.time || fmtNow()), ''];
+      if (d.categories && d.categories.length) lines.push('🔍 พบ: ' + d.categories.join(', '));
+      if (d.product) lines.push('🍯 ใน: ' + d.product);
+      if (d.supplier) lines.push('🏭 ซัพพรายเออร์: ' + d.supplier);
+      if (d.stage) lines.push('⚙️ จุดที่พบ: ' + d.stage);
+      var qty = [d.quantity, d.unit].filter(Boolean).join(' ');
       if (qty) lines.push('📏 จำนวน: ' + qty);
-      if (note) lines.push('📝 หมายเหตุ: ' + note);
-      return lines.join('\n');
+      lines.push('');
+      if (d.reporter) lines.push('👤 ผู้พบ: ' + d.reporter);
+      if (d.note) lines.push('📝 หมายเหตุ: ' + d.note);
+      return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
     }
 
     function dataURLtoBlob(dataUrl) {
@@ -637,20 +651,23 @@
     }
 
     function shareReport() {
-      var reporter = comboValue('reporter');
-      var product = comboValue('product');
-      var cats = getCheckedCategories();
-      if (!reporter && !product && cats.length === 0) {
+      var d = currentFormData();
+      var formHasData = d.product || (d.categories && d.categories.length);
+      // ถ้าฟอร์มว่าง (เพิ่งกดส่ง ฟอร์มถูกล้าง) แต่มีรายงานล่าสุด → แชร์รายงานล่าสุด
+      if (!formHasData && lastReport) d = lastReport;
+
+      if (!d.reporter && !d.product && (!d.categories || d.categories.length === 0)) {
         showAlert('error', 'กรอกข้อมูลก่อนแชร์');
         return;
       }
 
-      var text = buildShareText();
+      var text = buildShareTextFromData(d);
+      var photo = (d.photo && d.photo.dataUrl) ? d.photo.dataUrl : null;
 
       // 1) แชร์พร้อมรูป (มีรูป + เครื่องรองรับแนบไฟล์)
-      if (photoDataUrl && navigator.canShare) {
+      if (photo && navigator.canShare) {
         try {
-          var file = new File([dataURLtoBlob(photoDataUrl)], 'qc-photo.jpg', { type: 'image/jpeg' });
+          var file = new File([dataURLtoBlob(photo)], 'qc-photo.jpg', { type: 'image/jpeg' });
           if (navigator.canShare({ files: [file] })) {
             navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text, files: [file] }).catch(function () {});
             return;
@@ -658,21 +675,16 @@
         } catch (e) { /* ตกไปแชร์แบบข้อความ */ }
       }
 
-      // 2) แชร์เฉพาะข้อความ (เครื่องรองรับ share แต่แนบรูปไม่ได้)
+      // 2) แชร์เฉพาะข้อความ
       if (navigator.share) {
         navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
-        if (photoDataUrl) showAlert('info', 'แชร์ข้อความแล้ว — เครื่องนี้แนบรูปอัตโนมัติไม่ได้ ส่งรูปจากแกลเลอรีเองได้เลย');
+        if (photo) showAlert('info', 'แชร์ข้อความแล้ว — เครื่องนี้แนบรูปอัตโนมัติไม่ได้ ส่งรูปจากแกลเลอรีเองได้เลย');
         return;
       }
 
-      // 3) ไม่มี Web Share → คัดลอกข้อความ (+ ดาวน์โหลดรูปถ้ามี ให้แนบเอง)
+      // 3) ไม่มี Web Share → คัดลอกข้อความ
       var ok = copyText(text);
-      if (photoDataUrl) {
-        downloadPhoto();
-        showAlert('info', '📋 คัดลอกข้อความ + บันทึกรูปแล้ว — วางข้อความและแนบรูปใน LINE / Telegram');
-      } else {
-        showAlert('info', ok ? '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย' : 'อุปกรณ์นี้แชร์ไม่ได้');
-      }
+      showAlert('info', ok ? '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย' : 'อุปกรณ์นี้แชร์ไม่ได้');
     }
 
     document.getElementById('shareBtn').addEventListener('click', shareReport);
@@ -836,6 +848,13 @@
             var msg = '✅ ' + res.message + ' (row ' + res.rowIndex + ')';
             if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
             showAlert('success', msg);
+
+            // จำรายงานนี้ไว้สำหรับปุ่มแชร์ (ฟอร์มจะถูก reset แต่ข้อมูลที่เพิ่งส่งยังแชร์ได้)
+            lastReport = {
+              reporter: data.reporter, product: data.product, categories: data.categories,
+              stage: data.stage, supplier: data.supplier, quantity: data.quantity, unit: data.unit,
+              note: data.note, photo: data.photo, time: fmtNow()
+            };
 
             // อัปเดต dropdown ทันทีสำหรับค่าใหม่
             var nf = res.newFields || {};
