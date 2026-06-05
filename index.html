@@ -72,6 +72,29 @@
     .recent-row:last-child { border-bottom: none; }
     .recent-row .rt { color: #9ca3af; font-size: 11px; }
     .dash-empty { text-align: center; color: #9ca3af; padding: 24px 0; font-size: 14px; }
+    .kpi-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .kpi { background: white; border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .kpi .v { font-size: 26px; font-weight: 800; color: #dc2626; line-height: 1.1; }
+    .kpi .l { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .kpi .delta { font-size: 12px; font-weight: 700; margin-top: 4px; }
+    .delta.up { color: #dc2626; }
+    .delta.down { color: #16a34a; }
+    .delta.flat { color: #9ca3af; }
+    .trend-wrap { display: flex; align-items: flex-end; gap: 3px; height: 90px; padding: 4px 0 6px; }
+    .trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .trend-bar { width: 100%; background: linear-gradient(180deg, #dc2626, #ea580c); border-radius: 3px 3px 0 0; min-height: 2px; }
+    .trend-bar.zero { background: #e5e7eb; }
+    .trend-label { font-size: 9px; color: #9ca3af; transform: rotate(-45deg); transform-origin: top right; white-space: nowrap; height: 14px; }
+    .trend-val { font-size: 10px; color: #6b7280; font-weight: 600; }
+    .supcat-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+    .supcat-row:last-child { border-bottom: none; }
+    .supcat-head { display: flex; justify-content: space-between; font-weight: 700; color: #374151; font-size: 14px; margin-bottom: 4px; }
+    .supcat-head .tot { color: #dc2626; }
+    .supcat-cats { display: flex; flex-wrap: wrap; gap: 4px; }
+    .supcat-chip { background: #fef2f2; color: #991b1b; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    .combo-row { padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 13px; color: #374151; }
+    .combo-row:last-child { border-bottom: none; }
+    .combo-row .c { color: #dc2626; font-weight: 700; }
     .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
     .header .sub { font-size: 13px; opacity: 0.9; margin-top: 4px; }
     .card {
@@ -315,13 +338,26 @@
           <button type="button" data-period="week">7 วัน</button>
           <button type="button" data-period="month">30 วัน</button>
         </div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="v" id="kpiTotal">0</div><div class="l">รายงาน (<span id="periodLabel">วันนี้</span>)</div><div class="delta" id="kpiDelta"></div></div>
+          <div class="kpi"><div class="v" id="kpiAvg">0</div><div class="l">เฉลี่ย/วัน</div></div>
+          <div class="kpi"><div class="v" id="kpiPrev">0</div><div class="l">ช่วงก่อนหน้า</div></div>
+        </div>
         <div class="card">
-          <div class="stat-big" id="totalReports">0</div>
-          <div class="stat-label">รายงานทั้งหมด (<span id="periodLabel">วันนี้</span>)</div>
+          <div class="dash-title">📈 แนวโน้ม 14 วันล่าสุด</div>
+          <div id="trendChart" class="trend-wrap"></div>
         </div>
         <div class="card">
           <div class="dash-title">🏭 สกอร์บอร์ดซัพพรายเออร์ยอดแย่</div>
           <div id="scoreboard"></div>
+        </div>
+        <div class="card">
+          <div class="dash-title">🔥 ซัพพรายเออร์ × สิ่งแปลกปลอม</div>
+          <div id="supCatList"></div>
+        </div>
+        <div class="card">
+          <div class="dash-title">⚠️ คู่ที่เจอบ่อย (ผลิตภัณฑ์ + สิ่งแปลกปลอม)</div>
+          <div id="comboList"></div>
         </div>
         <div class="card">
           <div class="dash-title">🔍 สิ่งแปลกปลอมที่พบบ่อย</div>
@@ -334,6 +370,10 @@
         <div class="card">
           <div class="dash-title">⚙️ กระบวนการที่พบ</div>
           <div id="stageBars"></div>
+        </div>
+        <div class="card">
+          <div class="dash-title">👤 ผู้พบยอดเยี่ยม</div>
+          <div id="reporterList"></div>
         </div>
         <div class="card">
           <div class="dash-title">🕒 รายงานล่าสุด</div>
@@ -857,15 +897,81 @@
       }).join('');
     }
 
+    function renderKPIs(p) {
+      document.getElementById('periodLabel').textContent = p.label;
+      document.getElementById('kpiTotal').textContent = p.total;
+      document.getElementById('kpiAvg').textContent = p.avgPerDay;
+      document.getElementById('kpiPrev').textContent = p.prevTotal;
+      var dEl = document.getElementById('kpiDelta');
+      if (p.prevTotal === 0 && p.total === 0) {
+        dEl.textContent = ''; dEl.className = 'delta flat';
+      } else if (p.prevTotal === 0) {
+        dEl.textContent = '⬆️ ใหม่'; dEl.className = 'delta up';
+      } else {
+        var pct = Math.round(((p.total - p.prevTotal) / p.prevTotal) * 100);
+        if (pct > 0) { dEl.textContent = '⬆️ +' + pct + '%'; dEl.className = 'delta up'; }
+        else if (pct < 0) { dEl.textContent = '⬇️ ' + pct + '%'; dEl.className = 'delta down'; }
+        else { dEl.textContent = '— เท่าเดิม'; dEl.className = 'delta flat'; }
+      }
+    }
+
+    function renderTrend(trend) {
+      var el = document.getElementById('trendChart');
+      if (!trend || !trend.values || !trend.values.length) { el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูล</div>'; return; }
+      var max = Math.max.apply(null, trend.values);
+      if (max < 1) max = 1;
+      el.innerHTML = trend.values.map(function (v, i) {
+        var h = Math.round((v / max) * 70);
+        var cls = v === 0 ? 'trend-bar zero' : 'trend-bar';
+        return '<div class="trend-col">' +
+          '<div class="trend-val">' + (v || '') + '</div>' +
+          '<div class="' + cls + '" style="height:' + Math.max(h, 2) + 'px"></div>' +
+          '<div class="trend-label">' + esc(trend.labels[i] || '') + '</div></div>';
+      }).join('');
+    }
+
+    function renderSupCat(items) {
+      var el = document.getElementById('supCatList');
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูลซัพพรายเออร์ในช่วงนี้</div>'; return; }
+      el.innerHTML = items.map(function (s) {
+        var chips = (s.topCats || []).map(function (c) {
+          return '<span class="supcat-chip">' + esc(c.name) + ' ×' + c.count + '</span>';
+        }).join('');
+        if (!chips) chips = '<span style="color:#9ca3af; font-size:12px;">ไม่มีหมวด</span>';
+        return '<div class="supcat-row"><div class="supcat-head"><span>🏭 ' + esc(s.name) + '</span><span class="tot">' + s.total + ' ครั้ง</span></div><div class="supcat-cats">' + chips + '</div></div>';
+      }).join('');
+    }
+
+    function renderCombos(items) {
+      var el = document.getElementById('comboList');
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูล</div>'; return; }
+      el.innerHTML = items.map(function (it) {
+        return '<div class="combo-row"><span>' + esc(it.name) + '</span><span class="c">×' + it.count + '</span></div>';
+      }).join('');
+    }
+
+    function renderReporters(items) {
+      var el = document.getElementById('reporterList');
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มี</div>'; return; }
+      var medals = ['🥇', '🥈', '🥉'];
+      el.innerHTML = items.map(function (it, i) {
+        var rank = i < 3 ? medals[i] : (i + 1) + '.';
+        return '<div class="score-row"><div class="score-rank">' + rank + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' รายงาน</div></div>';
+      }).join('');
+    }
+
     function renderDashboard() {
       if (!dashData) return;
       var p = dashData.periods[currentPeriod];
-      document.getElementById('periodLabel').textContent = p.label;
-      document.getElementById('totalReports').textContent = p.total;
+      renderKPIs(p);
+      renderTrend(dashData.trend);
       renderScoreboard(p.suppliers);
+      renderSupCat(p.supplierByCategory);
+      renderCombos(p.combos);
       renderBars('catBars', p.categories, 'ไม่มีข้อมูล');
       renderBars('prodBars', p.products, 'ไม่มีข้อมูล');
       renderBars('stageBars', p.stages, 'ไม่มีข้อมูล');
+      renderReporters(p.reporters);
       renderRecent(dashData.recent);
     }
 
