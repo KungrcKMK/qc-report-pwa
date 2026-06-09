@@ -780,15 +780,20 @@
       }
 
       var text = buildShareTextFromData(d);
-      copyText(text);  // เก็บข้อความจริงใน clipboard เป็นตัวสำรอง
+      var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      // iOS: ส่งแค่รูปการ์ด (ข้อความฝังในรูปแล้ว ไม่ต้องซ้ำใน clipboard/text param)
+      // อื่นๆ: copy clipboard เป็น backup เผื่อ LINE ตัด text ทิ้ง
+      if (!isIOS) copyText(text);
 
-      // แชร์เป็น "การ์ดรูปเดียว" ที่มีทั้งข้อความ + รูป → ทุกแอปเก็บครบ ไม่ตัดข้อความ
       renderReportCard(d, function (card) {
         if (card && navigator.canShare) {
           try {
             var file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
             if (navigator.canShare({ files: [file] })) {
-              navigator.share({ files: [file], text: text, title: 'รายงานสิ่งแปลกปลอม' }).catch(function () {});
+              var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
+              if (!isIOS) payload.text = text; // ไม่แนบ text บน iOS เพราะมันโชว์ซ้ำกับ preview รูป
+              navigator.share(payload).catch(function () {});
               return;
             }
           } catch (e) { /* ตกไป fallback */ }
