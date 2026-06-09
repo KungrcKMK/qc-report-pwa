@@ -72,20 +72,20 @@
     .recent-row:last-child { border-bottom: none; }
     .recent-row .rt { color: #9ca3af; font-size: 11px; }
     .dash-empty { text-align: center; color: #9ca3af; padding: 24px 0; font-size: 14px; }
-    .kpi-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-    .kpi { background: white; border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .kpi .v { font-size: 26px; font-weight: 800; color: #dc2626; line-height: 1.1; }
-    .kpi .l { font-size: 11px; color: #6b7280; margin-top: 2px; }
-    .kpi .delta { font-size: 12px; font-weight: 700; margin-top: 4px; }
+    .kpi-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .kpi { background: white; border-radius: 12px; padding: 12px 6px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); min-width: 0; overflow: hidden; }
+    .kpi .v { font-size: 24px; font-weight: 800; color: #dc2626; line-height: 1.1; }
+    .kpi .l { font-size: 10.5px; color: #6b7280; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi .delta { font-size: 11px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .delta.up { color: #dc2626; }
     .delta.down { color: #16a34a; }
     .delta.flat { color: #9ca3af; }
-    .trend-wrap { display: flex; align-items: flex-end; gap: 3px; height: 90px; padding: 4px 0 6px; }
-    .trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .trend-bar { width: 100%; background: linear-gradient(180deg, #dc2626, #ea580c); border-radius: 3px 3px 0 0; min-height: 2px; }
+    .trend-wrap { display: flex; align-items: flex-end; gap: 2px; height: 130px; padding: 4px 0 24px; width: 100%; overflow: hidden; }
+    .trend-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .trend-bar { width: 100%; max-width: 18px; background: linear-gradient(180deg, #dc2626, #ea580c); border-radius: 2px 2px 0 0; min-height: 2px; }
     .trend-bar.zero { background: #e5e7eb; }
-    .trend-label { font-size: 9px; color: #9ca3af; transform: rotate(-45deg); transform-origin: top right; white-space: nowrap; height: 14px; }
-    .trend-val { font-size: 10px; color: #6b7280; font-weight: 600; }
+    .trend-label { font-size: 9px; color: #9ca3af; white-space: nowrap; line-height: 1; margin-top: 4px; }
+    .trend-val { font-size: 10px; color: #6b7280; font-weight: 600; line-height: 1; }
     .supcat-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
     .supcat-row:last-child { border-bottom: none; }
     .supcat-head { display: flex; justify-content: space-between; font-weight: 700; color: #374151; font-size: 14px; margin-bottom: 4px; }
@@ -920,13 +920,19 @@
       if (!trend || !trend.values || !trend.values.length) { el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูล</div>'; return; }
       var max = Math.max.apply(null, trend.values);
       if (max < 1) max = 1;
+      var n = trend.values.length;
       el.innerHTML = trend.values.map(function (v, i) {
-        var h = Math.round((v / max) * 70);
+        var h = Math.round((v / max) * 80);
         var cls = v === 0 ? 'trend-bar zero' : 'trend-bar';
+        // แสดง label แค่ทุก 3 column (กันแน่น) — column สุดท้ายแสดงเสมอ
+        var showLabel = (i === n - 1) || (i % 3 === 0);
+        // แสดงเลขเฉพาะตอนค่า > 0 (ลดความรกตอน 0)
+        var valStr = v > 0 ? v : '';
+        var labelStr = showLabel ? esc(trend.labels[i] || '') : '';
         return '<div class="trend-col">' +
-          '<div class="trend-val">' + (v || '') + '</div>' +
+          '<div class="trend-val">' + valStr + '</div>' +
           '<div class="' + cls + '" style="height:' + Math.max(h, 2) + 'px"></div>' +
-          '<div class="trend-label">' + esc(trend.labels[i] || '') + '</div></div>';
+          '<div class="trend-label">' + labelStr + '</div></div>';
       }).join('');
     }
 
