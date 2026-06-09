@@ -80,12 +80,16 @@
     .delta.up { color: #dc2626; }
     .delta.down { color: #16a34a; }
     .delta.flat { color: #9ca3af; }
-    .trend-wrap { display: flex; align-items: flex-end; gap: 3px; height: 140px; padding: 4px 0 24px; width: 100%; overflow: hidden; }
+    .trend-wrap { display: flex; align-items: flex-end; gap: 2px; height: 140px; padding: 4px 0 22px; width: 100%; overflow: hidden; }
     .trend-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 2px; position: relative; }
-    .trend-bar { width: 100%; background: linear-gradient(180deg, #dc2626, #ea580c); border-radius: 3px 3px 0 0; min-height: 2px; }
-    .trend-bar.zero { background: #e5e7eb; }
+    .trend-bar { width: 100%; background: linear-gradient(180deg, #dc2626, #ea580c); border-radius: 2px 2px 0 0; min-height: 2px; }
+    .trend-bar.zero { background: #e5e7eb; min-height: 3px; }
+    .trend-bar.future { background: transparent; min-height: 0; }
+    .trend-bar.today { box-shadow: 0 0 0 2px rgba(220,38,38,0.25); }
+    .trend-col.future .trend-label { color: #d1d5db; }
     .trend-label { font-size: 10px; color: #9ca3af; white-space: nowrap; line-height: 1; margin-top: 4px; text-align: center; }
-    .trend-val { font-size: 11px; color: #6b7280; font-weight: 700; line-height: 1; text-align: center; min-height: 12px; }
+    .trend-val { font-size: 10px; color: #6b7280; font-weight: 700; line-height: 1; text-align: center; min-height: 12px; }
+    .trend-month { font-size: 12px; color: #6b7280; margin-top: -6px; margin-bottom: 8px; }
     .supcat-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
     .supcat-row:last-child { border-bottom: none; }
     .supcat-head { display: flex; justify-content: space-between; font-weight: 700; color: #374151; font-size: 14px; margin-bottom: 4px; }
@@ -344,7 +348,8 @@
           <div class="kpi"><div class="v" id="kpiPrev">0</div><div class="l">ช่วงก่อนหน้า</div></div>
         </div>
         <div class="card">
-          <div class="dash-title">📈 แนวโน้ม 14 วันล่าสุด</div>
+          <div class="dash-title">📈 แนวโน้มประจำเดือน</div>
+          <div class="trend-month" id="trendMonth"></div>
           <div id="trendChart" class="trend-wrap"></div>
         </div>
         <div class="card">
@@ -922,19 +927,35 @@
 
     function renderTrend(trend) {
       var el = document.getElementById('trendChart');
-      if (!trend || !trend.values || !trend.values.length) { el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูล</div>'; return; }
+      var monthEl = document.getElementById('trendMonth');
+      if (!trend || !trend.values || !trend.values.length) {
+        el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูล</div>';
+        if (monthEl) monthEl.textContent = '';
+        return;
+      }
+      if (monthEl) monthEl.textContent = trend.monthLabel || '';
+
       var max = Math.max.apply(null, trend.values);
       if (max < 1) max = 1;
-      // แสดง label 5 จุดกระจายเท่ากัน (0, 3, 7, 10, 13) — กันทับ
-      var labelIdx = { 0: 1, 3: 1, 7: 1, 10: 1, 13: 1 };
+      var n = trend.values.length;
+      var todayIdx = (typeof trend.todayIdx === 'number') ? trend.todayIdx : (n - 1);
+      // label: วันที่ 1, 5, 10, 15, 20, 25, สุดท้าย
+      var labelSet = { 0: 1, 4: 1, 9: 1, 14: 1, 19: 1, 24: 1 };
+      labelSet[n - 1] = 1;
       el.innerHTML = trend.values.map(function (v, i) {
-        var h = Math.round((v / max) * 90);
-        var cls = v === 0 ? 'trend-bar zero' : 'trend-bar';
-        var valStr = v > 0 ? v : '';
-        var labelStr = labelIdx[i] ? esc(trend.labels[i] || '') : '';
-        return '<div class="trend-col">' +
+        var isFuture = i > todayIdx;
+        var isToday = i === todayIdx;
+        var h = isFuture ? 0 : Math.round((v / max) * 90);
+        var barCls = 'trend-bar';
+        if (isFuture) barCls += ' future';
+        else if (v === 0) barCls += ' zero';
+        if (isToday && v > 0) barCls += ' today';
+        var colCls = 'trend-col' + (isFuture ? ' future' : '');
+        var valStr = (!isFuture && v > 0) ? v : '';
+        var labelStr = labelSet[i] ? esc(trend.labels[i] || '') : '';
+        return '<div class="' + colCls + '">' +
           '<div class="trend-val">' + valStr + '</div>' +
-          '<div class="' + cls + '" style="height:' + Math.max(h, 2) + 'px"></div>' +
+          '<div class="' + barCls + '" style="height:' + (isFuture ? 0 : Math.max(h, 2)) + 'px"></div>' +
           '<div class="trend-label">' + labelStr + '</div></div>';
       }).join('');
     }
