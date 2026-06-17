@@ -100,8 +100,8 @@
     .combo-row { padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 13px; color: #374151; }
     .combo-row:last-child { border-bottom: none; }
     .combo-row .c { color: #dc2626; font-weight: 700; }
-    .unknown-note { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; font-size: 13px; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; }
-    .unknown-note b { color: #b45309; }
+    .unknown-note { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 13px; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; }
+    .unknown-note b { color: #1d4ed8; }
     .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
     .header .sub { font-size: 13px; opacity: 0.9; margin-top: 4px; }
     .card {
@@ -1001,7 +1001,7 @@
       if (unk) {
         if (p.unknownSuppliers && p.unknownSuppliers > 0) {
           unk.style.display = '';
-          unk.innerHTML = '⚠️ มี <b>' + p.unknownSuppliers + ' รายงาน</b> ที่ระบุซัพพรายเออร์เป็น "ไม่ทราบ/ไม่ระบุ" — กระตุ้นให้ผู้รายงานระบุชื่อจริงเพื่อ track ได้';
+          unk.innerHTML = 'ℹ️ มี <b>' + p.unknownSuppliers + ' รายงาน</b> จากวัตถุดิบที่รวมจากหลายแหล่ง (ระบุซัพพรายเออร์ไม่ได้)';
         } else {
           unk.style.display = 'none';
         }
