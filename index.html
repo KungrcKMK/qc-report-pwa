@@ -46,13 +46,57 @@
     .qr-steps b { color: #dc2626; }
     .qr-msg { margin-top: 10px; font-size: 13px; color: #065f46; min-height: 18px; }
 
-    .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
     .tab {
-      flex: 1; padding: 10px 4px; border: none; border-radius: 10px;
-      background: #fff; color: #6b7280; font-size: 13px; font-weight: 600;
+      flex: 1; padding: 9px 2px; border: none; border-radius: 10px;
+      background: #fff; color: #6b7280; font-size: 12px; font-weight: 600;
       font-family: inherit; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      white-space: nowrap;
     }
     .tab.active { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; }
+    .install-banner { display: none; background: #dbeafe; color: #1e3a8a; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 13px; align-items: center; gap: 8px; }
+    .install-banner.show { display: flex; }
+    .install-banner b { flex: 1; }
+    .install-banner button { background: #1e40af; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-weight: 700; cursor: pointer; }
+    .install-banner .close { background: transparent; color: #1e3a8a; padding: 2px 6px; font-size: 18px; }
+    /* History page */
+    .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .filter-row select, .filter-row input { padding: 8px; font-size: 13px; }
+    .hist-search { width: 100%; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .hist-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+    .hist-row:last-child { border-bottom: none; }
+    .hist-row:active { background: #fef2f2; }
+    .hist-meta { font-size: 11px; color: #9ca3af; display: flex; justify-content: space-between; }
+    .hist-cat { font-size: 14px; font-weight: 700; color: #dc2626; margin-top: 2px; }
+    .hist-sub { font-size: 13px; color: #374151; margin-top: 2px; }
+    .hist-empty { text-align: center; color: #9ca3af; padding: 30px 0; }
+    .hist-count { font-size: 12px; color: #6b7280; margin: 6px 0 8px; }
+    .pagi { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+    .pagi button { flex: 1; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; font-family: inherit; font-weight: 600; cursor: pointer; }
+    .pagi button:disabled { opacity: 0.4; cursor: not-allowed; }
+    /* Modal */
+    .modal-back { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
+    .modal-back.show { display: flex; }
+    .modal { background: #fff; border-radius: 12px; padding: 18px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { margin: 0 0 12px; font-size: 17px; color: #dc2626; }
+    .modal .field { margin-bottom: 10px; }
+    .modal label { font-size: 13px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .modal-actions button { flex: 1; padding: 11px; border: none; border-radius: 8px; font-family: inherit; font-weight: 700; cursor: pointer; }
+    .btn-save { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; }
+    .btn-cancel { background: #f3f4f6; color: #374151; }
+    .btn-delete { background: #fee2e2; color: #991b1b; }
+    /* category trend (multi-series) */
+    .cat-series-wrap { margin-top: 8px; }
+    .cat-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; font-size: 11px; }
+    .cat-legend-item { display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: #f3f4f6; }
+    .cat-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .cat-series-bars { display: flex; align-items: flex-end; gap: 1px; height: 90px; padding: 4px 0 4px; overflow: hidden; }
+    .cat-series-bars .cs-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; height: 100%; }
+    .cs-seg { width: 100%; }
+    /* offline queue */
+    .queue-badge { display: none; background: #fef3c7; color: #92400e; padding: 8px 10px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
+    .queue-badge.show { display: block; }
     .period-sel { display: flex; gap: 6px; margin-bottom: 14px; }
     .period-sel button { flex: 1; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; font-family: inherit; font-size: 13px; font-weight: 600; color: #6b7280; cursor: pointer; }
     .period-sel button.active { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
@@ -258,8 +302,17 @@
     <div class="tabs">
       <button type="button" class="tab active" data-page="form">📝 รายงาน</button>
       <button type="button" class="tab" data-page="dash">📊 สรุป</button>
+      <button type="button" class="tab" data-page="history">📜 ประวัติ</button>
       <button type="button" class="tab" data-page="qr">📲 แชร์</button>
     </div>
+
+    <div id="installBanner" class="install-banner">
+      <b>📲 ติดตั้ง QCControl เป็นแอป</b>
+      <button id="installBtn">ติดตั้ง</button>
+      <button id="installClose" class="close">✕</button>
+    </div>
+
+    <div id="queueBadge" class="queue-badge"></div>
 
     <div id="formPage">
     <div id="alert" class="alert"></div>
@@ -356,6 +409,13 @@
           <div id="trendChart" class="trend-wrap"></div>
         </div>
         <div class="card">
+          <div class="dash-title">🔍 แนวโน้มแยกตามหมวด (top 4)</div>
+          <div class="cat-series-wrap">
+            <div id="catLegend" class="cat-legend"></div>
+            <div id="catSeriesChart" class="cat-series-bars"></div>
+          </div>
+        </div>
+        <div class="card">
           <div class="dash-title">🏭 ซัพพรายเออร์ที่ต้องเฝ้าระวัง</div>
           <div id="unknownSupNote" class="unknown-note" style="display:none"></div>
           <div id="scoreboard"></div>
@@ -389,6 +449,81 @@
           <div id="recentList"></div>
         </div>
         <button type="button" class="btn-share" id="dashRefreshBtn">🔄 รีเฟรชข้อมูล</button>
+      </div>
+    </div>
+
+    <div id="historyPage" style="display:none">
+      <div class="card">
+        <div class="dash-title">📜 ค้นหา/กรองรายงาน</div>
+        <div class="field">
+          <input type="text" id="hQ" class="hist-search" placeholder="🔎 ค้นหาคำใดก็ได้ (ผลิตภัณฑ์/หมวด/หมายเหตุ)">
+        </div>
+        <div class="filter-row">
+          <select id="hSup"><option value="">ซัพพรายเออร์ทุกราย</option></select>
+          <select id="hProd"><option value="">ผลิตภัณฑ์ทั้งหมด</option></select>
+        </div>
+        <div class="filter-row">
+          <select id="hCat"><option value="">หมวดทั้งหมด</option></select>
+          <select id="hRep"><option value="">ผู้พบทั้งหมด</option></select>
+        </div>
+        <div class="filter-row">
+          <input type="date" id="hFrom">
+          <input type="date" id="hTo">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button type="button" class="btn-cancel" id="hReset" style="flex:1; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; background:#f3f4f6; color:#374151;">ล้างตัวกรอง</button>
+          <button type="button" class="btn-save" id="hSearch" style="flex:2; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:700; cursor:pointer; background:linear-gradient(135deg,#dc2626,#ea580c); color:#fff;">🔍 ค้นหา</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hist-count" id="hCount"></div>
+        <div id="hList"></div>
+        <div class="pagi" id="hPagi"></div>
+      </div>
+    </div>
+
+    <div id="modalBack" class="modal-back">
+      <div class="modal">
+        <h3 id="modalTitle">✏️ แก้ไขรายงาน</h3>
+        <div class="field">
+          <label>👤 ผู้พบ</label>
+          <input type="text" id="mReporter">
+        </div>
+        <div class="field">
+          <label>🍯 ผลิตภัณฑ์/วัตถุดิบ</label>
+          <input type="text" id="mProduct">
+        </div>
+        <div class="field">
+          <label>🔍 สิ่งแปลกปลอม (คั่นด้วย ,)</label>
+          <input type="text" id="mCategories">
+        </div>
+        <div class="field">
+          <label>⚙️ กระบวนการ</label>
+          <input type="text" id="mStage">
+        </div>
+        <div class="field">
+          <label>🏭 ซัพพรายเออร์</label>
+          <input type="text" id="mSupplier">
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label>📏 จำนวน</label>
+            <input type="text" id="mQuantity">
+          </div>
+          <div class="field">
+            <label>หน่วย</label>
+            <input type="text" id="mUnit">
+          </div>
+        </div>
+        <div class="field">
+          <label>📝 หมายเหตุ</label>
+          <textarea id="mNote" style="min-height:60px;"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-delete" id="mDelete">🗑 ลบ</button>
+          <button type="button" class="btn-cancel" id="mCancel">ยกเลิก</button>
+          <button type="button" class="btn-save" id="mSave">💾 บันทึก</button>
+        </div>
       </div>
     </div>
 
@@ -834,7 +969,7 @@
 
     // ----- tab navigation (รายงาน / สรุป / แชร์) -----
     function switchPage(page) {
-      var map = { form: 'formPage', dash: 'dashPage', qr: 'qrPage' };
+      var map = { form: 'formPage', dash: 'dashPage', history: 'historyPage', qr: 'qrPage' };
       Object.keys(map).forEach(function (k) {
         document.getElementById(map[k]).style.display = (k === page) ? '' : 'none';
       });
@@ -843,6 +978,7 @@
         tabs[i].classList.toggle('active', tabs[i].getAttribute('data-page') === page);
       }
       if (page === 'dash') loadDashboard(false);
+      if (page === 'history') { initHistoryFilters(); runHistorySearch(); }
       if (page === 'qr') {
         document.getElementById('qrMsg').textContent = '';
         renderQr();
@@ -882,13 +1018,14 @@
         .getDashboard();
     }
 
-    function renderBars(id, items, emptyMsg) {
+    function renderBars(id, items, emptyMsg, drillKind) {
       var el = document.getElementById(id);
       if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">' + emptyMsg + '</div>'; return; }
       var max = items[0].count || 1;
       el.innerHTML = items.map(function (it) {
         var pct = Math.max(6, Math.round((it.count / max) * 100));
-        return '<div class="bar-row"><div class="bar-label"><span>' + esc(it.name) + '</span><span>' + it.count + '</span></div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div></div>';
+        var attrs = drillKind ? ' data-drill="' + drillKind + '" data-val="' + esc(it.name) + '" style="cursor:pointer"' : '';
+        return '<div class="bar-row"' + attrs + '><div class="bar-label"><span>' + esc(it.name) + '</span><span>' + it.count + '</span></div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div></div>';
       }).join('');
     }
 
@@ -898,7 +1035,7 @@
       var medals = ['🥇', '🥈', '🥉'];
       el.innerHTML = items.map(function (it, i) {
         var rank = i < 3 ? medals[i] : (i + 1) + '.';
-        return '<div class="score-row"><div class="score-rank">' + rank + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' ครั้ง</div></div>';
+        return '<div class="score-row" style="cursor:pointer" data-drill="supplier" data-val="' + esc(it.name) + '"><div class="score-rank">' + rank + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' ครั้ง ›</div></div>';
       }).join('');
     }
 
@@ -1008,9 +1145,10 @@
       }
       renderScoreboard(p.suppliers);
       renderSupCat(p.supplierByCategory);
+      renderCatTrend(dashData.trend);
       renderCombos(p.combos);
-      renderBars('catBars', p.categories, 'ไม่มีข้อมูล');
-      renderBars('prodBars', p.products, 'ไม่มีข้อมูล');
+      renderBars('catBars', p.categories, 'ไม่มีข้อมูล', 'category');
+      renderBars('prodBars', p.products, 'ไม่มีข้อมูล', 'product');
       renderBars('stageBars', p.stages, 'ไม่มีข้อมูล');
       renderReporters(p.reporters);
       renderRecent(dashData.recent);
@@ -1109,6 +1247,378 @@
   </script>
 
   <script>
+    // ===== Category trend (multi-series) =====
+    var CAT_COLORS = ['#dc2626', '#ea580c', '#0891b2', '#7c3aed'];
+    function renderCatTrend(trend) {
+      var legendEl = document.getElementById('catLegend');
+      var chartEl = document.getElementById('catSeriesChart');
+      if (!trend || !trend.series || !trend.series.length) {
+        legendEl.innerHTML = '';
+        chartEl.innerHTML = '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+        return;
+      }
+      legendEl.innerHTML = trend.series.map(function (s, i) {
+        return '<div class="cat-legend-item"><div class="cat-legend-dot" style="background:' + CAT_COLORS[i] + '"></div>' + esc(s.name) + ' (' + s.total + ')</div>';
+      }).join('');
+      var days = trend.days || (trend.series[0].values || []).length;
+      var todayIdx = (typeof trend.todayIdx === 'number') ? trend.todayIdx : days - 1;
+      // หา max ของ stacked column
+      var maxStack = 1;
+      for (var d = 0; d < days; d++) {
+        var s = 0;
+        for (var i = 0; i < trend.series.length; i++) s += (trend.series[i].values[d] || 0);
+        if (s > maxStack) maxStack = s;
+      }
+      var html = '';
+      for (var d = 0; d < days; d++) {
+        var isFuture = d > todayIdx;
+        var colTotal = 0;
+        var segs = '';
+        for (var i = 0; i < trend.series.length; i++) {
+          var v = trend.series[i].values[d] || 0;
+          colTotal += v;
+          if (!isFuture && v > 0) {
+            var h = Math.max(2, Math.round((v / maxStack) * 80));
+            segs = '<div class="cs-seg" style="height:' + h + 'px; background:' + CAT_COLORS[i] + '"></div>' + segs;
+          }
+        }
+        html += '<div class="cs-col">' + segs + '</div>';
+      }
+      chartEl.innerHTML = html;
+    }
+
+    // ===== Drill-down: dashboard items → history =====
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-drill]');
+      if (!t) return;
+      var kind = t.getAttribute('data-drill');
+      var val = t.getAttribute('data-val');
+      historyDrillFilter = { kind: kind, val: val };
+      switchPage('history');
+    });
+
+    // ===== History page =====
+    var historyOffset = 0;
+    var historyLimit = 25;
+    var historyTotal = 0;
+    var historyFiltersInited = false;
+    var historyDrillFilter = null; // {kind, val}
+
+    function initHistoryFilters() {
+      if (historyFiltersInited) {
+        // ถ้ามี drill-down → ตั้งค่า filter
+        if (historyDrillFilter) {
+          applyDrill();
+        }
+        return;
+      }
+      // ใส่ค่าจาก dropdown options
+      var opts = window.__cachedOptions || {};
+      function fill(id, items) {
+        var sel = document.getElementById(id);
+        (items || []).forEach(function (it) {
+          var o = document.createElement('option');
+          o.value = it; o.textContent = it; sel.appendChild(o);
+        });
+      }
+      fill('hSup', opts.suppliers);
+      fill('hProd', opts.products);
+      fill('hCat', opts.categories);
+      fill('hRep', opts.workers);
+      historyFiltersInited = true;
+      // default 30 วันล่าสุด
+      var today = new Date();
+      var monthAgo = new Date(today.getTime() - 30 * 86400000);
+      document.getElementById('hFrom').value = fmtDateISO(monthAgo);
+      document.getElementById('hTo').value = fmtDateISO(today);
+      applyDrill();
+    }
+
+    function applyDrill() {
+      if (!historyDrillFilter) return;
+      var d = historyDrillFilter;
+      document.getElementById('hSup').value = '';
+      document.getElementById('hProd').value = '';
+      document.getElementById('hCat').value = '';
+      document.getElementById('hRep').value = '';
+      if (d.kind === 'supplier') document.getElementById('hSup').value = d.val;
+      else if (d.kind === 'product') document.getElementById('hProd').value = d.val;
+      else if (d.kind === 'category') document.getElementById('hCat').value = d.val;
+      historyDrillFilter = null;
+    }
+
+    function fmtDateISO(d) {
+      function p(n) { return (n < 10 ? '0' : '') + n; }
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+
+    function runHistorySearch(reset) {
+      if (reset !== false) historyOffset = 0;
+      var listEl = document.getElementById('hList');
+      var countEl = document.getElementById('hCount');
+      var pagiEl = document.getElementById('hPagi');
+      listEl.innerHTML = '<div class="dash-empty">⏳ กำลังค้นหา...</div>';
+      countEl.textContent = ''; pagiEl.innerHTML = '';
+      var params = {
+        from: document.getElementById('hFrom').value,
+        to: document.getElementById('hTo').value,
+        supplier: document.getElementById('hSup').value,
+        product: document.getElementById('hProd').value,
+        category: document.getElementById('hCat').value,
+        reporter: document.getElementById('hRep').value,
+        q: document.getElementById('hQ').value.trim(),
+        offset: historyOffset, limit: historyLimit
+      };
+      google.script.run
+        .withSuccessHandler(function (res) {
+          if (!res || !res.ok) { listEl.innerHTML = '<div class="hist-empty">❌ ' + esc((res && res.message) || 'ผิดพลาด') + '</div>'; return; }
+          historyTotal = res.total;
+          countEl.textContent = 'พบ ' + res.total + ' รายการ' + (res.total > historyLimit ? ' (แสดง ' + (res.offset + 1) + '-' + Math.min(res.offset + res.rows.length, res.total) + ')' : '');
+          if (!res.rows.length) { listEl.innerHTML = '<div class="hist-empty">ไม่พบรายการ</div>'; return; }
+          listEl.innerHTML = res.rows.map(function (r) {
+            var sup = r.supplier ? ' · 🏭 ' + esc(r.supplier) : '';
+            return '<div class="hist-row" data-row="' + r.rowIndex + '">' +
+              '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
+              '<div class="hist-cat">🔍 ' + esc(r.categories || '-') + '</div>' +
+              '<div class="hist-sub">🍯 ' + esc(r.product || '-') + sup + ' · 👤 ' + esc(r.reporter || '-') + '</div>' +
+              (r.note ? '<div class="hist-sub" style="color:#6b7280">📝 ' + esc(r.note) + '</div>' : '') +
+              '</div>';
+          }).join('');
+          // pagination
+          var pages = Math.ceil(res.total / historyLimit);
+          if (pages > 1) {
+            var curPage = Math.floor(res.offset / historyLimit) + 1;
+            pagiEl.innerHTML =
+              '<button id="hPrev" ' + (curPage <= 1 ? 'disabled' : '') + '>← ก่อนหน้า</button>' +
+              '<button disabled style="flex:0 0 auto; padding:9px 16px">' + curPage + '/' + pages + '</button>' +
+              '<button id="hNext" ' + (curPage >= pages ? 'disabled' : '') + '>ถัดไป →</button>';
+            var hP = document.getElementById('hPrev'); if (hP) hP.onclick = function () { historyOffset = Math.max(0, historyOffset - historyLimit); runHistorySearch(false); };
+            var hN = document.getElementById('hNext'); if (hN) hN.onclick = function () { historyOffset += historyLimit; runHistorySearch(false); };
+          }
+          // bind row click → modal
+          listEl.querySelectorAll('.hist-row').forEach(function (el) {
+            el.addEventListener('click', function () { openEditModal(res.rows.find(function (x) { return x.rowIndex == el.getAttribute('data-row'); })); });
+          });
+        })
+        .withFailureHandler(function (err) { listEl.innerHTML = '<div class="hist-empty">❌ ' + esc(err) + '</div>'; })
+        .searchReports(params);
+    }
+
+    document.getElementById('hSearch').addEventListener('click', function () { runHistorySearch(true); });
+    document.getElementById('hReset').addEventListener('click', function () {
+      document.getElementById('hSup').value = '';
+      document.getElementById('hProd').value = '';
+      document.getElementById('hCat').value = '';
+      document.getElementById('hRep').value = '';
+      document.getElementById('hQ').value = '';
+      var today = new Date();
+      var monthAgo = new Date(today.getTime() - 30 * 86400000);
+      document.getElementById('hFrom').value = fmtDateISO(monthAgo);
+      document.getElementById('hTo').value = fmtDateISO(today);
+      runHistorySearch(true);
+    });
+    document.getElementById('hQ').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); runHistorySearch(true); }
+    });
+
+    // ===== Edit/Delete modal =====
+    var editingRow = null;
+    function openEditModal(rec) {
+      if (!rec) return;
+      editingRow = rec.rowIndex;
+      document.getElementById('mReporter').value = rec.reporter || '';
+      document.getElementById('mProduct').value = rec.product || '';
+      document.getElementById('mCategories').value = rec.categories || '';
+      document.getElementById('mStage').value = rec.stage || '';
+      document.getElementById('mSupplier').value = rec.supplier || '';
+      document.getElementById('mQuantity').value = rec.quantity || '';
+      document.getElementById('mUnit').value = rec.unit || '';
+      document.getElementById('mNote').value = rec.note || '';
+      document.getElementById('modalBack').classList.add('show');
+    }
+    function closeModal() {
+      document.getElementById('modalBack').classList.remove('show');
+      editingRow = null;
+    }
+    document.getElementById('mCancel').addEventListener('click', closeModal);
+    document.getElementById('modalBack').addEventListener('click', function (e) {
+      if (e.target.id === 'modalBack') closeModal();
+    });
+    document.getElementById('mSave').addEventListener('click', function () {
+      if (!editingRow) return;
+      var btn = this; btn.disabled = true; btn.textContent = '⏳';
+      var patch = {
+        reporter: document.getElementById('mReporter').value.trim(),
+        product: document.getElementById('mProduct').value.trim(),
+        categories: document.getElementById('mCategories').value,
+        stage: document.getElementById('mStage').value.trim(),
+        supplier: document.getElementById('mSupplier').value.trim(),
+        quantity: document.getElementById('mQuantity').value.trim(),
+        unit: document.getElementById('mUnit').value.trim(),
+        note: document.getElementById('mNote').value.trim()
+      };
+      google.script.run
+        .withSuccessHandler(function (res) {
+          btn.disabled = false; btn.textContent = '💾 บันทึก';
+          if (res && res.ok) { closeModal(); runHistorySearch(false); dashData = null; }
+          else alert('แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
+        })
+        .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '💾 บันทึก'; alert('ผิดพลาด: ' + err); })
+        .updateReport({ rowIndex: editingRow, patch: patch });
+    });
+    document.getElementById('mDelete').addEventListener('click', function () {
+      if (!editingRow) return;
+      if (!confirm('ยืนยันลบรายงาน row ' + editingRow + '?')) return;
+      var btn = this; btn.disabled = true; btn.textContent = '⏳';
+      google.script.run
+        .withSuccessHandler(function (res) {
+          btn.disabled = false; btn.textContent = '🗑 ลบ';
+          if (res && res.ok) { closeModal(); runHistorySearch(false); dashData = null; }
+          else alert('ลบไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
+        })
+        .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '🗑 ลบ'; alert('ผิดพลาด: ' + err); })
+        .deleteReport({ rowIndex: editingRow });
+    });
+
+    // เก็บ options ไว้ใช้ใน history filters
+    var _origOnOptionsLoaded = onOptionsLoaded;
+    onOptionsLoaded = function (opts) { window.__cachedOptions = opts; _origOnOptionsLoaded(opts); };
+
+    // ===== PWA install prompt =====
+    var deferredPrompt = null;
+    var installBanner = document.getElementById('installBanner');
+    var installBtn = document.getElementById('installBtn');
+    var installClose = document.getElementById('installClose');
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!localStorage.getItem('installDismissed')) installBanner.classList.add('show');
+    });
+    installBtn.addEventListener('click', function () {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function () {
+        deferredPrompt = null; installBanner.classList.remove('show');
+      });
+    });
+    installClose.addEventListener('click', function () {
+      installBanner.classList.remove('show');
+      localStorage.setItem('installDismissed', '1');
+    });
+    window.addEventListener('appinstalled', function () { installBanner.classList.remove('show'); });
+
+    // ===== Offline queue (IndexedDB) =====
+    var DB_NAME = 'qc-queue';
+    var DB_STORE = 'queue';
+    var queueBadge = document.getElementById('queueBadge');
+
+    function openQueueDB() {
+      return new Promise(function (resolve, reject) {
+        var req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = function () { req.result.createObjectStore(DB_STORE, { keyPath: 'id', autoIncrement: true }); };
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error); };
+      });
+    }
+    function queueAdd(data) {
+      return openQueueDB().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          var tx = db.transaction(DB_STORE, 'readwrite');
+          tx.objectStore(DB_STORE).add({ data: data, ts: new Date().toISOString() });
+          tx.oncomplete = function () { resolve(); };
+          tx.onerror = function () { reject(tx.error); };
+        });
+      });
+    }
+    function queueGetAll() {
+      return openQueueDB().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          var items = [];
+          var tx = db.transaction(DB_STORE, 'readonly');
+          var cur = tx.objectStore(DB_STORE).openCursor();
+          cur.onsuccess = function (e) {
+            var c = e.target.result;
+            if (c) { items.push(c.value); c.continue(); }
+            else resolve(items);
+          };
+          cur.onerror = function () { reject(cur.error); };
+        });
+      });
+    }
+    function queueDelete(id) {
+      return openQueueDB().then(function (db) {
+        return new Promise(function (resolve) {
+          var tx = db.transaction(DB_STORE, 'readwrite');
+          tx.objectStore(DB_STORE).delete(id);
+          tx.oncomplete = function () { resolve(); };
+        });
+      });
+    }
+    function updateQueueBadge() {
+      queueGetAll().then(function (items) {
+        if (items.length > 0) {
+          queueBadge.classList.add('show');
+          queueBadge.textContent = '📤 มีรายงาน ' + items.length + ' รายการ รออยู่ในคิว (offline) — จะส่งให้อัตโนมัติเมื่อเน็ตกลับมา';
+        } else {
+          queueBadge.classList.remove('show');
+        }
+      });
+    }
+    function flushQueue() {
+      if (!navigator.onLine) return;
+      queueGetAll().then(function (items) {
+        if (!items.length) return;
+        items.forEach(function (item) {
+          google.script.run
+            .withSuccessHandler(function (res) { if (res && res.ok) { queueDelete(item.id).then(updateQueueBadge); } })
+            .withFailureHandler(function () {})
+            .saveReport(item.data);
+        });
+      });
+    }
+    window.addEventListener('online', flushQueue);
+    window.addEventListener('load', function () { updateQueueBadge(); flushQueue(); });
+
+    // wrap saveReport: ถ้า offline → queue + แจ้งผู้ใช้ว่าเก็บไว้แล้ว
+    (function () {
+      var origGetter = Object.getOwnPropertyDescriptor(window.google.script, 'run');
+      Object.defineProperty(window.google.script, 'run', {
+        configurable: true,
+        get: function () {
+          var realApi = origGetter.get.call(this);
+          var success = null, failure = null;
+          var api = {
+            withSuccessHandler: function (cb) { success = cb; return api; },
+            withFailureHandler: function (cb) { failure = cb; return api; }
+          };
+          ['getOptions', 'getDashboard', 'searchReports', 'updateReport', 'deleteReport', 'ping'].forEach(function (a) {
+            api[a] = function (arg) {
+              realApi.withSuccessHandler(function (r) { if (success) success(r); })
+                     .withFailureHandler(function (e) { if (failure) failure(e); })[a](arg);
+            };
+          });
+          api.saveReport = function (arg) {
+            if (!navigator.onLine) {
+              queueAdd(arg).then(function () {
+                updateQueueBadge();
+                if (success) success({ ok: true, message: 'เก็บไว้ในคิว (offline)', rowIndex: 0, added: [], newFields: {} });
+              });
+              return;
+            }
+            realApi.withSuccessHandler(function (r) { if (success) success(r); })
+                   .withFailureHandler(function (e) {
+                     // ส่งไม่ได้ → เก็บใส่คิวด้วย
+                     queueAdd(arg).then(function () {
+                       updateQueueBadge();
+                       if (success) success({ ok: true, message: 'ส่งไม่ได้ - เก็บไว้ในคิวแทน', rowIndex: 0, added: [], newFields: {} });
+                     });
+                   }).saveReport(arg);
+          };
+          return api;
+        }
+      });
+    })();
+
     // ===== PWA: register service worker (offline shell) =====
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {

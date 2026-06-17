@@ -1,7 +1,7 @@
 /* Service Worker - QCControl
    navigation/HTML = network-first (อัปเดตทันทีเมื่อมีเน็ต, ใช้ cache เมื่อ offline)
    static อื่นๆ = cache-first */
-var CACHE = 'qc-shell-v2';
+var CACHE = 'qc-shell-v3';
 var SHELL = [
   './',
   './index.html',
