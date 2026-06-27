@@ -97,6 +97,21 @@
     /* offline queue */
     .queue-badge { display: none; background: #fef3c7; color: #92400e; padding: 8px 10px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
     .queue-badge.show { display: block; }
+    /* exec actions */
+    .exec-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .exec-btn { padding: 11px 6px; border: 1.5px solid #e5e7eb; border-radius: 10px; background: #fff; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .exec-btn:active { background: #f9fafb; }
+    .exec-btn.primary { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; border-color: transparent; }
+    /* print */
+    @media print {
+      body { background: #fff; }
+      .tabs, .install-banner, .queue-badge, .exec-actions, #formPage, #historyPage, #qrPage, .period-sel, #dashRefreshBtn { display: none !important; }
+      .header { background: #fff !important; color: #000 !important; border-radius: 0; box-shadow: none; }
+      .header h1, .header .sub { color: #000 !important; }
+      .card { box-shadow: none !important; border: 1px solid #e5e7eb; page-break-inside: avoid; }
+      #dashPage { display: block !important; }
+      .container { max-width: 100% !important; padding: 0 !important; }
+    }
     .period-sel { display: flex; gap: 6px; margin-bottom: 14px; }
     .period-sel button { flex: 1; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; font-family: inherit; font-size: 13px; font-weight: 600; color: #6b7280; cursor: pointer; }
     .period-sel button.active { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
@@ -393,6 +408,11 @@
     <div id="dashPage" style="display:none">
       <div id="dashLoading" class="loading show"><div class="spinner"></div>กำลังโหลดสรุป...</div>
       <div id="dashContent" style="display:none">
+        <div class="exec-actions">
+          <button type="button" class="exec-btn primary" id="execShareBtn">📋 สรุปผู้บริหาร</button>
+          <button type="button" class="exec-btn" id="execPrintBtn">🖨 พิมพ์</button>
+          <button type="button" class="exec-btn" id="execCsvBtn">📊 ดาวน์โหลด CSV</button>
+        </div>
         <div class="period-sel">
           <button type="button" data-period="day" class="active">วันนี้</button>
           <button type="button" data-period="week">7 วัน</button>
@@ -1618,6 +1638,207 @@
         }
       });
     })();
+
+    // ===== Executive summary card (canvas) =====
+    function execWrapText(ctx, text, maxW) {
+      var lines = [], line = '';
+      var words = text.split(/(\s+)/);
+      for (var i = 0; i < words.length; i++) {
+        var t = line + words[i];
+        if (ctx.measureText(t).width > maxW && line) { lines.push(line.trim()); line = words[i]; }
+        else line = t;
+      }
+      if (line) lines.push(line.trim());
+      return lines;
+    }
+
+    function renderExecCard(cb) {
+      if (!dashData) { cb(null); return; }
+      var p = dashData.periods[currentPeriod];
+      var W = 1000, PAD = 50;
+      var c = document.createElement('canvas'); c.width = W;
+      // ขนาดสูงคำนวณจากเนื้อหา
+      var ctx = c.getContext('2d');
+
+      // คำนวณ rows ของแต่ละ block ก่อน
+      var topSup = (p.suppliers || []).slice(0, 3);
+      var topCat = (p.categories || []).slice(0, 5);
+      var topProd = (p.products || []).slice(0, 5);
+
+      // ประเมินความสูง (header + KPI + suppliers + categories + products + notes + footer)
+      var headerH = 200, kpiH = 200, supH = 70 + topSup.length * 60, catH = 70 + topCat.length * 50, prodH = 70 + topProd.length * 50;
+      var noteH = (p.unknownSuppliers > 0) ? 90 : 0;
+      var footerH = 80;
+      c.height = headerH + 30 + kpiH + 30 + supH + 30 + catH + 30 + prodH + (noteH ? 30 + noteH : 0) + 30 + footerH;
+
+      // background
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, c.height);
+
+      // header
+      var g = ctx.createLinearGradient(0, 0, W, headerH);
+      g.addColorStop(0, '#dc2626'); g.addColorStop(1, '#ea580c');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, headerH);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 56px sans-serif'; ctx.fillText('📊 รายงานสรุป QC', PAD, 80);
+      ctx.font = '34px sans-serif'; ctx.fillText(p.label + ' · ' + (dashData.trend.monthLabel || ''), PAD, 130);
+      ctx.font = '24px sans-serif'; ctx.fillText('QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)', PAD, 170);
+
+      var y = headerH + 30;
+      // KPI block
+      ctx.fillStyle = '#fef2f2';
+      ctx.fillRect(PAD, y, W - PAD * 2, kpiH);
+      ctx.fillStyle = '#dc2626'; ctx.font = 'bold 110px sans-serif';
+      ctx.fillText(String(p.total), PAD + 30, y + 130);
+      ctx.fillStyle = '#374151'; ctx.font = '28px sans-serif';
+      ctx.fillText('รายงานทั้งหมด', PAD + 30, y + 170);
+      // delta + avg
+      ctx.font = 'bold 36px sans-serif';
+      var deltaStr = '';
+      if (p.prevTotal === 0 && p.total === 0) deltaStr = '— ไม่มีข้อมูล';
+      else if (p.prevTotal === 0) deltaStr = '⬆ ใหม่';
+      else {
+        var pct = Math.round(((p.total - p.prevTotal) / p.prevTotal) * 100);
+        if (pct > 0) deltaStr = '⬆ +' + pct + '% จากช่วงก่อน';
+        else if (pct < 0) deltaStr = '⬇ ' + pct + '% จากช่วงก่อน';
+        else deltaStr = '— เท่าเดิม';
+      }
+      ctx.fillStyle = '#1f2937'; ctx.fillText(deltaStr, W / 2, y + 80);
+      ctx.font = '28px sans-serif'; ctx.fillStyle = '#6b7280';
+      ctx.fillText('เฉลี่ย ' + p.avgPerDay + ' / วัน', W / 2, y + 130);
+      ctx.fillText('ช่วงก่อนหน้า ' + p.prevTotal + ' ครั้ง', W / 2, y + 170);
+      y += kpiH + 30;
+
+      // Suppliers
+      ctx.fillStyle = '#1f2937'; ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('🏭 ซัพพรายเออร์ที่ต้องเฝ้าระวัง', PAD, y + 30);
+      var medals = ['🥇', '🥈', '🥉'];
+      var ry = y + 80;
+      topSup.forEach(function (s, i) {
+        ctx.font = 'bold 40px sans-serif'; ctx.fillStyle = '#1f2937';
+        ctx.fillText(medals[i] + '  ' + s.name, PAD + 20, ry + 35);
+        ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right';
+        ctx.fillText(s.count + ' ครั้ง', W - PAD - 20, ry + 35);
+        ctx.textAlign = 'left';
+        ry += 60;
+      });
+      y += supH + 30;
+
+      // Categories
+      ctx.fillStyle = '#1f2937'; ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('🔍 สิ่งแปลกปลอมหลัก', PAD, y + 30);
+      ry = y + 80;
+      topCat.forEach(function (cat) {
+        ctx.font = '32px sans-serif'; ctx.fillStyle = '#374151';
+        ctx.fillText('• ' + cat.name, PAD + 20, ry + 30);
+        ctx.fillStyle = '#dc2626'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(cat.count + ' ครั้ง', W - PAD - 20, ry + 30);
+        ctx.textAlign = 'left';
+        ry += 50;
+      });
+      y += catH + 30;
+
+      // Products
+      ctx.fillStyle = '#1f2937'; ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('🍯 ผลิตภัณฑ์/วัตถุดิบที่เจอปัญหา', PAD, y + 30);
+      ry = y + 80;
+      topProd.forEach(function (prod) {
+        ctx.font = '32px sans-serif'; ctx.fillStyle = '#374151';
+        ctx.fillText('• ' + prod.name, PAD + 20, ry + 30);
+        ctx.fillStyle = '#dc2626'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(prod.count + ' ครั้ง', W - PAD - 20, ry + 30);
+        ctx.textAlign = 'left';
+        ry += 50;
+      });
+      y += prodH + 30;
+
+      // Notes (unknown suppliers info)
+      if (noteH > 0) {
+        ctx.fillStyle = '#eff6ff'; ctx.fillRect(PAD, y, W - PAD * 2, noteH);
+        ctx.fillStyle = '#1e40af'; ctx.font = 'bold 30px sans-serif';
+        ctx.fillText('ℹ️ ข้อสังเกต', PAD + 20, y + 38);
+        ctx.font = '26px sans-serif';
+        ctx.fillText('มี ' + p.unknownSuppliers + ' รายงาน จากวัตถุดิบที่รวมจากหลายแหล่ง (ระบุซัพพรายเออร์ไม่ได้)', PAD + 20, y + 75);
+        y += noteH + 30;
+      }
+
+      // Footer
+      ctx.fillStyle = '#6b7280'; ctx.font = '22px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)', W / 2, c.height - 50);
+      var ts = new Date();
+      function p2(n) { return n < 10 ? '0' + n : n; }
+      var stamp = p2(ts.getDate()) + '/' + p2(ts.getMonth() + 1) + '/' + ts.getFullYear() + ' ' + p2(ts.getHours()) + ':' + p2(ts.getMinutes());
+      ctx.fillText('สร้างเมื่อ ' + stamp, W / 2, c.height - 20);
+      ctx.textAlign = 'left';
+
+      try { cb(c.toDataURL('image/jpeg', 0.9)); } catch (e) { cb(null); }
+    }
+
+    function shareExecCard() {
+      renderExecCard(function (dataUrl) {
+        if (!dataUrl) { alert('สร้างการ์ดไม่สำเร็จ'); return; }
+        if (navigator.canShare) {
+          try {
+            var file = new File([dataURLtoBlob(dataUrl)], 'qc-exec-summary.jpg', { type: 'image/jpeg' });
+            if (navigator.canShare({ files: [file] })) {
+              navigator.share({ files: [file], title: 'รายงานสรุป QC' }).catch(function () {});
+              return;
+            }
+          } catch (e) {}
+        }
+        if (navigator.share) {
+          navigator.share({ title: 'รายงานสรุป QC', text: 'รายงานสรุปประจำเดือน (เปิดภาพในเครื่อง)' }).catch(function () {});
+        }
+        // fallback: ดาวน์โหลดให้
+        var a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'qc-exec-' + (new Date().toISOString().slice(0, 10)) + '.jpg';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      });
+    }
+
+    document.getElementById('execShareBtn').addEventListener('click', shareExecCard);
+    document.getElementById('execPrintBtn').addEventListener('click', function () { window.print(); });
+
+    // ===== CSV export =====
+    function csvEscape(s) {
+      s = String(s == null ? '' : s);
+      if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+    function downloadCSV(filename, headers, rows) {
+      var lines = [headers.map(csvEscape).join(',')];
+      rows.forEach(function (r) { lines.push(r.map(csvEscape).join(',')); });
+      var BOM = '﻿'; // ให้ Excel เปิดภาษาไทยถูก
+      var blob = new Blob([BOM + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+    document.getElementById('execCsvBtn').addEventListener('click', function () {
+      var btn = this; btn.disabled = true; var orig = btn.textContent;
+      btn.textContent = '⏳ กำลังโหลด...';
+      // ดึงข้อมูล 30 วันล่าสุด (หรือทั้งเดือน)
+      var today = new Date();
+      var fromD = new Date(today.getFullYear(), today.getMonth(), 1);
+      google.script.run
+        .withSuccessHandler(function (res) {
+          btn.disabled = false; btn.textContent = orig;
+          if (!res || !res.ok) { alert('โหลดไม่สำเร็จ: ' + ((res && res.message) || '')); return; }
+          var headers = ['Timestamp', 'Reporter', 'Product', 'Categories', 'Stage', 'Supplier', 'Quantity', 'Unit', 'Note'];
+          var rows = res.rows.map(function (r) {
+            return [r.timestamp, r.reporter, r.product, r.categories, r.stage, r.supplier, r.quantity, r.unit, r.note];
+          });
+          var fname = 'qc-report-' + fmtDateISO(fromD) + '-to-' + fmtDateISO(today) + '.csv';
+          downloadCSV(fname, headers, rows);
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false; btn.textContent = orig;
+          alert('ผิดพลาด: ' + err);
+        })
+        .searchReports({ from: fmtDateISO(fromD), to: fmtDateISO(today), limit: 200, offset: 0 });
+    });
 
     // ===== PWA: register service worker (offline shell) =====
     if ('serviceWorker' in navigator) {
