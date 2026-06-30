@@ -934,7 +934,7 @@
       else showAlert('info', '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
     }
 
-    function shareReport() {
+    function shareReport(preRenderedCard) {
       var d = currentFormData();
       var formHasData = d.product || (d.categories && d.categories.length);
       if (!formHasData && lastReport) d = lastReport;
@@ -946,24 +946,26 @@
       var text = buildShareTextFromData(d);
       var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      // iOS: ส่งแค่รูปการ์ด (ข้อความฝังในรูปแล้ว ไม่ต้องซ้ำใน clipboard/text param)
-      // อื่นๆ: copy clipboard เป็น backup เผื่อ LINE ตัด text ทิ้ง
       if (!isIOS) copyText(text);
 
-      renderReportCard(d, function (card) {
+      // ใช้การ์ดที่ render ไว้แล้ว (preRenderedCard) หรือใน lastReport ก่อน — ถ้าไม่มีค่อย render ใหม่
+      var cached = preRenderedCard || (d && d.cardImage);
+      function shareWithCard(card) {
         if (card && navigator.canShare) {
           try {
             var file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
             if (navigator.canShare({ files: [file] })) {
               var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
-              if (!isIOS) payload.text = text; // ไม่แนบ text บน iOS เพราะมันโชว์ซ้ำกับ preview รูป
+              if (!isIOS) payload.text = text;
               navigator.share(payload).catch(function () {});
               return;
             }
-          } catch (e) { /* ตกไป fallback */ }
+          } catch (e) {}
         }
         shareTextFallback(text);
-      });
+      }
+      if (cached) shareWithCard(cached);
+      else renderReportCard(d, shareWithCard);
     }
 
     document.getElementById('shareBtn').addEventListener('click', shareReport);
@@ -1212,8 +1214,19 @@
 
       submitBtn.disabled = true;
       submitBtn.textContent = '⏳ กำลังส่ง...';
-      showAlert('info', data.photo ? 'กำลังบันทึก + อัปโหลดรูป...' : 'กำลังบันทึก...');
+      showAlert('info', data.photo ? 'กำลังสร้างการ์ด + บันทึก...' : 'กำลังบันทึก...');
 
+      // render การ์ดก่อน (รวมข้อความ+รูป) แล้วส่งการ์ดให้ backend (ไม่ส่งรูปต้นฉบับ → ประหยัด Drive)
+      renderReportCard(data, function (cardUrl) {
+        var payload = {};
+        Object.keys(data).forEach(function (k) { payload[k] = data[k]; });
+        payload.photo = null; // ไม่อัปโหลดรูปต้นฉบับ
+        if (cardUrl) payload.cardDataUrl = cardUrl;
+        submitReport(payload, data, cardUrl);
+      });
+    });
+
+    function submitReport(payload, originalData, cardUrl) {
       google.script.run
         .withSuccessHandler(function (res) {
           submitBtn.disabled = false;
@@ -1223,14 +1236,15 @@
             if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
             showAlert('success', msg);
 
-            // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง
+            // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง — เก็บ card ที่ render แล้ว เพื่อแชร์ใหม่ได้ทันที
             lastReport = {
-              reporter: data.reporter, product: data.product, categories: data.categories,
-              stage: data.stage, supplier: data.supplier, quantity: data.quantity, unit: data.unit,
-              note: data.note, photo: data.photo, time: fmtNow()
+              reporter: originalData.reporter, product: originalData.product, categories: originalData.categories,
+              stage: originalData.stage, supplier: originalData.supplier, quantity: originalData.quantity, unit: originalData.unit,
+              note: originalData.note, photo: originalData.photo, time: fmtNow(),
+              cardImage: cardUrl
             };
-            // เด้ง share sheet อัตโนมัติทันทีหลังบันทึกสำเร็จ
-            shareReport();
+            // แชร์การ์ดที่ render ไว้แล้วทันที (ไม่ต้อง render ใหม่)
+            shareReport(cardUrl);
             // โชว์ปุ่ม "แชร์อีกครั้ง" เผื่อ user ยกเลิก share sheet แล้วอยากแชร์ทีหลัง
             document.getElementById('shareBtn').style.display = '';
 
@@ -1263,7 +1277,7 @@
           showAlert('error', '❌ ' + err);
         })
         .saveReport(data);
-    });
+    }
   </script>
 
   <script>
