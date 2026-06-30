@@ -490,6 +490,10 @@
           <input type="date" id="hFrom">
           <input type="date" id="hTo">
         </div>
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#374151; margin-top:6px; cursor:pointer;">
+          <input type="checkbox" id="hMineOnly" style="width:auto; transform:scale(1.2);">
+          <span>👤 เฉพาะของฉัน (<span id="hMineName" style="color:#dc2626; font-weight:600;">-</span>)</span>
+        </label>
         <div style="display:flex; gap:8px; margin-top:6px;">
           <button type="button" class="btn-cancel" id="hReset" style="flex:1; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; background:#f3f4f6; color:#374151;">ล้างตัวกรอง</button>
           <button type="button" class="btn-save" id="hSearch" style="flex:2; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:700; cursor:pointer; background:linear-gradient(135deg,#dc2626,#ea580c); color:#fff;">🔍 ค้นหา</button>
@@ -1245,6 +1249,9 @@
             if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
             showAlert('success', msg);
 
+            // จำชื่อผู้พบ ไว้ใช้ self-filter ในประวัติ
+            try { localStorage.setItem('defaultReporter', originalData.reporter || ''); } catch (e) {}
+
             // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง — เก็บ card ที่ render แล้ว เพื่อแชร์ใหม่ได้ทันที
             lastReport = {
               reporter: originalData.reporter, product: originalData.product, categories: originalData.categories,
@@ -1374,6 +1381,10 @@
       var monthAgo = new Date(today.getTime() - 30 * 86400000);
       document.getElementById('hFrom').value = fmtDateISO(monthAgo);
       document.getElementById('hTo').value = fmtDateISO(today);
+      // self-filter init: แสดงชื่อ default reporter จาก localStorage
+      var defaultReporter = '';
+      try { defaultReporter = localStorage.getItem('defaultReporter') || ''; } catch (e) {}
+      document.getElementById('hMineName').textContent = defaultReporter || 'ยังไม่มี - ส่งรายงานก่อน';
       applyDrill();
     }
 
@@ -1402,13 +1413,19 @@
       var pagiEl = document.getElementById('hPagi');
       listEl.innerHTML = '<div class="dash-empty">⏳ กำลังค้นหา...</div>';
       countEl.textContent = ''; pagiEl.innerHTML = '';
+      var rep = document.getElementById('hRep').value;
+      if (document.getElementById('hMineOnly').checked) {
+        var mine = '';
+        try { mine = localStorage.getItem('defaultReporter') || ''; } catch (e) {}
+        if (mine) rep = mine;
+      }
       var params = {
         from: document.getElementById('hFrom').value,
         to: document.getElementById('hTo').value,
         supplier: document.getElementById('hSup').value,
         product: document.getElementById('hProd').value,
         category: document.getElementById('hCat').value,
-        reporter: document.getElementById('hRep').value,
+        reporter: rep,
         q: document.getElementById('hQ').value.trim(),
         offset: historyOffset, limit: historyLimit
       };
@@ -1448,6 +1465,7 @@
     }
 
     document.getElementById('hSearch').addEventListener('click', function () { runHistorySearch(true); });
+    document.getElementById('hMineOnly').addEventListener('change', function () { runHistorySearch(true); });
     document.getElementById('hReset').addEventListener('click', function () {
       document.getElementById('hSup').value = '';
       document.getElementById('hProd').value = '';
