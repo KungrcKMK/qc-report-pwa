@@ -876,14 +876,13 @@
 
     // สร้าง "การ์ดรายงาน" เป็นรูปเดียว (ข้อความ + รูป อยู่ในภาพ → LINE ตัดข้อความไม่ได้)
     function renderReportCard(d, cb) {
-      var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 170;
+      var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 210;
       var entries = ['🔍 พบ: ' + (d.categories && d.categories.length ? d.categories.join(', ') : '-')];
       if (d.product) entries.push('🍯 ใน: ' + d.product);
       if (d.supplier) entries.push('🏭 ซัพพรายเออร์: ' + d.supplier);
       if (d.stage) entries.push('⚙️ จุดที่พบ: ' + d.stage);
       var qty = [d.quantity, d.unit].filter(Boolean).join(' ');
       if (qty) entries.push('📏 จำนวน: ' + qty);
-      if (d.reporter) entries.push('👤 ผู้พบ: ' + d.reporter);
       if (d.note) entries.push('📝 หมายเหตุ: ' + d.note);
 
       function finish(photoImg) {
@@ -906,8 +905,18 @@
         g.addColorStop(0, '#dc2626'); g.addColorStop(1, '#ea580c');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, headerH);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 46px sans-serif'; ctx.fillText('🚨 รายงานสิ่งแปลกปลอม', PAD, 76);
-        ctx.font = '30px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 128);
+        ctx.font = 'bold 46px sans-serif'; ctx.fillText('🚨 รายงานสิ่งแปลกปลอม', PAD, 70);
+        ctx.font = '28px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 115);
+
+        // ผู้พบเด่นใต้ header — กล่องสีขาวซ้อนบน gradient
+        if (d.reporter) {
+          var badgeY = 140, badgeH = 50;
+          ctx.fillStyle = 'rgba(255,255,255,0.95)';
+          ctx.fillRect(PAD, badgeY, W - PAD * 2, badgeH);
+          ctx.fillStyle = '#dc2626';
+          ctx.font = 'bold 30px sans-serif';
+          ctx.fillText('👤 ผู้พบ: ' + d.reporter, PAD + 18, badgeY + 35);
+        }
 
         ctx.fillStyle = '#1f2937'; ctx.font = FS + 'px sans-serif';
         var y = bodyTop + FS;
@@ -915,8 +924,8 @@
 
         if (photoImg) ctx.drawImage(photoImg, PAD, afterBody, pw, ph);
 
-        ctx.fillStyle = '#9ca3af'; ctx.font = '26px sans-serif';
-        ctx.fillText('QCControl', PAD, footerTop + 38);
+        ctx.fillStyle = '#9ca3af'; ctx.font = '24px sans-serif';
+        ctx.fillText('QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)', PAD, footerTop + 38);
 
         try { cb(c.toDataURL('image/jpeg', 0.85)); } catch (e) { cb(null); }
       }
