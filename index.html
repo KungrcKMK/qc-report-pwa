@@ -398,6 +398,12 @@
           <label>📝 หมายเหตุ</label>
           <textarea id="note" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
         </div>
+
+        <div class="field">
+          <label>🗓 วันเวลาที่พบ (รายงานย้อนหลัง)</label>
+          <input type="datetime-local" id="foundAt">
+          <div style="font-size:12px; color:#9ca3af; margin-top:4px;">เว้นว่าง = ใช้เวลาปัจจุบัน · ตั้งย้อนหลังได้ถ้าถ่ายรูปเก็บไว้ก่อนแล้วมากรอกทีหลัง</div>
+        </div>
       </div>
 
       <button type="submit" class="btn" id="submitBtn">📨 ส่งรายงาน + แชร์</button>
@@ -490,6 +496,10 @@
           <input type="date" id="hFrom">
           <input type="date" id="hTo">
         </div>
+        <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#374151; margin-top:6px; cursor:pointer;">
+          <input type="checkbox" id="hMineOnly" style="width:auto; transform:scale(1.2);">
+          <span>👤 เฉพาะของฉัน (<span id="hMineName" style="color:#dc2626; font-weight:600;">-</span>)</span>
+        </label>
         <div style="display:flex; gap:8px; margin-top:6px;">
           <button type="button" class="btn-cancel" id="hReset" style="flex:1; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; background:#f3f4f6; color:#374151;">ล้างตัวกรอง</button>
           <button type="button" class="btn-save" id="hSearch" style="flex:2; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:700; cursor:pointer; background:linear-gradient(135deg,#dc2626,#ea580c); color:#fff;">🔍 ค้นหา</button>
@@ -563,7 +573,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v13 · 2026-07-02</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v14 · 2026-07-02</span></div>
   </div>
 
   <script>
@@ -799,6 +809,13 @@
       return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
     }
 
+    // แปลงค่า datetime-local ("2026-06-30T14:30") → รูปแบบเดียวกับ fmtNow ("30/06/2026 14:30")
+    function fmtFoundAt(v) {
+      var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+      if (!m) return '';
+      return m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5];
+    }
+
     function currentFormData() {
       return {
         reporter: comboValue('reporter'),
@@ -876,14 +893,13 @@
 
     // สร้าง "การ์ดรายงาน" เป็นรูปเดียว (ข้อความ + รูป อยู่ในภาพ → LINE ตัดข้อความไม่ได้)
     function renderReportCard(d, cb) {
-      var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 170;
+      var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 210;
       var entries = ['🔍 พบ: ' + (d.categories && d.categories.length ? d.categories.join(', ') : '-')];
       if (d.product) entries.push('🍯 ใน: ' + d.product);
       if (d.supplier) entries.push('🏭 ซัพพรายเออร์: ' + d.supplier);
       if (d.stage) entries.push('⚙️ จุดที่พบ: ' + d.stage);
       var qty = [d.quantity, d.unit].filter(Boolean).join(' ');
       if (qty) entries.push('📏 จำนวน: ' + qty);
-      if (d.reporter) entries.push('👤 ผู้พบ: ' + d.reporter);
       if (d.note) entries.push('📝 หมายเหตุ: ' + d.note);
 
       function finish(photoImg) {
@@ -906,8 +922,18 @@
         g.addColorStop(0, '#dc2626'); g.addColorStop(1, '#ea580c');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, headerH);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 46px sans-serif'; ctx.fillText('🚨 รายงานสิ่งแปลกปลอม', PAD, 76);
-        ctx.font = '30px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 128);
+        ctx.font = 'bold 46px sans-serif'; ctx.fillText('🚨 รายงานสิ่งแปลกปลอม', PAD, 70);
+        ctx.font = '28px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 115);
+
+        // ผู้พบเด่นใต้ header — กล่องสีขาวซ้อนบน gradient
+        if (d.reporter) {
+          var badgeY = 140, badgeH = 50;
+          ctx.fillStyle = 'rgba(255,255,255,0.95)';
+          ctx.fillRect(PAD, badgeY, W - PAD * 2, badgeH);
+          ctx.fillStyle = '#dc2626';
+          ctx.font = 'bold 30px sans-serif';
+          ctx.fillText('👤 ผู้พบ: ' + d.reporter, PAD + 18, badgeY + 35);
+        }
 
         ctx.fillStyle = '#1f2937'; ctx.font = FS + 'px sans-serif';
         var y = bodyTop + FS;
@@ -915,8 +941,8 @@
 
         if (photoImg) ctx.drawImage(photoImg, PAD, afterBody, pw, ph);
 
-        ctx.fillStyle = '#9ca3af'; ctx.font = '26px sans-serif';
-        ctx.fillText('QCControl', PAD, footerTop + 38);
+        ctx.fillStyle = '#9ca3af'; ctx.font = '24px sans-serif';
+        ctx.fillText('QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)', PAD, footerTop + 38);
 
         try { cb(c.toDataURL('image/jpeg', 0.85)); } catch (e) { cb(null); }
       }
@@ -929,9 +955,25 @@
       } else { finish(null); }
     }
 
-    function shareTextFallback(text) {
-      if (navigator.share) navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
-      else showAlert('info', '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
+    // เรียกเมื่อแนบไฟล์รูปไปกับ share ไม่ได้ (เบราว์เซอร์/แอปไม่รองรับ Web Share ไฟล์ — พบบ่อยใน in-app browser เช่น LINE)
+    // สำคัญ: ห้ามทิ้งรูปการ์ดไปเฉยๆ — ดาวน์โหลดให้ผู้ใช้แนบเอง ไม่งั้นข้อมูลหาย (มีแต่ข้อความ)
+    function shareTextFallback(text, cardUrl) {
+      if (cardUrl) {
+        try {
+          var a = document.createElement('a');
+          a.href = cardUrl; a.download = 'qc-report.jpg';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        } catch (e) {}
+      }
+      if (navigator.share) {
+        navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
+        if (cardUrl) showAlert('info', '📷 บันทึกรูปการ์ดลงเครื่องแล้ว (เบราว์เซอร์นี้แนบรูปพร้อมข้อความไม่ได้) — แนบรูปในแชทเพิ่มได้เลย');
+      } else {
+        copyText(text);
+        showAlert('info', cardUrl
+          ? '📋 คัดลอกข้อความ + บันทึกรูปการ์ดแล้ว — วางข้อความและแนบรูปใน LINE / Telegram'
+          : '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
+      }
     }
 
     function shareReport(preRenderedCard) {
@@ -950,19 +992,47 @@
 
       // ใช้การ์ดที่ render ไว้แล้ว (preRenderedCard) หรือใน lastReport ก่อน — ถ้าไม่มีค่อย render ใหม่
       var cached = preRenderedCard || (d && d.cardImage);
+      // ทุก branch โชว์ข้อความบนจอชัดเจน (ไม่ซ่อนใน console) เพื่อวินิจฉัยว่าจุดไหนล้มเหลวจริงบนเครื่องผู้ใช้
       function shareWithCard(card) {
-        if (card && navigator.canShare) {
-          try {
-            var file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
-            if (navigator.canShare({ files: [file] })) {
-              var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
-              if (!isIOS) payload.text = text;
-              navigator.share(payload).catch(function () {});
-              return;
-            }
-          } catch (e) {}
+        if (!card) {
+          showAlert('error', '❌ ไม่มีรูปการ์ด (สร้างการ์ดไม่สำเร็จ) — ลองส่งรายงานใหม่');
+          shareTextFallback(text, card);
+          return;
         }
-        shareTextFallback(text);
+        if (!navigator.share) {
+          showAlert('info', 'ℹ️ เบราว์เซอร์นี้ไม่รองรับการแชร์ (ไม่มี Web Share API)');
+          shareTextFallback(text, card);
+          return;
+        }
+        if (!navigator.canShare) {
+          showAlert('info', 'ℹ️ เบราว์เซอร์นี้เช็คไฟล์แนบไม่ได้ (canShare ไม่รองรับ) — บันทึกรูปการ์ดแทน');
+          shareTextFallback(text, card);
+          return;
+        }
+        var file;
+        try {
+          file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
+        } catch (e) {
+          showAlert('error', '⚠️ แปลงรูปเป็นไฟล์ไม่สำเร็จ: ' + e.message);
+          shareTextFallback(text, card);
+          return;
+        }
+        var canShareFile;
+        try { canShareFile = navigator.canShare({ files: [file] }); } catch (e) { canShareFile = false; }
+        if (!canShareFile) {
+          showAlert('info', 'ℹ️ เบราว์เซอร์/แอปนี้แนบไฟล์รูปกับ Web Share ไม่ได้ (พบบ่อยใน LINE in-app browser) — บันทึกรูปการ์ดลงเครื่องแทน แนบเองในแชทได้เลย');
+          shareTextFallback(text, card);
+          return;
+        }
+        var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
+        if (!isIOS) payload.text = text;
+        navigator.share(payload).catch(function (err) {
+          // ผู้ใช้กดยกเลิก share sheet เอง — ไม่ต้องทำอะไรต่อ
+          if (err && err.name === 'AbortError') return;
+          // แชร์ล้มเหลวด้วยเหตุอื่น (เช่น เสีย user-activation) — ห้ามทิ้งรูป ให้ fallback + บอก error name ไว้วินิจฉัย
+          showAlert('error', '⚠️ แชร์ไม่สำเร็จ (' + (err && err.name || err || 'unknown') + ') — บันทึกรูปการ์ดลงเครื่องแทน');
+          shareTextFallback(text, card);
+        });
       }
       if (cached) shareWithCard(cached);
       else renderReportCard(d, shareWithCard);
@@ -1190,6 +1260,7 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
+      var foundAtVal = document.getElementById('foundAt').value;
       var data = {
         reporter: comboValue('reporter'),
         product: comboValue('product'),
@@ -1199,7 +1270,9 @@
         quantity: document.getElementById('quantity').value.trim(),
         unit: comboValue('unit'),
         note: document.getElementById('note').value,
-        photo: photoDataUrl ? { dataUrl: photoDataUrl } : null
+        photo: photoDataUrl ? { dataUrl: photoDataUrl } : null,
+        foundAt: foundAtVal,
+        time: foundAtVal ? fmtFoundAt(foundAtVal) : fmtNow()
       };
 
       if (!data.reporter) {
@@ -1237,11 +1310,14 @@
             if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
             showAlert('success', msg);
 
+            // จำชื่อผู้พบไว้ใช้ self-filter ในหน้าประวัติ
+            try { localStorage.setItem('defaultReporter', originalData.reporter || ''); } catch (e) {}
+
             // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง — เก็บ card ที่ render แล้ว เพื่อแชร์ใหม่ได้ทันที
             lastReport = {
               reporter: originalData.reporter, product: originalData.product, categories: originalData.categories,
               stage: originalData.stage, supplier: originalData.supplier, quantity: originalData.quantity, unit: originalData.unit,
-              note: originalData.note, photo: originalData.photo, time: fmtNow(),
+              note: originalData.note, photo: originalData.photo, time: originalData.time || fmtNow(),
               cardImage: cardUrl
             };
             // แชร์การ์ดที่ render ไว้แล้วทันที (ไม่ต้อง render ใหม่)
@@ -1366,6 +1442,10 @@
       var monthAgo = new Date(today.getTime() - 30 * 86400000);
       document.getElementById('hFrom').value = fmtDateISO(monthAgo);
       document.getElementById('hTo').value = fmtDateISO(today);
+      // self-filter init: แสดงชื่อ default reporter จาก localStorage
+      var defaultReporter = '';
+      try { defaultReporter = localStorage.getItem('defaultReporter') || ''; } catch (e) {}
+      document.getElementById('hMineName').textContent = defaultReporter || 'ยังไม่มี - ส่งรายงานก่อน';
       applyDrill();
     }
 
@@ -1394,13 +1474,19 @@
       var pagiEl = document.getElementById('hPagi');
       listEl.innerHTML = '<div class="dash-empty">⏳ กำลังค้นหา...</div>';
       countEl.textContent = ''; pagiEl.innerHTML = '';
+      var rep = document.getElementById('hRep').value;
+      if (document.getElementById('hMineOnly').checked) {
+        var mine = '';
+        try { mine = localStorage.getItem('defaultReporter') || ''; } catch (e) {}
+        if (mine) rep = mine;
+      }
       var params = {
         from: document.getElementById('hFrom').value,
         to: document.getElementById('hTo').value,
         supplier: document.getElementById('hSup').value,
         product: document.getElementById('hProd').value,
         category: document.getElementById('hCat').value,
-        reporter: document.getElementById('hRep').value,
+        reporter: rep,
         q: document.getElementById('hQ').value.trim(),
         offset: historyOffset, limit: historyLimit
       };
@@ -1440,11 +1526,13 @@
     }
 
     document.getElementById('hSearch').addEventListener('click', function () { runHistorySearch(true); });
+    document.getElementById('hMineOnly').addEventListener('change', function () { runHistorySearch(true); });
     document.getElementById('hReset').addEventListener('click', function () {
       document.getElementById('hSup').value = '';
       document.getElementById('hProd').value = '';
       document.getElementById('hCat').value = '';
       document.getElementById('hRep').value = '';
+      document.getElementById('hMineOnly').checked = false;
       document.getElementById('hQ').value = '';
       var today = new Date();
       var monthAgo = new Date(today.getTime() - 30 * 86400000);
@@ -1612,7 +1700,15 @@
       });
     }
     window.addEventListener('online', flushQueue);
-    window.addEventListener('load', function () { updateQueueBadge(); flushQueue(); });
+    window.addEventListener('load', function () {
+      updateQueueBadge(); flushQueue();
+      // ตั้ง max ของช่อง "วันเวลาที่พบ" = ตอนนี้ (กันเลือกอนาคต; ย้อนหลังได้)
+      try {
+        var n = new Date();
+        function p(x) { return (x < 10 ? '0' : '') + x; }
+        document.getElementById('foundAt').max = n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()) + 'T' + p(n.getHours()) + ':' + p(n.getMinutes());
+      } catch (e) {}
+    });
 
     // wrap saveReport: ถ้า offline → queue + แจ้งผู้ใช้ว่าเก็บไว้แล้ว
     (function () {
