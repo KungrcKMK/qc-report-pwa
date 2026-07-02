@@ -1240,6 +1240,7 @@
     });
 
     function submitReport(payload, originalData, cardUrl) {
+      var data = originalData; // alias สำหรับอ่าน field ใน success handler
       google.script.run
         .withSuccessHandler(function (res) {
           submitBtn.disabled = false;
@@ -1292,7 +1293,7 @@
           submitBtn.textContent = '📨 ส่งรายงาน + แชร์';
           showAlert('error', '❌ ' + err);
         })
-        .saveReport(data);
+        .saveReport(payload);
     }
   </script>
 
