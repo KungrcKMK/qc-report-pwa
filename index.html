@@ -280,14 +280,6 @@
       font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
     }
     .btn-share:active { background: #f0fdfa; }
-    .btn-share.attn {
-      background: linear-gradient(135deg,#0f766e,#0d9488); color: #fff;
-      animation: attnPulse 1.1s ease-in-out 3;
-    }
-    @keyframes attnPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(15,118,110,0.5); }
-      50% { box-shadow: 0 0 0 10px rgba(15,118,110,0); }
-    }
 
     .alert {
       padding: 12px 14px;
@@ -950,54 +942,9 @@
       } else { finish(null); }
     }
 
-    // เรียกเมื่อแนบไฟล์รูปไปกับ share ไม่ได้ (เบราว์เซอร์/แอปไม่รองรับ Web Share ไฟล์ - พบบ่อยใน in-app browser เช่น LINE)
-    // สำคัญ: ห้ามทิ้งรูปการ์ดไปเฉยๆ - ต้องดาวน์โหลดให้ผู้ใช้แนบเอง ไม่งั้นข้อมูลหาย (มีแต่ข้อความ ไม่มีรูป)
-    function shareTextFallback(text, cardUrl) {
-      if (cardUrl) {
-        try {
-          var a = document.createElement('a');
-          a.href = cardUrl; a.download = 'qc-report.jpg';
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        } catch (e) {}
-      }
-      if (navigator.share) {
-        navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
-        if (cardUrl) showAlert('info', '📷 บันทึกรูปการ์ดลงเครื่องแล้ว (เบราว์เซอร์นี้แนบรูปพร้อมข้อความไม่ได้) — แนบรูปในแชทเพิ่มเองได้เลย');
-      } else {
-        copyText(text);
-        showAlert('info', cardUrl
-          ? '📋 คัดลอกข้อความ + บันทึกรูปการ์ดแล้ว — วางข้อความและแนบรูปใน LINE / Telegram'
-          : '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
-      }
-    }
-
-    // เรียกหลังบันทึกสำเร็จ (มาจาก async callback ของ google.script.run)
-    // มือถือส่วนใหญ่บล็อก navigator.share() ถ้าไม่ได้เรียกจาก user-tap โดยตรง (เสีย "user activation" หลัง await เครือข่าย)
-    // จึงลอง auto-share แบบ best-effort เงียบๆ แล้วโชว์ปุ่มเด่นให้ผู้ใช้กดเองเสมอ (กดจริง = รับประกันว่า share sheet เด้ง)
-    function offerShareAfterSave(cardUrl, text) {
-      var btn = document.getElementById('shareBtn');
-      btn.style.display = '';
-      btn.textContent = '📤 แชร์การ์ดรายงานนี้';
-      btn.classList.add('attn');
-      setTimeout(function () { btn.classList.remove('attn'); }, 4000);
-      btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      if (!isIOS) copyText(text);
-
-      if (cardUrl && navigator.canShare) {
-        try {
-          var file = new File([dataURLtoBlob(cardUrl)], 'qc-report.jpg', { type: 'image/jpeg' });
-          if (navigator.canShare({ files: [file] })) {
-            var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
-            if (!isIOS) payload.text = text;
-            // best-effort: ถ้าเบราว์เซอร์ยังอนุญาต (บาง Android ยอมถ้าเร็วพอ) จะเด้งเลย
-            // ถ้าไม่ได้ (ส่วนใหญ่) ก็ไม่เป็นไร ปุ่มเด่นด้านล่างให้กดเองอยู่แล้ว
-            navigator.share(payload).catch(function () {});
-          }
-        } catch (e) {}
-      }
+    function shareTextFallback(text) {
+      if (navigator.share) navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
+      else showAlert('info', '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
     }
 
     function shareReport(preRenderedCard) {
@@ -1016,48 +963,19 @@
 
       // ใช้การ์ดที่ render ไว้แล้ว (preRenderedCard) หรือใน lastReport ก่อน — ถ้าไม่มีค่อย render ใหม่
       var cached = preRenderedCard || (d && d.cardImage);
-      // ทุก branch โชว์ข้อความบนจอชัดเจน (ไม่ใช่ซ่อนใน console) เพื่อวินิจฉัยว่าจุดไหนล้มเหลวจริงบนเครื่องผู้ใช้
       function shareWithCard(card) {
-        if (!card) {
-          showAlert('error', '❌ ไม่มีรูปการ์ด (สร้างการ์ดไม่สำเร็จ) — ลองส่งรายงานใหม่');
-          shareTextFallback(text, card);
-          return;
+        if (card && navigator.canShare) {
+          try {
+            var file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
+            if (navigator.canShare({ files: [file] })) {
+              var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
+              if (!isIOS) payload.text = text;
+              navigator.share(payload).catch(function () {});
+              return;
+            }
+          } catch (e) {}
         }
-        if (!navigator.share) {
-          showAlert('info', 'ℹ️ เบราว์เซอร์นี้ไม่รองรับการแชร์ (ไม่มี Web Share API)');
-          shareTextFallback(text, card);
-          return;
-        }
-        if (!navigator.canShare) {
-          // มี navigator.share แต่ไม่มี canShare (เบราว์เซอร์เก่า/บาง in-app browser) - ลองส่งแบบไม่มีไฟล์
-          showAlert('info', 'ℹ️ เบราว์เซอร์นี้เช็คไฟล์แนบไม่ได้ (canShare ไม่รองรับ) — บันทึกรูปการ์ดแทน');
-          shareTextFallback(text, card);
-          return;
-        }
-        var file;
-        try {
-          file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
-        } catch (e) {
-          showAlert('error', '⚠️ แปลงรูปเป็นไฟล์ไม่สำเร็จ: ' + e.message);
-          shareTextFallback(text, card);
-          return;
-        }
-        var canShareFile;
-        try { canShareFile = navigator.canShare({ files: [file] }); } catch (e) { canShareFile = false; }
-        if (!canShareFile) {
-          showAlert('info', 'ℹ️ เบราว์เซอร์/แอปนี้แนบไฟล์รูปกับ Web Share ไม่ได้ (พบบ่อยใน LINE in-app browser) — บันทึกรูปการ์ดลงเครื่องแทน แนบเองในแชทได้เลย');
-          shareTextFallback(text, card);
-          return;
-        }
-        var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
-        if (!isIOS) payload.text = text;
-        navigator.share(payload).catch(function (err) {
-          // ผู้ใช้กดยกเลิก share sheet เอง - ไม่ต้องทำอะไรต่อ
-          if (err && err.name === 'AbortError') return;
-          // แชร์ล้มเหลวด้วยเหตุอื่น (เช่น เสีย user-activation) - ห้ามทิ้งรูป ให้ fallback + บอก error name ไว้วินิจฉัย
-          showAlert('error', '⚠️ แชร์ไม่สำเร็จ (' + (err && err.name || err || 'unknown') + ') — บันทึกรูปการ์ดลงเครื่องแทน');
-          shareTextFallback(text, card);
-        });
+        shareTextFallback(text);
       }
       if (cached) shareWithCard(cached);
       else renderReportCard(d, shareWithCard);
@@ -1322,7 +1240,6 @@
     });
 
     function submitReport(payload, originalData, cardUrl) {
-      var data = originalData; // alias สำหรับอ่าน field ใน success handler
       google.script.run
         .withSuccessHandler(function (res) {
           submitBtn.disabled = false;
@@ -1342,8 +1259,10 @@
               note: originalData.note, photo: originalData.photo, time: fmtNow(),
               cardImage: cardUrl
             };
-            // โชว์ปุ่มแชร์เด่นให้กดเอง (มือถือส่วนใหญ่บล็อก auto-share หลัง async - ต้องเป็น user-tap จริง)
-            offerShareAfterSave(cardUrl, buildShareTextFromData(lastReport));
+            // แชร์การ์ดที่ render ไว้แล้วทันที (ไม่ต้อง render ใหม่)
+            shareReport(cardUrl);
+            // โชว์ปุ่ม "แชร์อีกครั้ง" เผื่อ user ยกเลิก share sheet แล้วอยากแชร์ทีหลัง
+            document.getElementById('shareBtn').style.display = '';
 
             // อัปเดต dropdown ทันทีสำหรับค่าใหม่
             var nf = res.newFields || {};
@@ -1373,7 +1292,7 @@
           submitBtn.textContent = '📨 ส่งรายงาน + แชร์';
           showAlert('error', '❌ ' + err);
         })
-        .saveReport(payload);
+        .saveReport(data);
     }
   </script>
 
