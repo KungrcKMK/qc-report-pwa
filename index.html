@@ -1016,25 +1016,48 @@
 
       // ใช้การ์ดที่ render ไว้แล้ว (preRenderedCard) หรือใน lastReport ก่อน — ถ้าไม่มีค่อย render ใหม่
       var cached = preRenderedCard || (d && d.cardImage);
+      // ทุก branch โชว์ข้อความบนจอชัดเจน (ไม่ใช่ซ่อนใน console) เพื่อวินิจฉัยว่าจุดไหนล้มเหลวจริงบนเครื่องผู้ใช้
       function shareWithCard(card) {
-        if (card && navigator.canShare) {
-          try {
-            var file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
-            if (navigator.canShare({ files: [file] })) {
-              var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
-              if (!isIOS) payload.text = text;
-              navigator.share(payload).catch(function (err) {
-                // ผู้ใช้กดยกเลิก share sheet เอง - ไม่ต้องทำอะไรต่อ
-                if (err && err.name === 'AbortError') return;
-                // แชร์ล้มเหลวด้วยเหตุอื่น (เช่น เสีย user-activation) - ห้ามทิ้งรูป ให้ fallback
-                shareTextFallback(text, card);
-              });
-              return;
-            }
-          } catch (e) {}
+        if (!card) {
+          showAlert('error', '❌ ไม่มีรูปการ์ด (สร้างการ์ดไม่สำเร็จ) — ลองส่งรายงานใหม่');
+          shareTextFallback(text, card);
+          return;
         }
-        // เบราว์เซอร์นี้แนบไฟล์ไม่ได้เลย (พบบ่อยใน in-app browser เช่น LINE) - fallback พร้อมรูปการ์ด
-        shareTextFallback(text, card);
+        if (!navigator.share) {
+          showAlert('info', 'ℹ️ เบราว์เซอร์นี้ไม่รองรับการแชร์ (ไม่มี Web Share API)');
+          shareTextFallback(text, card);
+          return;
+        }
+        if (!navigator.canShare) {
+          // มี navigator.share แต่ไม่มี canShare (เบราว์เซอร์เก่า/บาง in-app browser) - ลองส่งแบบไม่มีไฟล์
+          showAlert('info', 'ℹ️ เบราว์เซอร์นี้เช็คไฟล์แนบไม่ได้ (canShare ไม่รองรับ) — บันทึกรูปการ์ดแทน');
+          shareTextFallback(text, card);
+          return;
+        }
+        var file;
+        try {
+          file = new File([dataURLtoBlob(card)], 'qc-report.jpg', { type: 'image/jpeg' });
+        } catch (e) {
+          showAlert('error', '⚠️ แปลงรูปเป็นไฟล์ไม่สำเร็จ: ' + e.message);
+          shareTextFallback(text, card);
+          return;
+        }
+        var canShareFile;
+        try { canShareFile = navigator.canShare({ files: [file] }); } catch (e) { canShareFile = false; }
+        if (!canShareFile) {
+          showAlert('info', 'ℹ️ เบราว์เซอร์/แอปนี้แนบไฟล์รูปกับ Web Share ไม่ได้ (พบบ่อยใน LINE in-app browser) — บันทึกรูปการ์ดลงเครื่องแทน แนบเองในแชทได้เลย');
+          shareTextFallback(text, card);
+          return;
+        }
+        var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
+        if (!isIOS) payload.text = text;
+        navigator.share(payload).catch(function (err) {
+          // ผู้ใช้กดยกเลิก share sheet เอง - ไม่ต้องทำอะไรต่อ
+          if (err && err.name === 'AbortError') return;
+          // แชร์ล้มเหลวด้วยเหตุอื่น (เช่น เสีย user-activation) - ห้ามทิ้งรูป ให้ fallback + บอก error name ไว้วินิจฉัย
+          showAlert('error', '⚠️ แชร์ไม่สำเร็จ (' + (err && err.name || err || 'unknown') + ') — บันทึกรูปการ์ดลงเครื่องแทน');
+          shareTextFallback(text, card);
+        });
       }
       if (cached) shareWithCard(cached);
       else renderReportCard(d, shareWithCard);
