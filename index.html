@@ -581,7 +581,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v15 · 2026-07-02</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v16 · 2026-07-02</span></div>
   </div>
 
   <script>
@@ -1301,13 +1301,18 @@
           submitBtn.disabled = false;
           submitBtn.textContent = '📨 ส่งรายงาน + แชร์';
           if (res && res.ok) {
-            var msg = '✅ ' + res.message + ' (row ' + res.rowIndex + ')';
-            if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
+            var msg;
+            if (res.test) {
+              msg = '🧪 ' + res.message; // ผู้พบ = Admin → โหมดทดสอบ ไม่บันทึกลงระบบ
+            } else {
+              msg = '✅ ' + res.message + ' (row ' + res.rowIndex + ')';
+              if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
+            }
             msg += '\n📤 กดปุ่มแชร์ด้านล่าง 👇 (ถ้าหน้าต่างแชร์ไม่เด้งเอง)';
-            showAlert('success', msg);
+            showAlert(res.test ? 'info' : 'success', msg);
 
-            // จำชื่อผู้พบไว้ใช้ self-filter ในหน้าประวัติ
-            try { localStorage.setItem('defaultReporter', originalData.reporter || ''); } catch (e) {}
+            // จำชื่อผู้พบไว้ใช้ self-filter ในหน้าประวัติ (ยกเว้นโหมดทดสอบ Admin — ไม่จำ)
+            if (!res.test) { try { localStorage.setItem('defaultReporter', originalData.reporter || ''); } catch (e) {} }
 
             // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง — เก็บ card ที่ render แล้ว เพื่อแชร์ใหม่ได้ทันที
             lastReport = {
