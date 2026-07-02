@@ -950,9 +950,25 @@
       } else { finish(null); }
     }
 
-    function shareTextFallback(text) {
-      if (navigator.share) navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
-      else showAlert('info', '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
+    // เรียกเมื่อแนบไฟล์รูปไปกับ share ไม่ได้ (เบราว์เซอร์/แอปไม่รองรับ Web Share ไฟล์ - พบบ่อยใน in-app browser เช่น LINE)
+    // สำคัญ: ห้ามทิ้งรูปการ์ดไปเฉยๆ - ต้องดาวน์โหลดให้ผู้ใช้แนบเอง ไม่งั้นข้อมูลหาย (มีแต่ข้อความ ไม่มีรูป)
+    function shareTextFallback(text, cardUrl) {
+      if (cardUrl) {
+        try {
+          var a = document.createElement('a');
+          a.href = cardUrl; a.download = 'qc-report.jpg';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        } catch (e) {}
+      }
+      if (navigator.share) {
+        navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
+        if (cardUrl) showAlert('info', '📷 บันทึกรูปการ์ดลงเครื่องแล้ว (เบราว์เซอร์นี้แนบรูปพร้อมข้อความไม่ได้) — แนบรูปในแชทเพิ่มเองได้เลย');
+      } else {
+        copyText(text);
+        showAlert('info', cardUrl
+          ? '📋 คัดลอกข้อความ + บันทึกรูปการ์ดแล้ว — วางข้อความและแนบรูปใน LINE / Telegram'
+          : '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
+      }
     }
 
     // เรียกหลังบันทึกสำเร็จ (มาจาก async callback ของ google.script.run)
@@ -1007,12 +1023,18 @@
             if (navigator.canShare({ files: [file] })) {
               var payload = { files: [file], title: 'รายงานสิ่งแปลกปลอม' };
               if (!isIOS) payload.text = text;
-              navigator.share(payload).catch(function () {});
+              navigator.share(payload).catch(function (err) {
+                // ผู้ใช้กดยกเลิก share sheet เอง - ไม่ต้องทำอะไรต่อ
+                if (err && err.name === 'AbortError') return;
+                // แชร์ล้มเหลวด้วยเหตุอื่น (เช่น เสีย user-activation) - ห้ามทิ้งรูป ให้ fallback
+                shareTextFallback(text, card);
+              });
               return;
             }
           } catch (e) {}
         }
-        shareTextFallback(text);
+        // เบราว์เซอร์นี้แนบไฟล์ไม่ได้เลย (พบบ่อยใน in-app browser เช่น LINE) - fallback พร้อมรูปการ์ด
+        shareTextFallback(text, card);
       }
       if (cached) shareWithCard(cached);
       else renderReportCard(d, shareWithCard);
