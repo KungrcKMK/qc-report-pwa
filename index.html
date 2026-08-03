@@ -103,6 +103,11 @@
     .exec-btn:active { background: #f9fafb; }
     .exec-btn.primary { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; border-color: transparent; }
     /* ===== รายงานรายเดือน (จัดหน้าเพื่อพิมพ์) ===== */
+    .section-divider {
+      display: flex; align-items: center; gap: 8px;
+      margin: 22px 0 12px; font-size: 15px; font-weight: 700; color: #374151;
+    }
+    .section-divider::before, .section-divider::after { content: ''; flex: 1; border-top: 2px solid #e5e7eb; }
     .rep-head { text-align: center; border-bottom: 2px solid #dc2626; padding-bottom: 10px; margin-bottom: 12px; }
     .rep-head h2 { margin: 0 0 4px; font-size: 19px; color: #111827; }
     .rep-head .rep-sub { font-size: 13px; color: #6b7280; }
@@ -132,6 +137,10 @@
       /* ซ่อนเฉพาะส่วนควบคุม — หน้าไหนเปิดอยู่ก็พิมพ์หน้านั้น (inline display คุมอยู่แล้ว) */
       .tabs, .install-banner, .queue-badge, .exec-actions, .month-actions,
       .period-sel, #dashRefreshBtn, .footer, .loading, .btn, .btn-share { display: none !important; }
+      /* กดพิมพ์จากส่วนไหน ให้ออกเฉพาะส่วนนั้น (สรุปกับรายงานเดือนอยู่หน้าเดียวกัน) */
+      body.print-month #dashContent { display: none !important; }
+      body.print-month .section-divider { display: none !important; }
+      body.print-dash #monthSection { display: none !important; }
       .header { background: #fff !important; color: #000 !important; border-radius: 0; box-shadow: none; }
       .header h1, .header .sub { color: #000 !important; }
       .card { box-shadow: none !important; border: 1px solid #e5e7eb; page-break-inside: avoid; margin-bottom: 10px; }
@@ -353,7 +362,6 @@
     <div class="tabs">
       <button type="button" class="tab active" data-page="form">📝 รายงาน</button>
       <button type="button" class="tab" data-page="dash">📊 สรุป</button>
-      <button type="button" class="tab" data-page="month">📅 รายเดือน</button>
       <button type="button" class="tab" data-page="history">📜 ประวัติ</button>
       <button type="button" class="tab" data-page="qr">📲 แชร์</button>
     </div>
@@ -513,22 +521,22 @@
         </div>
         <button type="button" class="btn-share" id="dashRefreshBtn">🔄 รีเฟรชข้อมูล</button>
       </div>
-    </div>
 
-    <div id="monthPage" style="display:none">
-      <div class="card month-actions">
-        <div class="dash-title">📅 รายงานสรุปรายเดือน</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input type="month" id="monthPick" style="flex:1;">
-          <button type="button" class="exec-btn primary" id="monthLoadBtn">ดูรายงาน</button>
+      <div id="monthSection">
+        <div class="section-divider">📅 รายงานสรุปรายเดือน</div>
+        <div class="card month-actions">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="month" id="monthPick" style="flex:1;">
+            <button type="button" class="exec-btn primary" id="monthLoadBtn">ดูรายงาน</button>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button type="button" class="exec-btn" id="monthPrintBtn" style="flex:1;">🖨 พิมพ์ / บันทึก PDF</button>
+            <button type="button" class="exec-btn" id="monthCsvBtn" style="flex:1;">📊 ดาวน์โหลด CSV</button>
+          </div>
         </div>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button type="button" class="exec-btn" id="monthPrintBtn" style="flex:1;">🖨 พิมพ์ / บันทึก PDF</button>
-          <button type="button" class="exec-btn" id="monthCsvBtn" style="flex:1;">📊 ดาวน์โหลด CSV</button>
-        </div>
+        <div id="monthLoading" class="loading"><div class="spinner"></div>กำลังสร้างรายงาน...</div>
+        <div id="monthContent"></div>
       </div>
-      <div id="monthLoading" class="loading"><div class="spinner"></div>กำลังสร้างรายงาน...</div>
-      <div id="monthContent"></div>
     </div>
 
     <div id="historyPage" style="display:none">
@@ -626,7 +634,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v18 · 2026-08-03</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v19 · 2026-08-03</span></div>
   </div>
 
   <script>
@@ -1103,7 +1111,7 @@
 
     // ----- tab navigation (รายงาน / สรุป / แชร์) -----
     function switchPage(page) {
-      var map = { form: 'formPage', dash: 'dashPage', month: 'monthPage', history: 'historyPage', qr: 'qrPage' };
+      var map = { form: 'formPage', dash: 'dashPage', history: 'historyPage', qr: 'qrPage' };
       Object.keys(map).forEach(function (k) {
         document.getElementById(map[k]).style.display = (k === page) ? '' : 'none';
       });
@@ -1111,8 +1119,7 @@
       for (var i = 0; i < tabs.length; i++) {
         tabs[i].classList.toggle('active', tabs[i].getAttribute('data-page') === page);
       }
-      if (page === 'dash') loadDashboard(false);
-      if (page === 'month') initMonthPage();
+      if (page === 'dash') { loadDashboard(false); initMonthPage(); }
       if (page === 'history') { initHistoryFilters(); runHistorySearch(); }
       if (page === 'qr') {
         document.getElementById('qrMsg').textContent = '';
@@ -1928,9 +1935,24 @@
 
     document.getElementById('monthLoadBtn').addEventListener('click', loadMonthlyReport);
     document.getElementById('monthPick').addEventListener('change', loadMonthlyReport);
+    // พิมพ์เฉพาะส่วนที่กด — สรุปกับรายงานเดือนอยู่หน้าเดียวกันแล้ว
+    function printScoped(cls) {
+      // ล้าง scope เดิมก่อนเสมอ — ถ้าค้างทั้งสองคลาสพร้อมกัน กฎจะซ่อนทุกส่วน = พิมพ์ออกมาหน้าว่าง
+      document.body.classList.remove('print-month');
+      document.body.classList.remove('print-dash');
+      document.body.classList.add(cls);
+      var cleanup = function () {
+        document.body.classList.remove(cls);
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+      setTimeout(cleanup, 3000); // เผื่อเบราว์เซอร์ไม่ยิง afterprint
+      window.print();
+    }
+
     document.getElementById('monthPrintBtn').addEventListener('click', function () {
       if (!monthData) { alert('กรุณาเลือกเดือนและกด "ดูรายงาน" ก่อน'); return; }
-      window.print();
+      printScoped('print-month');
     });
     document.getElementById('monthCsvBtn').addEventListener('click', function () {
       if (!monthData) { alert('กรุณาเลือกเดือนและกด "ดูรายงาน" ก่อน'); return; }
@@ -2110,7 +2132,7 @@
     }
 
     document.getElementById('execShareBtn').addEventListener('click', shareExecCard);
-    document.getElementById('execPrintBtn').addEventListener('click', function () { window.print(); });
+    document.getElementById('execPrintBtn').addEventListener('click', function () { printScoped('print-dash'); });
 
     // ===== CSV export =====
     function csvEscape(s) {
