@@ -102,15 +102,43 @@
     .exec-btn { padding: 11px 6px; border: 1.5px solid #e5e7eb; border-radius: 10px; background: #fff; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
     .exec-btn:active { background: #f9fafb; }
     .exec-btn.primary { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; border-color: transparent; }
+    /* ===== รายงานรายเดือน (จัดหน้าเพื่อพิมพ์) ===== */
+    .rep-head { text-align: center; border-bottom: 2px solid #dc2626; padding-bottom: 10px; margin-bottom: 12px; }
+    .rep-head h2 { margin: 0 0 4px; font-size: 19px; color: #111827; }
+    .rep-head .rep-sub { font-size: 13px; color: #6b7280; }
+    .rep-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 6px; }
+    .rep-kpi { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; text-align: center; }
+    .rep-kpi .k-val { font-size: 22px; font-weight: 800; color: #dc2626; line-height: 1.2; }
+    .rep-kpi .k-lab { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .rep-kpi .k-val.up { color: #dc2626; }
+    .rep-kpi .k-val.down { color: #059669; }
+    table.rep-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.rep-tbl th, table.rep-tbl td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
+    table.rep-tbl th { background: #f9fafb; font-weight: 700; color: #374151; }
+    table.rep-tbl td.num, table.rep-tbl th.num { text-align: right; width: 64px; white-space: nowrap; }
+    table.rep-tbl tbody tr:nth-child(odd) { background: #fcfcfd; }
+    .rep-empty { color: #9ca3af; font-size: 13px; padding: 6px 2px; }
+    .rep-days { display: flex; align-items: flex-end; gap: 2px; height: 90px; margin-top: 6px; }
+    .rep-days .d-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+    .rep-days .d-bar { background: linear-gradient(180deg, #ef4444, #dc2626); border-radius: 2px 2px 0 0; min-height: 1px; }
+    .rep-days .d-num { font-size: 7px; color: #9ca3af; text-align: center; margin-top: 2px; }
+    .rep-sign { display: flex; gap: 24px; margin-top: 26px; }
+    .rep-sign div { flex: 1; text-align: center; font-size: 12px; color: #6b7280; }
+    .rep-sign .line { border-top: 1px dotted #9ca3af; margin-bottom: 5px; height: 30px; }
+
     /* print */
     @media print {
       body { background: #fff; }
-      .tabs, .install-banner, .queue-badge, .exec-actions, #formPage, #historyPage, #qrPage, .period-sel, #dashRefreshBtn { display: none !important; }
+      /* ซ่อนเฉพาะส่วนควบคุม — หน้าไหนเปิดอยู่ก็พิมพ์หน้านั้น (inline display คุมอยู่แล้ว) */
+      .tabs, .install-banner, .queue-badge, .exec-actions, .month-actions,
+      .period-sel, #dashRefreshBtn, .footer, .loading, .btn, .btn-share { display: none !important; }
       .header { background: #fff !important; color: #000 !important; border-radius: 0; box-shadow: none; }
       .header h1, .header .sub { color: #000 !important; }
-      .card { box-shadow: none !important; border: 1px solid #e5e7eb; page-break-inside: avoid; }
-      #dashPage { display: block !important; }
+      .card { box-shadow: none !important; border: 1px solid #e5e7eb; page-break-inside: avoid; margin-bottom: 10px; }
       .container { max-width: 100% !important; padding: 0 !important; }
+      table.rep-tbl { font-size: 12px; }
+      .rep-kpi .k-val { color: #000 !important; }
+      @page { margin: 12mm; }
     }
     .period-sel { display: flex; gap: 6px; margin-bottom: 14px; }
     .period-sel button { flex: 1; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; font-family: inherit; font-size: 13px; font-weight: 600; color: #6b7280; cursor: pointer; }
@@ -325,6 +353,7 @@
     <div class="tabs">
       <button type="button" class="tab active" data-page="form">📝 รายงาน</button>
       <button type="button" class="tab" data-page="dash">📊 สรุป</button>
+      <button type="button" class="tab" data-page="month">📅 รายเดือน</button>
       <button type="button" class="tab" data-page="history">📜 ประวัติ</button>
       <button type="button" class="tab" data-page="qr">📲 แชร์</button>
     </div>
@@ -486,6 +515,22 @@
       </div>
     </div>
 
+    <div id="monthPage" style="display:none">
+      <div class="card month-actions">
+        <div class="dash-title">📅 รายงานสรุปรายเดือน (สำหรับพิมพ์เข้าประชุม)</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="month" id="monthPick" style="flex:1;">
+          <button type="button" class="exec-btn primary" id="monthLoadBtn">ดูรายงาน</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" class="exec-btn" id="monthPrintBtn" style="flex:1;">🖨 พิมพ์ / บันทึก PDF</button>
+          <button type="button" class="exec-btn" id="monthCsvBtn" style="flex:1;">📊 ดาวน์โหลด CSV</button>
+        </div>
+      </div>
+      <div id="monthLoading" class="loading"><div class="spinner"></div>กำลังสร้างรายงาน...</div>
+      <div id="monthContent"></div>
+    </div>
+
     <div id="historyPage" style="display:none">
       <div class="card">
         <div class="dash-title">📜 ค้นหา/กรองรายงาน</div>
@@ -581,7 +626,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v16 · 2026-07-02</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v17 · 2026-08-03</span></div>
   </div>
 
   <script>
@@ -590,7 +635,9 @@
     var SHARE_URL = (location.origin + location.pathname).replace(/index\.html$/, '');
     (function () {
       var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };
-      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'ping'];
+      // แหล่งเดียวของรายชื่อ action — ต้องครบทุกตัวที่แอปเรียก ไม่งั้น wrapper ข้างล่างจะ throw
+      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport', 'ping'];
+      window.__API_ACTIONS = ACTIONS;
       function makeRunner() {
         var success = null, failure = null;
         var api = {
@@ -1056,7 +1103,7 @@
 
     // ----- tab navigation (รายงาน / สรุป / แชร์) -----
     function switchPage(page) {
-      var map = { form: 'formPage', dash: 'dashPage', history: 'historyPage', qr: 'qrPage' };
+      var map = { form: 'formPage', dash: 'dashPage', month: 'monthPage', history: 'historyPage', qr: 'qrPage' };
       Object.keys(map).forEach(function (k) {
         document.getElementById(map[k]).style.display = (k === page) ? '' : 'none';
       });
@@ -1065,6 +1112,7 @@
         tabs[i].classList.toggle('active', tabs[i].getAttribute('data-page') === page);
       }
       if (page === 'dash') loadDashboard(false);
+      if (page === 'month') initMonthPage();
       if (page === 'history') { initHistoryFilters(); runHistorySearch(); }
       if (page === 'qr') {
         document.getElementById('qrMsg').textContent = '';
@@ -1728,7 +1776,8 @@
             withSuccessHandler: function (cb) { success = cb; return api; },
             withFailureHandler: function (cb) { failure = cb; return api; }
           };
-          ['getOptions', 'getDashboard', 'searchReports', 'updateReport', 'deleteReport', 'ping'].forEach(function (a) {
+          // ดึงจากแหล่งเดียว (window.__API_ACTIONS) — saveReport จัดการแยกด้านล่าง (offline queue)
+          (window.__API_ACTIONS || []).filter(function (a) { return a !== 'saveReport'; }).forEach(function (a) {
             api[a] = function (arg) {
               realApi.withSuccessHandler(function (r) { if (success) success(r); })
                      .withFailureHandler(function (e) { if (failure) failure(e); })[a](arg);
@@ -1755,6 +1804,153 @@
         }
       });
     })();
+
+    // ===== รายงานสรุปรายเดือน (สำหรับพิมพ์เข้าห้องประชุม) =====
+    var monthData = null;
+    var monthInited = false;
+
+    function initMonthPage() {
+      if (monthInited) return;
+      monthInited = true;
+      var n = new Date();
+      var p2 = function (x) { return (x < 10 ? '0' : '') + x; };
+      document.getElementById('monthPick').value = n.getFullYear() + '-' + p2(n.getMonth() + 1);
+      loadMonthlyReport();
+    }
+
+    function loadMonthlyReport() {
+      var v = document.getElementById('monthPick').value;
+      var m = /^(\d{4})-(\d{2})$/.exec(v || '');
+      var year, month;
+      if (m) { year = Number(m[1]); month = Number(m[2]); }
+      else { var n = new Date(); year = n.getFullYear(); month = n.getMonth() + 1; }
+
+      var loadEl = document.getElementById('monthLoading');
+      var contEl = document.getElementById('monthContent');
+      loadEl.classList.add('show');
+      contEl.innerHTML = '';
+      monthData = null;
+
+      google.script.run
+        .withSuccessHandler(function (res) {
+          loadEl.classList.remove('show');
+          if (!res || !res.ok) {
+            contEl.innerHTML = '<div class="card"><div class="rep-empty">❌ ' + esc((res && res.message) || 'โหลดรายงานไม่สำเร็จ') + '</div></div>';
+            return;
+          }
+          monthData = res;
+          renderMonthlyReport(res);
+        })
+        .withFailureHandler(function (err) {
+          loadEl.classList.remove('show');
+          contEl.innerHTML = '<div class="card"><div class="rep-empty">❌ ' + esc(String(err)) + '</div></div>';
+        })
+        .getMonthlyReport({ year: year, month: month });
+    }
+
+    function repTable(title, icon, list, colName) {
+      var html = '<div class="card"><div class="dash-title">' + icon + ' ' + title + '</div>';
+      if (!list || !list.length) {
+        html += '<div class="rep-empty">ไม่มีข้อมูลในเดือนนี้</div></div>';
+        return html;
+      }
+      html += '<table class="rep-tbl"><thead><tr><th class="num">#</th><th>' + colName +
+              '</th><th class="num">ครั้ง</th><th class="num">%</th></tr></thead><tbody>';
+      list.forEach(function (it, i) {
+        html += '<tr><td class="num">' + (i + 1) + '</td><td>' + esc(it.name) +
+                '</td><td class="num">' + it.count + '</td><td class="num">' + it.pct + '%</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    function renderMonthlyReport(d) {
+      var html = '';
+
+      // หัวรายงาน
+      html += '<div class="card"><div class="rep-head">' +
+              '<h2>รายงานสรุปสิ่งแปลกปลอมประจำเดือน</h2>' +
+              '<div class="rep-sub"><b>' + esc(d.label) + '</b> · จัดทำเมื่อ ' + esc(d.generatedAt) + '</div>' +
+              '</div>';
+
+      // KPI
+      var chg = '—', chgCls = '';
+      if (d.changePct !== null && d.changePct !== undefined) {
+        chg = (d.changePct > 0 ? '+' : '') + d.changePct + '%';
+        chgCls = d.changePct > 0 ? ' up' : (d.changePct < 0 ? ' down' : '');
+      }
+      html += '<div class="rep-kpis">' +
+              '<div class="rep-kpi"><div class="k-val">' + d.total + '</div><div class="k-lab">รายงานทั้งหมด (ครั้ง)</div></div>' +
+              '<div class="rep-kpi"><div class="k-val' + chgCls + '">' + chg + '</div><div class="k-lab">เทียบเดือนก่อน (' + d.prevTotal + ' ครั้ง)</div></div>' +
+              '<div class="rep-kpi"><div class="k-val">' + d.avgPerDay + '</div><div class="k-lab">เฉลี่ยต่อวัน</div></div>' +
+              '<div class="rep-kpi"><div class="k-val">' + d.activeDays + '</div><div class="k-lab">จำนวนวันที่พบ (จาก ' + d.daysInMonth + ' วัน)</div></div>' +
+              '</div>';
+      if (d.busiestDay) {
+        html += '<div class="rep-sub" style="font-size:12px; color:#6b7280;">📌 วันที่พบมากที่สุด: วันที่ ' +
+                d.busiestDay + ' (' + d.busiestCount + ' ครั้ง)' +
+                (d.unknownSuppliers ? ' · ไม่ระบุซัพพลายเออร์ ' + d.unknownSuppliers + ' ครั้ง' : '') + '</div>';
+      }
+      html += '</div>';
+
+      if (!d.total) {
+        html += '<div class="card"><div class="rep-empty">ไม่มีรายงานในเดือนนี้</div></div>';
+        document.getElementById('monthContent').innerHTML = html;
+        return;
+      }
+
+      // กราฟรายวัน
+      var maxDay = 0;
+      d.dayCounts.forEach(function (c) { if (c > maxDay) maxDay = c; });
+      html += '<div class="card"><div class="dash-title">📈 จำนวนรายงานรายวัน</div><div class="rep-days">';
+      d.dayCounts.forEach(function (c, i) {
+        var h = maxDay ? Math.round(c * 100 / maxDay) : 0;
+        html += '<div class="d-col" title="วันที่ ' + (i + 1) + ': ' + c + ' ครั้ง">' +
+                '<div class="d-bar" style="height:' + h + '%"></div>' +
+                '<div class="d-num">' + (i + 1) + '</div></div>';
+      });
+      html += '</div></div>';
+
+      html += repTable('สิ่งแปลกปลอมที่พบ', '🔍', d.categories, 'สิ่งแปลกปลอม');
+      html += repTable('ผลิตภัณฑ์/วัตถุดิบ', '🍯', d.products, 'ผลิตภัณฑ์');
+      html += repTable('ซัพพลายเออร์', '🏭', d.suppliers, 'ซัพพลายเออร์');
+      html += repTable('จุด/กระบวนการที่พบ', '⚙️', d.stages, 'กระบวนการ');
+      html += repTable('ผู้พบ', '👤', d.reporters, 'ผู้พบ');
+
+      // ช่องเซ็นสำหรับที่ประชุม
+      html += '<div class="card"><div class="rep-sign">' +
+              '<div><div class="line"></div>ผู้จัดทำ</div>' +
+              '<div><div class="line"></div>ผู้ตรวจสอบ</div>' +
+              '<div><div class="line"></div>ผู้อนุมัติ</div>' +
+              '</div></div>';
+
+      document.getElementById('monthContent').innerHTML = html;
+    }
+
+    document.getElementById('monthLoadBtn').addEventListener('click', loadMonthlyReport);
+    document.getElementById('monthPick').addEventListener('change', loadMonthlyReport);
+    document.getElementById('monthPrintBtn').addEventListener('click', function () {
+      if (!monthData) { alert('กรุณาเลือกเดือนและกด "ดูรายงาน" ก่อน'); return; }
+      window.print();
+    });
+    document.getElementById('monthCsvBtn').addEventListener('click', function () {
+      if (!monthData) { alert('กรุณาเลือกเดือนและกด "ดูรายงาน" ก่อน'); return; }
+      var d = monthData;
+      var headers = ['ประเภท', 'รายการ', 'จำนวน(ครั้ง)', 'ร้อยละ'];
+      var rows = [
+        ['สรุป', 'รายงานทั้งหมด', d.total, ''],
+        ['สรุป', 'เดือนก่อนหน้า', d.prevTotal, ''],
+        ['สรุป', 'เปลี่ยนแปลง', (d.changePct === null ? '-' : d.changePct + '%'), ''],
+        ['สรุป', 'เฉลี่ยต่อวัน', d.avgPerDay, ''],
+        ['สรุป', 'จำนวนวันที่พบ', d.activeDays, ''],
+        ['สรุป', 'ไม่ระบุซัพพลายเออร์', d.unknownSuppliers, '']
+      ];
+      [['สิ่งแปลกปลอม', d.categories], ['ผลิตภัณฑ์', d.products], ['ซัพพลายเออร์', d.suppliers],
+       ['กระบวนการ', d.stages], ['ผู้พบ', d.reporters]].forEach(function (pair) {
+        (pair[1] || []).forEach(function (it) { rows.push([pair[0], it.name, it.count, it.pct + '%']); });
+      });
+      (d.dayCounts || []).forEach(function (c, i) { rows.push(['รายวัน', 'วันที่ ' + (i + 1), c, '']); });
+      downloadCSV('qc-monthly-' + d.year + '-' + (d.month < 10 ? '0' : '') + d.month + '.csv', headers, rows);
+    });
 
     // ===== Executive summary card (canvas) =====
     function execWrapText(ctx, text, maxW) {

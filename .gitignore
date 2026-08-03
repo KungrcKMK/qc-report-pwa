@@ -1,0 +1,2 @@
+# local dev-only static server (ไม่ต้อง deploy ขึ้น GitHub Pages)
+.devserver.js
