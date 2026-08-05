@@ -127,6 +127,16 @@
     .rep-days .d-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
     .rep-days .d-bar { background: linear-gradient(180deg, #ef4444, #dc2626); border-radius: 2px 2px 0 0; min-height: 1px; }
     .rep-days .d-num { font-size: 7px; color: #9ca3af; text-align: center; margin-top: 2px; }
+
+    /* กราฟแนวโน้มรายเดือน (12 เดือนย้อนหลัง) */
+    .rep-trend { display: flex; align-items: flex-end; gap: 4px; height: 118px; margin-top: 8px; }
+    .rep-trend .t-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+    .rep-trend .t-val { font-size: 9px; font-weight: 700; color: #6b7280; text-align: center; margin-bottom: 2px; }
+    .rep-trend .t-bar { background: linear-gradient(180deg, #93c5fd, #3b82f6); border-radius: 3px 3px 0 0; min-height: 2px; }
+    .rep-trend .t-lbl { font-size: 8px; color: #9ca3af; text-align: center; margin-top: 3px; line-height: 1.25; }
+    .rep-trend .t-col.cur .t-bar { background: linear-gradient(180deg, #f87171, #dc2626); }
+    .rep-trend .t-col.cur .t-val, .rep-trend .t-col.cur .t-lbl { color: #dc2626; font-weight: 700; }
+    .rep-trend-note { font-size: 11px; color: #9ca3af; margin-top: 6px; }
     .rep-sign { display: flex; gap: 24px; margin-top: 26px; }
     .rep-sign div { flex: 1; text-align: center; font-size: 12px; color: #6b7280; }
     .rep-sign .line { border-top: 1px dotted #9ca3af; margin-bottom: 5px; height: 30px; }
@@ -634,7 +644,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v19 · 2026-08-03</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v20 · 2026-08-05</span></div>
   </div>
 
   <script>
@@ -1905,6 +1915,28 @@
         return;
       }
 
+      // กราฟแนวโน้มรายเดือน (12 เดือนย้อนหลัง จบที่เดือนที่เลือก)
+      var trend = d.monthTrend || [];
+      if (trend.length) {
+        var maxT = 0;
+        trend.forEach(function (m) { if (m.total > maxT) maxT = m.total; });
+        var tSum = trend.reduce(function (s, m) { return s + m.total; }, 0);
+        var tActive = trend.filter(function (m) { return m.total > 0; }).length;
+        html += '<div class="card"><div class="dash-title">📉 แนวโน้มรายเดือน (' + trend.length + ' เดือนล่าสุด)</div><div class="rep-trend">';
+        trend.forEach(function (m) {
+          // เพดาน 85% เผื่อที่ให้ตัวเลขด้านบนไม่ล้นกรอบ
+          var h = maxT ? Math.round(m.total * 85 / maxT) : 0;
+          html += '<div class="t-col' + (m.isCurrent ? ' cur' : '') + '" title="' + esc(m.label + ' ' + m.yearShort) + ': ' + m.total + ' ครั้ง">' +
+                  '<div class="t-val">' + m.total + '</div>' +
+                  '<div class="t-bar" style="height:' + h + '%"></div>' +
+                  '<div class="t-lbl">' + esc(m.label) + '<br>' + esc(m.yearShort) + '</div></div>';
+        });
+        html += '</div>';
+        html += '<div class="rep-trend-note">รวม ' + tSum + ' ครั้งใน ' + trend.length + ' เดือน · เฉลี่ย ' +
+                (tActive ? (tSum / tActive).toFixed(1) : '0') + ' ครั้ง/เดือน (เฉพาะเดือนที่มีรายงาน) · แท่งสีแดง = เดือนที่เลือก</div>';
+        html += '</div>';
+      }
+
       // กราฟรายวัน
       var maxDay = 0;
       d.dayCounts.forEach(function (c) { if (c > maxDay) maxDay = c; });
@@ -1970,6 +2002,7 @@
        ['กระบวนการ', d.stages], ['ผู้พบ', d.reporters]].forEach(function (pair) {
         (pair[1] || []).forEach(function (it) { rows.push([pair[0], it.name, it.count, it.pct + '%']); });
       });
+      (d.monthTrend || []).forEach(function (m) { rows.push(['แนวโน้มรายเดือน', m.label + ' ' + m.yearShort, m.total, '']); });
       (d.dayCounts || []).forEach(function (c, i) { rows.push(['รายวัน', 'วันที่ ' + (i + 1), c, '']); });
       downloadCSV('qc-monthly-' + d.year + '-' + (d.month < 10 ? '0' : '') + d.month + '.csv', headers, rows);
     });
