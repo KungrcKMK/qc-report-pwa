@@ -99,8 +99,7 @@
                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .hbar-track { flex: 1; min-width: 0; background: #f3f4f6; border-radius: 6px; height: 20px; overflow: hidden; }
     .hbar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #d97706); border-radius: 6px; min-width: 2px; }
-    .hbar-val { width: 46px; flex: none; font-size: 12px; font-weight: 700; color: #b45309; }
-    .hbar-val span { font-weight: 400; color: #9ca3af; font-size: 11px; }
+    .hbar-val { width: 30px; flex: none; font-size: 13px; font-weight: 700; color: #b45309; text-align: right; }
 
     .sev-row { display: flex; gap: 6px; }
     .sev-btn {
@@ -606,7 +605,8 @@
           <button type="button" class="sev-btn" data-mode="year">รายปี</button>
         </div>
         <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
-          <input type="month" id="esMonth" style="flex:1;">
+          <select id="esMonthM" style="flex:1;"></select>
+          <select id="esMonthY" style="flex:1;"></select>
           <select id="esYear" style="flex:1; display:none;"></select>
           <button type="button" class="exec-btn primary" id="esLoadBtn">ดูสรุป</button>
         </div>
@@ -801,7 +801,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v35 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v37 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -2175,17 +2175,19 @@
       return s + '</svg>';
     }
 
-    function repTable(title, icon, list, colName) {
+    // noPct = ไม่ต้องมีคอลัมน์ % (ใช้ในสรุปงานผิดพลาด)
+    function repTable(title, icon, list, colName, noPct) {
       var html = '<div class="card"><div class="dash-title">' + icon + ' ' + title + '</div>';
       if (!list || !list.length) {
         html += '<div class="rep-empty">ไม่มีข้อมูลในเดือนนี้</div></div>';
         return html;
       }
       html += '<table class="rep-tbl"><thead><tr><th class="num">#</th><th>' + colName +
-              '</th><th class="num">ครั้ง</th><th class="num">%</th></tr></thead><tbody>';
+              '</th><th class="num">ครั้ง</th>' + (noPct ? '' : '<th class="num">%</th>') + '</tr></thead><tbody>';
       list.forEach(function (it, i) {
         html += '<tr><td class="num">' + (i + 1) + '</td><td>' + esc(it.name) +
-                '</td><td class="num">' + it.count + '</td><td class="num">' + it.pct + '%</td></tr>';
+                '</td><td class="num">' + it.count + '</td>' +
+                (noPct ? '' : '<td class="num">' + it.pct + '%</td>') + '</tr>';
       });
       html += '</tbody></table></div>';
       return html;
@@ -2784,7 +2786,7 @@
 
     // ----- ข้อความ + การ์ดสำหรับแชร์ -----
     function buildErrorShareText(d) {
-      var lines = ['⚠️ รายงานข้อผิดพลาดในการทำงาน', ''];
+      var lines = ['⚠️ รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ', ''];
       if (d.errorTypes && d.errorTypes.length) lines.push('❗ เรื่อง: ' + d.errorTypes.join(', '));
       if (d.employees && d.employees.length) lines.push('🧑‍🏭 พนักงาน: ' + d.employees.join(', '));
       lines.push('');
@@ -2797,6 +2799,11 @@
     function renderErrorCard(d, cb) {
       var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 210;
       var entries = ['❗ เรื่อง: ' + (d.errorTypes && d.errorTypes.length ? d.errorTypes.join(', ') : '-')];
+      // พนักงานที่เกี่ยวข้องอยู่ในเนื้อการ์ด (พื้นที่ขาว) และเรียงเป็นลำดับ — หัวการ์ดเหลือแค่ผู้รายงาน
+      if (d.employees && d.employees.length) {
+        entries.push('🧑‍🏭 พนักงานที่เกี่ยวข้อง:');
+        d.employees.forEach(function (n, i) { entries.push('      ' + (i + 1) + '. ' + n); });
+      }
       if (d.note) entries.push('📝 หมายเหตุ: ' + d.note);
 
       function finish(photoImg) {
@@ -2819,7 +2826,15 @@
         g.addColorStop(0, '#d97706'); g.addColorStop(1, '#f59e0b');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, headerH);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 44px sans-serif'; ctx.fillText('⚠️ รายงานข้อผิดพลาดในการทำงาน', PAD, 70);
+        // หัวเรื่องยาว — ย่อขนาดฟอนต์ให้พอดีความกว้างการ์ด ไม่ให้ล้นออกนอกกรอบ
+        var title = '⚠️ รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ';
+        var titleSize = 44;
+        ctx.font = 'bold ' + titleSize + 'px sans-serif';
+        while (titleSize > 24 && ctx.measureText(title).width > W - PAD * 2) {
+          titleSize -= 2;
+          ctx.font = 'bold ' + titleSize + 'px sans-serif';
+        }
+        ctx.fillText(title, PAD, 70);
         ctx.font = '28px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 115);
 
         var badgeY = 140, badgeH = 50;
@@ -2827,9 +2842,7 @@
         ctx.fillRect(PAD, badgeY, W - PAD * 2, badgeH);
         ctx.fillStyle = '#b45309';
         ctx.font = 'bold 30px sans-serif';
-        var who = '👤 ผู้รายงาน: ' + (d.reporter || '-');
-        if (d.employees && d.employees.length) who += '   🧑‍🏭 พนักงาน: ' + d.employees.join(', ');
-        ctx.fillText(who, PAD + 18, badgeY + 35);
+        ctx.fillText('👤 ผู้รายงาน: ' + (d.reporter || '-'), PAD + 18, badgeY + 35);
 
         ctx.fillStyle = '#1f2937'; ctx.font = FS + 'px sans-serif';
         var y = bodyTop + FS;
@@ -2884,7 +2897,7 @@
           if (silentOnFail) return;
           if (msg) showErrAlert(type, msg);
           shareTextFallback(text, card, {
-            title: 'รายงานข้อผิดพลาดในการทำงาน',
+            title: 'รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ',
             filename: 'qc-error.jpg',
             alert: showErrAlert
           });
@@ -2898,7 +2911,7 @@
         var canShareFile;
         try { canShareFile = navigator.canShare({ files: [file] }); } catch (e) { canShareFile = false; }
         if (!canShareFile) { return fallback('info', 'ℹ️ แอปนี้แนบไฟล์รูปไม่ได้ (พบบ่อยใน LINE) — บันทึกรูปการ์ดลงเครื่องแทน'); }
-        var payload = { files: [file], title: 'รายงานข้อผิดพลาดในการทำงาน' };
+        var payload = { files: [file], title: 'รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ' };
         if (!isIOS) payload.text = text;
         navigator.share(payload).catch(function (err) {
           if (err && err.name === 'AbortError') return;
@@ -3004,25 +3017,43 @@
     var esMode = 'month';
     var esInited = false;
 
+    var TH_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
     function esSyncControls() {
-      document.getElementById('esMonth').style.display = (esMode === 'month') ? '' : 'none';
-      document.getElementById('esYear').style.display = (esMode === 'year') ? '' : 'none';
+      var isMonth = (esMode === 'month');
+      document.getElementById('esMonthM').style.display = isMonth ? '' : 'none';
+      document.getElementById('esMonthY').style.display = isMonth ? '' : 'none';
+      document.getElementById('esYear').style.display = isMonth ? 'none' : '';
     }
 
     function initErrSummary() {
       if (esInited) return;
       esInited = true;
       var n = new Date();
-      var p2 = function (x) { return (x < 10 ? '0' : '') + x; };
-      document.getElementById('esMonth').value = n.getFullYear() + '-' + p2(n.getMonth() + 1);
-      var ySel = document.getElementById('esYear');
-      ySel.innerHTML = '';
-      for (var y = n.getFullYear(); y >= n.getFullYear() - 4; y--) {
+      // เดือน/ปี เป็น dropdown ภาษาไทย (input type=month แสดงเป็นอังกฤษตามเครื่อง บังคับไม่ได้)
+      var mSel = document.getElementById('esMonthM');
+      mSel.innerHTML = '';
+      TH_MONTHS.forEach(function (name, i) {
         var o = document.createElement('option');
-        o.value = String(y);
-        o.textContent = 'ปี ' + (y + 543);
-        ySel.appendChild(o);
+        o.value = String(i + 1);
+        o.textContent = name;
+        mSel.appendChild(o);
+      });
+      mSel.value = String(n.getMonth() + 1);
+
+      function fillYears(sel, prefix) {
+        sel.innerHTML = '';
+        for (var y = n.getFullYear(); y >= n.getFullYear() - 4; y--) {
+          var o = document.createElement('option');
+          o.value = String(y);
+          o.textContent = prefix + (y + 543);
+          sel.appendChild(o);
+        }
+        sel.value = String(n.getFullYear());
       }
+      fillYears(document.getElementById('esMonthY'), 'พ.ศ. ');
+      fillYears(document.getElementById('esYear'), 'ปี ');
       esSyncControls();
       loadErrSummary();
     }
@@ -3038,14 +3069,18 @@
       });
     });
     document.getElementById('esLoadBtn').addEventListener('click', loadErrSummary);
-['esMonth', 'esYear'].forEach(function (id) {
+    ['esMonthM', 'esMonthY', 'esYear'].forEach(function (id) {
       document.getElementById(id).addEventListener('change', loadErrSummary);
     });
 
     function loadErrSummary() {
       var params = { mode: esMode };
-      if (esMode === 'year') params.year = document.getElementById('esYear').value;
-      else params.month = document.getElementById('esMonth').value;
+      if (esMode === 'year') {
+        params.year = document.getElementById('esYear').value;
+      } else {
+        var mm = Number(document.getElementById('esMonthM').value);
+        params.month = document.getElementById('esMonthY').value + '-' + (mm < 10 ? '0' : '') + mm;
+      }
 
       var loadEl = document.getElementById('esLoading');
       var contEl = document.getElementById('esContent');
@@ -3077,10 +3112,10 @@
       var html = '<div class="card"><div class="dash-title">🧑‍🏭 เทียบรายบุคคล (' + list.length + ' คน)</div><div class="hbar">';
       list.forEach(function (e) {
         var w = maxV ? Math.round(e.count * 100 / maxV) : 0;
-        html += '<div class="hbar-row" title="' + esc(e.name) + ': ' + e.count + ' ครั้ง (' + e.pct + '%)">' +
+        html += '<div class="hbar-row" title="' + esc(e.name) + ': ' + e.count + ' ครั้ง">' +
                 '<div class="hbar-name">' + esc(e.name) + '</div>' +
                 '<div class="hbar-track"><div class="hbar-fill" style="width:' + w + '%"></div></div>' +
-                '<div class="hbar-val">' + e.count + ' <span>' + e.pct + '%</span></div>' +
+                '<div class="hbar-val">' + e.count + '</div>' +
                 '</div>';
       });
       return html + '</div></div>';
@@ -3088,16 +3123,6 @@
 
     function renderErrSummary(d) {
       var html = '';
-      var chg = (d.changePct === null || d.changePct === undefined)
-        ? '<span style="color:#9ca3af">—</span>'
-        : '<span style="color:' + (d.changePct > 0 ? '#dc2626' : '#16a34a') + '">' + (d.changePct > 0 ? '+' : '') + d.changePct + '%</span>';
-
-      html += '<div class="card">';
-      html += '<div class="dash-title">⚠️ ' + esc(d.label) + '</div>';
-      html += '<div class="rep-kpis">' +
-        '<div class="rep-kpi"><div class="v err-accent">' + d.total + '</div><div class="l">ข้อผิดพลาด (ครั้ง)</div></div>' +
-        '<div class="rep-kpi"><div class="v">' + chg + '</div><div class="l">เทียบ' + esc(d.prevLabel) + ' (' + d.prevTotal + ' ครั้ง)</div></div>';
-      html += '</div></div>';
 
       if (!d.total) {
         html += '<div class="card"><div class="rep-empty">ไม่มีรายงานข้อผิดพลาดใน' +
@@ -3105,7 +3130,7 @@
       }
 
       if (d.total) {
-        html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท');
+        html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท', true);
         html += empBarChart(d.employees);
       }
       return html;
