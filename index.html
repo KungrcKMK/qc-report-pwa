@@ -801,7 +801,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v34 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v35 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -3097,10 +3097,6 @@
       html += '<div class="rep-kpis">' +
         '<div class="rep-kpi"><div class="v err-accent">' + d.total + '</div><div class="l">ข้อผิดพลาด (ครั้ง)</div></div>' +
         '<div class="rep-kpi"><div class="v">' + chg + '</div><div class="l">เทียบ' + esc(d.prevLabel) + ' (' + d.prevTotal + ' ครั้ง)</div></div>';
-      html += '<div class="rep-kpi"><div class="v err-accent">' + d.activeUnits + '</div><div class="l">' +
-              (d.mode === 'year' ? 'เดือนที่มีรายงาน' : 'วันที่มีรายงาน') + '</div></div>';
-      html += '<div class="rep-kpi"><div class="v err-accent">' + (d.busiestCount || 0) + '</div><div class="l">' +
-              (d.busiestLabel ? 'มากสุด: ' + esc(d.busiestLabel) : 'มากสุด') + '</div></div>';
       html += '</div></div>';
 
       if (!d.total) {
@@ -3108,28 +3104,9 @@
                 (d.mode === 'year' ? 'ปีนี้' : 'เดือนนี้') + ' (' + esc(d.label) + ')</div></div>';
       }
 
-      // กราฟแท่ง — ไม่มีข้อมูลก็ไม่ต้องขึ้นกรอบเปล่าๆ (ข้อความ "ไม่มีรายงาน" พอแล้ว)
-      var ch = d.chart || {};
-      if (d.total && (ch.values || []).length) {
-        var maxV = 0;
-        ch.values.forEach(function (v) { if (v > maxV) maxV = v; });
-        var dense = ch.values.length > 16 ? ' dense' : '';
-        html += '<div class="card"><div class="dash-title">📈 ' + esc(ch.title || '') + '</div><div class="rep-trend' + dense + '">';
-        ch.values.forEach(function (v, i) {
-          var hgt = maxV ? Math.round(v * 85 / maxV) : 0;
-          var cur = (i === ch.curIdx) ? ' cur' : '';
-          html += '<div class="t-col' + cur + '" title="' + esc(ch.labels[i]) + ': ' + v + ' ครั้ง">' +
-                  '<div class="t-val">' + (v || '') + '</div>' +
-                  '<div class="t-bar" style="height:' + hgt + '%"></div>' +
-                  '<div class="t-lbl">' + esc(ch.labels[i]) + '</div></div>';
-        });
-        html += '</div></div>';
-      }
-
       if (d.total) {
         html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท');
         html += empBarChart(d.employees);
-        html += repTable('ผู้รายงาน', '👤', d.reporters, 'ผู้รายงาน');
       }
       return html;
     }
