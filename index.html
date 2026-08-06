@@ -514,9 +514,12 @@
           </div>
 
           <div class="field">
-            <label>🧑‍🏭 พนักงานที่เกี่ยวข้อง <span style="font-weight:400; color:#9ca3af; font-size:12px;">(ไม่บังคับ)</span></label>
-            <select id="eEmployee"><option value="">-- ไม่ระบุ --</option></select>
-            <input type="text" id="eEmployeeNew" class="combo-new" placeholder="พิมพ์ชื่อพนักงานใหม่" style="display:none">
+            <label>🧑‍🏭 พนักงานที่เกี่ยวข้อง (เลือกได้หลายคน) <span class="req">*</span></label>
+            <div id="employees" class="checkbox-grid"></div>
+            <div class="add-row">
+              <input type="text" id="employeeNew" placeholder="เพิ่มชื่อพนักงานใหม่">
+              <button type="button" class="btn-add" id="employeeAddBtn">➕</button>
+            </div>
           </div>
 
           <div class="field">
@@ -757,7 +760,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v23 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v24 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -1720,7 +1723,7 @@
           if (!res.rows.length) { listEl.innerHTML = '<div class="hist-empty">ไม่พบรายการ</div>'; return; }
           listEl.innerHTML = res.rows.map(function (r) {
             if (isErr) {
-              var emp = r.employee ? ' · 🧑‍🏭 ' + esc(r.employee) : '';
+              var emp = r.employee ? ' · 🧑‍🏭 ' + esc(r.employee) : ''; // ช่องนี้เก็บได้หลายคน คั่นด้วย ,
               var dmg = [r.damageQty, r.damageUnit].filter(Boolean).join(' ');
               return '<div class="hist-row" data-row="' + r.rowIndex + '">' +
                 '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
@@ -2582,6 +2585,48 @@
       addErrorTypeChip(name, true);
       inp.value = '';
     }
+    // ----- พนักงานที่เกี่ยวข้อง (chip เลือกได้หลายคน) -----
+    function addEmployeeChip(name, checked) {
+      name = String(name).trim();
+      if (!name) return null;
+      var grid = document.getElementById('employees');
+      var lbl = document.createElement('label');
+      lbl.className = 'chk err' + (checked ? ' active' : '');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = name; cb.checked = !!checked;
+      cb.addEventListener('change', function () { lbl.classList.toggle('active', cb.checked); });
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(name));
+      grid.appendChild(lbl);
+      return cb;
+    }
+    function getCheckedEmployees() {
+      var boxes = document.querySelectorAll('#employees input[type=checkbox]:checked');
+      var out = [];
+      for (var i = 0; i < boxes.length; i++) out.push(boxes[i].value);
+      return out;
+    }
+    function addCustomEmployee() {
+      var inp = document.getElementById('employeeNew');
+      var name = inp.value.trim();
+      if (!name) return;
+      var boxes = document.querySelectorAll('#employees input[type=checkbox]');
+      for (var i = 0; i < boxes.length; i++) {
+        if (boxes[i].value.toLowerCase() === name.toLowerCase()) {
+          boxes[i].checked = true;
+          boxes[i].parentNode.classList.add('active');
+          inp.value = '';
+          return;
+        }
+      }
+      addEmployeeChip(name, true);
+      inp.value = '';
+    }
+    document.getElementById('employeeAddBtn').addEventListener('click', addCustomEmployee);
+    document.getElementById('employeeNew').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); addCustomEmployee(); }
+    });
+
     document.getElementById('errorTypeAddBtn').addEventListener('click', addCustomErrorType);
     document.getElementById('errorTypeNew').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); addCustomErrorType(); }
@@ -2589,16 +2634,15 @@
 
     function initErrorForm(opts) {
       fillSelect('eReporter', opts.workers);
-      fillSelect('eEmployee', opts.workers);
       fillSelect('eStage', opts.stages);
       fillSelect('eProduct', opts.products);
       fillSelect('eUnit', opts.units);
       initCombo('eReporter', '➕ ชื่ออื่น (พิมพ์เอง)');
-      initCombo('eEmployee', '➕ ชื่ออื่น (พิมพ์เอง)');
       initCombo('eStage', '➕ พิมพ์เอง');
       initCombo('eProduct', '➕ พิมพ์เอง');
       initCombo('eUnit', '➕ พิมพ์เอง');
       (opts.errorTypes || []).forEach(function (t) { addErrorTypeChip(t, false); });
+      (opts.workers || []).forEach(function (w) { addEmployeeChip(w, false); });
       try {
         var n = new Date();
         function p(x) { return (x < 10 ? '0' : '') + x; }
@@ -2614,7 +2658,7 @@
       if (d.product) lines.push('🍯 งาน/ผลิตภัณฑ์: ' + d.product);
       var dmg = [d.damageQty, d.damageUnit].filter(Boolean).join(' ');
       if (dmg) lines.push('💥 ความเสียหาย: ' + dmg);
-      if (d.employee) lines.push('🧑‍🏭 พนักงาน: ' + d.employee);
+      if (d.employees && d.employees.length) lines.push('🧑‍🏭 พนักงาน: ' + d.employees.join(', '));
       if (d.action) lines.push('🛠 แก้ไข: ' + d.action);
       lines.push('');
       if (d.reporter) lines.push('👤 ผู้รายงาน: ' + d.reporter);
@@ -2662,7 +2706,7 @@
         ctx.fillStyle = '#b45309';
         ctx.font = 'bold 30px sans-serif';
         var who = '👤 ผู้รายงาน: ' + (d.reporter || '-');
-        if (d.employee) who += '   🧑‍🏭 พนักงาน: ' + d.employee;
+        if (d.employees && d.employees.length) who += '   🧑‍🏭 พนักงาน: ' + d.employees.join(', ');
         ctx.fillText(who, PAD + 18, badgeY + 35);
 
         ctx.fillStyle = '#1f2937'; ctx.font = FS + 'px sans-serif';
@@ -2689,7 +2733,7 @@
       var foundAtVal = document.getElementById('eFoundAt').value;
       return {
         reporter: comboValue('eReporter'),
-        employee: comboValue('eEmployee'),
+        employees: getCheckedEmployees(),
         errorTypes: getCheckedErrorTypes(),
         stage: comboValue('eStage'),
         product: comboValue('eProduct'),
@@ -2754,6 +2798,7 @@
         showErrAlert('error', document.getElementById('eReporter').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผู้รายงาน' : 'กรุณาเลือกผู้รายงาน');
         return;
       }
+      if (data.employees.length === 0) { showErrAlert('error', 'กรุณาเลือกพนักงานที่เกี่ยวข้องอย่างน้อย 1 คน'); return; }
       if (data.errorTypes.length === 0) { showErrAlert('error', 'กรุณาเลือกประเภทข้อผิดพลาดอย่างน้อย 1 อย่าง'); return; }
 
       eSubmitBtn.disabled = true;
@@ -2785,7 +2830,7 @@
             showErrAlert(res.test ? 'info' : 'success', msg);
 
             lastErrReport = {
-              reporter: originalData.reporter, employee: originalData.employee,
+              reporter: originalData.reporter, employees: originalData.employees,
               errorTypes: originalData.errorTypes,
               stage: originalData.stage, product: originalData.product,
               damageQty: originalData.damageQty, damageUnit: originalData.damageUnit,
@@ -2804,7 +2849,6 @@
 
             var nf = res.newFields || {};
             if (nf.reporter) comboEnsureOption('eReporter', originalData.reporter);
-            if (nf.employee) comboEnsureOption('eEmployee', originalData.employee);
             if (nf.stage) comboEnsureOption('eStage', originalData.stage);
             if (nf.product) comboEnsureOption('eProduct', originalData.product);
             if (nf.unit) comboEnsureOption('eUnit', originalData.damageUnit);
@@ -2812,11 +2856,11 @@
             // reset แต่เก็บผู้รายงานไว้ (คนเดิมมักรายงานหลายครั้ง)
             var keepReporter = document.getElementById('eReporter').value;
             errForm.reset();
-            ['eReporter', 'eEmployee', 'eStage', 'eProduct', 'eUnit'].forEach(function (id) {
+['eReporter', 'eStage', 'eProduct', 'eUnit'].forEach(function (id) {
               document.getElementById(id + 'New').style.display = 'none';
             });
             document.getElementById('eReporter').value = keepReporter;
-            document.querySelectorAll('#errorTypes .chk').forEach(function (el) { el.classList.remove('active'); });
+            document.querySelectorAll('#errorTypes .chk, #employees .chk').forEach(function (el) { el.classList.remove('active'); });
             clearErrPhoto();
           } else {
             showErrAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด'));
