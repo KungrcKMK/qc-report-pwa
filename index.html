@@ -58,7 +58,6 @@
     .tab-err.active { background: linear-gradient(135deg,#d97706,#f59e0b); }
     .err-accent { color: #b45309; }
     .btn-err { background: linear-gradient(135deg,#d97706,#f59e0b); }
-    .chk.err.active { background: #fef3c7; border-color: #d97706; color: #92400e; }
     /* รายชื่อที่เลือกไว้จาก dropdown (กด ✕ เพื่อเอาออก) */
     .sel-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .sel-list:empty { display: none; }
@@ -537,11 +536,9 @@
 
           <div class="field">
             <label>⚠️ ประเภทข้อผิดพลาด (เลือกได้หลายอัน) <span class="req">*</span></label>
-            <div id="errorTypes" class="checkbox-grid"></div>
-            <div class="add-row">
-              <input type="text" id="errorTypeNew" placeholder="เพิ่มประเภทข้อผิดพลาดใหม่">
-              <button type="button" class="btn-add" id="errorTypeAddBtn">➕</button>
-            </div>
+            <select id="eErrType"><option value="">-- เลือกประเภท --</option></select>
+            <input type="text" id="eErrTypeNew" class="combo-new" placeholder="พิมพ์ประเภทใหม่ แล้วกด Enter" style="display:none">
+            <div id="errorTypeList" class="sel-list"></div>
           </div>
 
           <div class="field">
@@ -773,7 +770,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v25 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v26 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -2561,43 +2558,64 @@
       ePhotoControls.style.display = 'flex';
     }
 
-    // ----- ประเภทข้อผิดพลาด (chip เลือกได้หลายอัน) -----
-    function addErrorTypeChip(name, checked) {
-      name = String(name).trim();
-      if (!name) return null;
-      var grid = document.getElementById('errorTypes');
-      var lbl = document.createElement('label');
-      lbl.className = 'chk err' + (checked ? ' active' : '');
-      var cb = document.createElement('input');
-      cb.type = 'checkbox'; cb.value = name; cb.checked = !!checked;
-      cb.addEventListener('change', function () { lbl.classList.toggle('active', cb.checked); });
-      lbl.appendChild(cb);
-      lbl.appendChild(document.createTextNode(name));
-      grid.appendChild(lbl);
-      return cb;
+    // ----- ประเภทข้อผิดพลาด: เลือกจาก dropdown ทีละอัน สะสมเป็นรายการด้านล่าง -----
+    var selectedErrorTypes = [];
+
+    function renderErrorTypeList() {
+      var box = document.getElementById('errorTypeList');
+      box.innerHTML = '';
+      selectedErrorTypes.forEach(function (name) {
+        var chip = document.createElement('span');
+        chip.className = 'sel-chip';
+        chip.appendChild(document.createTextNode(name));
+        var x = document.createElement('button');
+        x.type = 'button';
+        x.textContent = '✕';
+        x.setAttribute('aria-label', 'เอา ' + name + ' ออก');
+        x.addEventListener('click', function () { removeErrorType(name); });
+        chip.appendChild(x);
+        box.appendChild(chip);
+      });
     }
-    function getCheckedErrorTypes() {
-      var boxes = document.querySelectorAll('#errorTypes input[type=checkbox]:checked');
-      var out = [];
-      for (var i = 0; i < boxes.length; i++) out.push(boxes[i].value);
-      return out;
-    }
-    function addCustomErrorType() {
-      var inp = document.getElementById('errorTypeNew');
-      var name = inp.value.trim();
+    function addErrorType(name) {
+      name = String(name || '').trim();
       if (!name) return;
-      var boxes = document.querySelectorAll('#errorTypes input[type=checkbox]');
-      for (var i = 0; i < boxes.length; i++) {
-        if (boxes[i].value.toLowerCase() === name.toLowerCase()) {
-          boxes[i].checked = true;
-          boxes[i].parentNode.classList.add('active');
-          inp.value = '';
-          return;
-        }
-      }
-      addErrorTypeChip(name, true);
-      inp.value = '';
+      var dup = selectedErrorTypes.some(function (n) { return n.toLowerCase() === name.toLowerCase(); });
+      if (!dup) selectedErrorTypes.push(name);
+      renderErrorTypeList();
     }
+    function removeErrorType(name) {
+      selectedErrorTypes = selectedErrorTypes.filter(function (n) { return n !== name; });
+      renderErrorTypeList();
+    }
+    function clearErrorTypes() {
+      selectedErrorTypes = [];
+      renderErrorTypeList();
+    }
+    function getCheckedErrorTypes() { return selectedErrorTypes.slice(); }
+
+    (function () {
+      var sel = document.getElementById('eErrType');
+      var txt = document.getElementById('eErrTypeNew');
+      sel.addEventListener('change', function () {
+        if (sel.value === NEW_VALUE) { txt.style.display = ''; txt.focus(); return; }
+        if (sel.value) { addErrorType(sel.value); }
+        txt.style.display = 'none';
+        sel.value = ''; // คืน dropdown เป็นค่าว่าง พร้อมเลือกอันถัดไป
+      });
+      function commitTyped() {
+        var name = txt.value.trim();
+        if (!name) return;
+        addErrorType(name);
+        txt.value = '';
+        txt.style.display = 'none';
+        sel.value = '';
+      }
+      txt.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); commitTyped(); }
+      });
+      txt.addEventListener('blur', commitTyped);
+    })();
     // ----- พนักงานที่เกี่ยวข้อง: เลือกจาก dropdown ทีละคน สะสมเป็นรายการด้านล่าง -----
     var selectedEmployees = [];
 
@@ -2657,10 +2675,6 @@
       txt.addEventListener('blur', commitTyped);
     })();
 
-    document.getElementById('errorTypeAddBtn').addEventListener('click', addCustomErrorType);
-    document.getElementById('errorTypeNew').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); addCustomErrorType(); }
-    });
 
     function initErrorForm(opts) {
       fillSelect('eReporter', opts.workers);
@@ -2671,7 +2685,8 @@
       initCombo('eStage', '➕ พิมพ์เอง');
       initCombo('eProduct', '➕ พิมพ์เอง');
       initCombo('eUnit', '➕ พิมพ์เอง');
-      (opts.errorTypes || []).forEach(function (t) { addErrorTypeChip(t, false); });
+      fillSelect('eErrType', opts.errorTypes);
+      initCombo('eErrType', '➕ พิมพ์เอง');
       fillSelect('eEmployee', opts.workers);
       initCombo('eEmployee', '➕ ชื่ออื่น (พิมพ์เอง)');
       try {
@@ -2887,11 +2902,11 @@
             // reset แต่เก็บผู้รายงานไว้ (คนเดิมมักรายงานหลายครั้ง)
             var keepReporter = document.getElementById('eReporter').value;
             errForm.reset();
-            ['eReporter', 'eEmployee', 'eStage', 'eProduct', 'eUnit'].forEach(function (id) {
+            ['eReporter', 'eEmployee', 'eErrType', 'eStage', 'eProduct', 'eUnit'].forEach(function (id) {
               document.getElementById(id + 'New').style.display = 'none';
             });
             document.getElementById('eReporter').value = keepReporter;
-            document.querySelectorAll('#errorTypes .chk').forEach(function (el) { el.classList.remove('active'); });
+            clearErrorTypes();
             clearEmployees();
             clearErrPhoto();
           } else {
