@@ -92,6 +92,16 @@
     }
     .sel-empty { font-size: 12px; color: #9ca3af; margin-top: 6px; }
 
+    /* กราฟแท่งแนวนอน เทียบรายบุคคล (ชื่อไทยยาว แนวนอนอ่านง่ายกว่าแนวตั้ง) */
+    .hbar { margin-top: 8px; }
+    .hbar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .hbar-name { width: 88px; flex: none; font-size: 12px; color: #374151; text-align: right;
+                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hbar-track { flex: 1; min-width: 0; background: #f3f4f6; border-radius: 6px; height: 20px; overflow: hidden; }
+    .hbar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #d97706); border-radius: 6px; min-width: 2px; }
+    .hbar-val { width: 46px; flex: none; font-size: 12px; font-weight: 700; color: #b45309; }
+    .hbar-val span { font-weight: 400; color: #9ca3af; font-size: 11px; }
+
     .sev-row { display: flex; gap: 6px; }
     .sev-btn {
       flex: 1; padding: 9px 4px; border: 1.5px solid #e5e7eb; border-radius: 8px;
@@ -592,12 +602,10 @@
       <div class="section-divider">📊 สรุปการทำงานผิดพลาด หรือ ผิดระเบียบ</div>
       <div class="card">
         <div class="sev-row" id="esModeRow">
-          <button type="button" class="sev-btn" data-mode="day">รายวัน</button>
           <button type="button" class="sev-btn active" data-mode="month">รายเดือน</button>
           <button type="button" class="sev-btn" data-mode="year">รายปี</button>
         </div>
         <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
-          <input type="date" id="esDate" style="flex:1; display:none;">
           <input type="month" id="esMonth" style="flex:1;">
           <select id="esYear" style="flex:1; display:none;"></select>
           <button type="button" class="exec-btn primary" id="esLoadBtn">ดูสรุป</button>
@@ -793,7 +801,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v29 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v30 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -2954,7 +2962,6 @@
     var esInited = false;
 
     function esSyncControls() {
-      document.getElementById('esDate').style.display = (esMode === 'day') ? '' : 'none';
       document.getElementById('esMonth').style.display = (esMode === 'month') ? '' : 'none';
       document.getElementById('esYear').style.display = (esMode === 'year') ? '' : 'none';
     }
@@ -2964,7 +2971,6 @@
       esInited = true;
       var n = new Date();
       var p2 = function (x) { return (x < 10 ? '0' : '') + x; };
-      document.getElementById('esDate').value = n.getFullYear() + '-' + p2(n.getMonth() + 1) + '-' + p2(n.getDate());
       document.getElementById('esMonth').value = n.getFullYear() + '-' + p2(n.getMonth() + 1);
       var ySel = document.getElementById('esYear');
       ySel.innerHTML = '';
@@ -2989,14 +2995,13 @@
       });
     });
     document.getElementById('esLoadBtn').addEventListener('click', loadErrSummary);
-    ['esDate', 'esMonth', 'esYear'].forEach(function (id) {
+['esMonth', 'esYear'].forEach(function (id) {
       document.getElementById(id).addEventListener('change', loadErrSummary);
     });
 
     function loadErrSummary() {
       var params = { mode: esMode };
-      if (esMode === 'day') params.date = document.getElementById('esDate').value;
-      else if (esMode === 'year') params.year = document.getElementById('esYear').value;
+      if (esMode === 'year') params.year = document.getElementById('esYear').value;
       else params.month = document.getElementById('esMonth').value;
 
       var loadEl = document.getElementById('esLoading');
@@ -3020,6 +3025,24 @@
         .getErrorSummary(params);
     }
 
+    // กราฟแท่งแนวนอน เทียบพนักงานทุกคนที่มีรายงานในช่วงนั้น (เรียงมากไปน้อย)
+    function empBarChart(list) {
+      list = list || [];
+      if (!list.length) return '';
+      var maxV = 0;
+      list.forEach(function (e) { if (e.count > maxV) maxV = e.count; });
+      var html = '<div class="card"><div class="dash-title">🧑‍🏭 เทียบรายบุคคล (' + list.length + ' คน)</div><div class="hbar">';
+      list.forEach(function (e) {
+        var w = maxV ? Math.round(e.count * 100 / maxV) : 0;
+        html += '<div class="hbar-row" title="' + esc(e.name) + ': ' + e.count + ' ครั้ง (' + e.pct + '%)">' +
+                '<div class="hbar-name">' + esc(e.name) + '</div>' +
+                '<div class="hbar-track"><div class="hbar-fill" style="width:' + w + '%"></div></div>' +
+                '<div class="hbar-val">' + e.count + ' <span>' + e.pct + '%</span></div>' +
+                '</div>';
+      });
+      return html + '</div></div>';
+    }
+
     function renderErrSummary(d) {
       var html = '';
       var chg = (d.changePct === null || d.changePct === undefined)
@@ -3031,17 +3054,15 @@
       html += '<div class="rep-kpis">' +
         '<div class="rep-kpi"><div class="v err-accent">' + d.total + '</div><div class="l">ข้อผิดพลาด (ครั้ง)</div></div>' +
         '<div class="rep-kpi"><div class="v">' + chg + '</div><div class="l">เทียบ' + esc(d.prevLabel) + ' (' + d.prevTotal + ' ครั้ง)</div></div>';
-      if (d.mode !== 'day') {
-        html += '<div class="rep-kpi"><div class="v err-accent">' + d.activeUnits + '</div><div class="l">' +
-                (d.mode === 'year' ? 'เดือนที่มีรายงาน' : 'วันที่มีรายงาน') + '</div></div>';
-        html += '<div class="rep-kpi"><div class="v err-accent">' + (d.busiestCount || 0) + '</div><div class="l">' +
-                (d.busiestLabel ? 'มากสุด: ' + esc(d.busiestLabel) : 'มากสุด') + '</div></div>';
-      }
+      html += '<div class="rep-kpi"><div class="v err-accent">' + d.activeUnits + '</div><div class="l">' +
+              (d.mode === 'year' ? 'เดือนที่มีรายงาน' : 'วันที่มีรายงาน') + '</div></div>';
+      html += '<div class="rep-kpi"><div class="v err-accent">' + (d.busiestCount || 0) + '</div><div class="l">' +
+              (d.busiestLabel ? 'มากสุด: ' + esc(d.busiestLabel) : 'มากสุด') + '</div></div>';
       html += '</div></div>';
 
       if (!d.total) {
         html += '<div class="card"><div class="rep-empty">ไม่มีรายงานข้อผิดพลาดใน' +
-                (d.mode === 'day' ? 'วันนี้' : d.mode === 'year' ? 'ปีนี้' : 'เดือนนี้') + ' (' + esc(d.label) + ')</div></div>';
+                (d.mode === 'year' ? 'ปีนี้' : 'เดือนนี้') + ' (' + esc(d.label) + ')</div></div>';
       }
 
       // กราฟแท่ง
@@ -3064,7 +3085,7 @@
 
       if (d.total) {
         html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท');
-        html += repTable('พนักงานที่เกี่ยวข้อง', '🧑‍🏭', d.employees, 'พนักงาน');
+        html += empBarChart(d.employees);
         html += repTable('ผู้รายงาน', '👤', d.reporters, 'ผู้รายงาน');
       }
       return html;
