@@ -174,7 +174,11 @@
 
     /* กราฟแนวโน้มรายเดือน (12 เดือนย้อนหลัง) */
     .rep-trend { display: flex; align-items: flex-end; gap: 4px; height: 118px; margin-top: 8px; }
-    .rep-trend .t-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+    .rep-trend .t-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
+    /* กราฟที่มีแท่งเยอะ (เช่น รายวันทั้งเดือน) — ซ่อนตัวเลขบนแท่ง ไม่งั้นดันจนล้นจอ */
+    .rep-trend.dense { gap: 2px; }
+    .rep-trend.dense .t-val { display: none; }
+    .rep-trend.dense .t-lbl { font-size: 7px; }
     .rep-trend .t-val { font-size: 9px; font-weight: 700; color: #6b7280; text-align: center; margin-bottom: 2px; }
     .rep-trend .t-bar { background: linear-gradient(180deg, #93c5fd, #3b82f6); border-radius: 3px 3px 0 0; min-height: 2px; }
     .rep-trend .t-lbl { font-size: 8px; color: #9ca3af; text-align: center; margin-top: 3px; line-height: 1.25; }
@@ -584,6 +588,23 @@
         <button type="submit" class="btn btn-err" id="eSubmitBtn">📨 ส่งรายงาน + แชร์</button>
         <button type="button" class="btn-share" id="eShareBtn" style="display:none">📤 แชร์รายงานล่าสุดอีกครั้ง</button>
       </form>
+
+      <div class="section-divider">📊 สรุปงานผิดพลาด</div>
+      <div class="card">
+        <div class="sev-row" id="esModeRow">
+          <button type="button" class="sev-btn" data-mode="day">รายวัน</button>
+          <button type="button" class="sev-btn active" data-mode="month">รายเดือน</button>
+          <button type="button" class="sev-btn" data-mode="year">รายปี</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+          <input type="date" id="esDate" style="flex:1; display:none;">
+          <input type="month" id="esMonth" style="flex:1;">
+          <select id="esYear" style="flex:1; display:none;"></select>
+          <button type="button" class="exec-btn primary" id="esLoadBtn">ดูสรุป</button>
+        </div>
+      </div>
+      <div id="esLoading" class="loading"><div class="spinner"></div>กำลังสรุป...</div>
+      <div id="esContent"></div>
     </div>
 
     <div id="dashPage" style="display:none">
@@ -772,7 +793,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v27 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v28 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -783,7 +804,7 @@
       var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };
       // แหล่งเดียวของรายชื่อ action — ต้องครบทุกตัวที่แอปเรียก ไม่งั้น wrapper ข้างล่างจะ throw
       var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport',
-                     'saveErrorReport', 'searchErrorReports', 'deleteErrorReport', 'getErrorMonthlyReport', 'ping'];
+                     'saveErrorReport', 'searchErrorReports', 'deleteErrorReport', 'getErrorSummary', 'ping'];
       window.__API_ACTIONS = ACTIONS;
       function makeRunner() {
         var success = null, failure = null;
@@ -1265,6 +1286,7 @@
         tabs[i].classList.toggle('active', tabs[i].getAttribute('data-page') === page);
       }
       if (page === 'dash') { loadDashboard(false); initMonthPage(); }
+      if (page === 'err') initErrSummary();
       if (page === 'history') { initHistoryFilters(); runHistorySearch(); }
       if (page === 'qr') {
         document.getElementById('qrMsg').textContent = '';
@@ -2052,7 +2074,6 @@
           }
           monthData = res;
           renderMonthlyReport(res);
-          loadErrorMonthlySection(year, month);
         })
         .withFailureHandler(function (err) {
           loadEl.classList.remove('show');
@@ -2274,20 +2295,6 @@
       });
       (d.dayCounts || []).forEach(function (c, i) { rows.push(['รายวัน', 'วันที่ ' + (i + 1), c, '']); });
 
-      // ส่วนงานผิดพลาด (ถ้าโหลดมาแล้วในหน้าเดียวกัน)
-      var e = errMonthData;
-      if (e && e.ok) {
-        rows.push(['— งานผิดพลาด —', '', '', '']);
-        rows.push(['งานผิดพลาด: สรุป', 'รวมทั้งเดือน', e.total, '']);
-        rows.push(['งานผิดพลาด: สรุป', 'เดือนก่อน', e.prevTotal, '']);
-        rows.push(['งานผิดพลาด: สรุป', 'เฉลี่ยต่อวัน', e.avgPerDay, '']);
-        [['ประเภทข้อผิดพลาด', e.errorTypes], ['พนักงาน', e.employees],
-         ['ผู้รายงาน', e.reporters]].forEach(function (pair) {
-          (pair[1] || []).forEach(function (it) { rows.push(['งานผิดพลาด: ' + pair[0], it.name, it.count, it.pct + '%']); });
-        });
-        (e.monthTrend || []).forEach(function (m) { rows.push(['งานผิดพลาด: แนวโน้มรายเดือน', m.label + ' ' + m.yearShort, m.total, '']); });
-        (e.dayCounts || []).forEach(function (c, i) { rows.push(['งานผิดพลาด: รายวัน', 'วันที่ ' + (i + 1), c, '']); });
-      }
       downloadCSV('qc-monthly-' + d.year + '-' + (d.month < 10 ? '0' : '') + d.month + '.csv', headers, rows);
     });
 
@@ -2939,88 +2946,127 @@
   </script>
 
 
-  <script>
-    // ===== ส่วน "งานผิดพลาด" ในรายงานสรุปรายเดือน (ต่อท้ายส่วนสิ่งแปลกปลอม) =====
-    var errMonthData = null;
 
-    function loadErrorMonthlySection(year, month) {
-      var contEl = document.getElementById('monthContent');
-      var holder = document.createElement('div');
-      holder.id = 'errMonthSection';
-      holder.innerHTML = '<div class="section-divider">⚠️ งานผิดพลาดของพนักงาน</div>' +
-                         '<div class="card"><div class="rep-empty">⏳ กำลังโหลด...</div></div>';
-      contEl.appendChild(holder);
+
+  <script>
+    // ===== สรุปงานผิดพลาด (ในแท็บ ⚠️ ผิดพลาด) — เลือกดูรายวัน / รายเดือน / รายปี =====
+    var esMode = 'month';
+    var esInited = false;
+
+    function esSyncControls() {
+      document.getElementById('esDate').style.display = (esMode === 'day') ? '' : 'none';
+      document.getElementById('esMonth').style.display = (esMode === 'month') ? '' : 'none';
+      document.getElementById('esYear').style.display = (esMode === 'year') ? '' : 'none';
+    }
+
+    function initErrSummary() {
+      if (esInited) return;
+      esInited = true;
+      var n = new Date();
+      var p2 = function (x) { return (x < 10 ? '0' : '') + x; };
+      document.getElementById('esDate').value = n.getFullYear() + '-' + p2(n.getMonth() + 1) + '-' + p2(n.getDate());
+      document.getElementById('esMonth').value = n.getFullYear() + '-' + p2(n.getMonth() + 1);
+      var ySel = document.getElementById('esYear');
+      ySel.innerHTML = '';
+      for (var y = n.getFullYear(); y >= n.getFullYear() - 4; y--) {
+        var o = document.createElement('option');
+        o.value = String(y);
+        o.textContent = 'ปี ' + (y + 543);
+        ySel.appendChild(o);
+      }
+      esSyncControls();
+      loadErrSummary();
+    }
+
+    document.querySelectorAll('#esModeRow .sev-btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        esMode = b.getAttribute('data-mode');
+        document.querySelectorAll('#esModeRow .sev-btn').forEach(function (x) {
+          x.classList.toggle('active', x === b);
+        });
+        esSyncControls();
+        loadErrSummary();
+      });
+    });
+    document.getElementById('esLoadBtn').addEventListener('click', loadErrSummary);
+    ['esDate', 'esMonth', 'esYear'].forEach(function (id) {
+      document.getElementById(id).addEventListener('change', loadErrSummary);
+    });
+
+    function loadErrSummary() {
+      var params = { mode: esMode };
+      if (esMode === 'day') params.date = document.getElementById('esDate').value;
+      else if (esMode === 'year') params.year = document.getElementById('esYear').value;
+      else params.month = document.getElementById('esMonth').value;
+
+      var loadEl = document.getElementById('esLoading');
+      var contEl = document.getElementById('esContent');
+      loadEl.classList.add('show');
+      contEl.innerHTML = '';
 
       google.script.run
         .withSuccessHandler(function (res) {
-          errMonthData = (res && res.ok) ? res : null;
+          loadEl.classList.remove('show');
           if (!res || !res.ok) {
-            holder.innerHTML = '<div class="section-divider">⚠️ งานผิดพลาดของพนักงาน</div>' +
-              '<div class="card"><div class="rep-empty">❌ ' + esc((res && res.message) || 'โหลดไม่สำเร็จ') + '</div></div>';
+            contEl.innerHTML = '<div class="card"><div class="rep-empty">❌ ' + esc((res && res.message) || 'สรุปไม่สำเร็จ') + '</div></div>';
             return;
           }
-          holder.innerHTML = '<div class="section-divider">⚠️ งานผิดพลาดของพนักงาน</div>' + renderErrorMonthlyHtml(res);
+          contEl.innerHTML = renderErrSummary(res);
         })
         .withFailureHandler(function (err) {
-          errMonthData = null;
-          holder.innerHTML = '<div class="section-divider">⚠️ งานผิดพลาดของพนักงาน</div>' +
-            '<div class="card"><div class="rep-empty">❌ ' + esc(err) + '</div></div>';
+          loadEl.classList.remove('show');
+          contEl.innerHTML = '<div class="card"><div class="rep-empty">❌ ' + esc(err) + '</div></div>';
         })
-        .getErrorMonthlyReport({ year: year, month: month });
+        .getErrorSummary(params);
     }
 
-    function renderErrorMonthlyHtml(d) {
-      if (!d.total) {
-        return '<div class="card"><div class="rep-empty">ไม่มีรายงานข้อผิดพลาดในเดือน ' + esc(d.label) + '</div></div>';
-      }
+    function renderErrSummary(d) {
       var html = '';
-
-      // KPI
       var chg = (d.changePct === null || d.changePct === undefined)
         ? '<span style="color:#9ca3af">—</span>'
         : '<span style="color:' + (d.changePct > 0 ? '#dc2626' : '#16a34a') + '">' + (d.changePct > 0 ? '+' : '') + d.changePct + '%</span>';
-      html += '<div class="card"><div class="rep-kpis">' +
-        '<div class="rep-kpi"><div class="v err-accent">' + d.total + '</div><div class="l">ข้อผิดพลาดทั้งหมด (ครั้ง)</div></div>' +
-        '<div class="rep-kpi"><div class="v">' + chg + '</div><div class="l">เทียบเดือนก่อน (' + d.prevTotal + ' ครั้ง)</div></div>' +
-        '<div class="rep-kpi"><div class="v err-accent">' + d.avgPerDay + '</div><div class="l">เฉลี่ยต่อวัน</div></div>' +
-        '<div class="rep-kpi"><div class="v err-accent">' + d.activeDays + '</div><div class="l">จำนวนวันที่เกิด (จาก ' + d.daysInMonth + ' วัน)</div></div>' +
-        '</div>';
-      if (d.busiestDay) {
-        html += '<div class="rep-note">📌 วันที่เกิดมากสุด: วันที่ ' + d.busiestDay + ' (' + d.busiestCount + ' ครั้ง)</div>';
-      }
-      html += '</div>';
 
-      // แนวโน้มรายเดือน (แท่ง)
-      var trend = d.monthTrend || [];
-      if (trend.length) {
-        var maxT = 0;
-        trend.forEach(function (m) { if (m.total > maxT) maxT = m.total; });
-        html += '<div class="card"><div class="dash-title">📉 แนวโน้มข้อผิดพลาดรายเดือน (' + trend.length + ' เดือนล่าสุด)</div><div class="rep-trend">';
-        trend.forEach(function (m) {
-          var h = maxT ? Math.round(m.total * 85 / maxT) : 0;
-          html += '<div class="t-col' + (m.isCurrent ? ' cur' : '') + '" title="' + esc(m.label + ' ' + m.yearShort) + ': ' + m.total + ' ครั้ง">' +
-                  '<div class="t-val">' + m.total + '</div>' +
-                  '<div class="t-bar" style="height:' + h + '%"></div>' +
-                  '<div class="t-lbl">' + esc(m.label) + '<br>' + esc(m.yearShort) + '</div></div>';
+      html += '<div class="card">';
+      html += '<div class="dash-title">⚠️ ' + esc(d.label) + '</div>';
+      html += '<div class="rep-kpis">' +
+        '<div class="rep-kpi"><div class="v err-accent">' + d.total + '</div><div class="l">ข้อผิดพลาด (ครั้ง)</div></div>' +
+        '<div class="rep-kpi"><div class="v">' + chg + '</div><div class="l">เทียบ' + esc(d.prevLabel) + ' (' + d.prevTotal + ' ครั้ง)</div></div>';
+      if (d.mode !== 'day') {
+        html += '<div class="rep-kpi"><div class="v err-accent">' + d.activeUnits + '</div><div class="l">' +
+                (d.mode === 'year' ? 'เดือนที่มีรายงาน' : 'วันที่มีรายงาน') + '</div></div>';
+        html += '<div class="rep-kpi"><div class="v err-accent">' + (d.busiestCount || 0) + '</div><div class="l">' +
+                (d.busiestLabel ? 'มากสุด: ' + esc(d.busiestLabel) : 'มากสุด') + '</div></div>';
+      }
+      html += '</div></div>';
+
+      if (!d.total) {
+        html += '<div class="card"><div class="rep-empty">ไม่มีรายงานข้อผิดพลาดใน' +
+                (d.mode === 'day' ? 'วันนี้' : d.mode === 'year' ? 'ปีนี้' : 'เดือนนี้') + ' (' + esc(d.label) + ')</div></div>';
+      }
+
+      // กราฟแท่ง
+      var ch = d.chart || {};
+      if ((ch.values || []).length) {
+        var maxV = 0;
+        ch.values.forEach(function (v) { if (v > maxV) maxV = v; });
+        var dense = ch.values.length > 16 ? ' dense' : '';
+        html += '<div class="card"><div class="dash-title">📈 ' + esc(ch.title || '') + '</div><div class="rep-trend' + dense + '">';
+        ch.values.forEach(function (v, i) {
+          var hgt = maxV ? Math.round(v * 85 / maxV) : 0;
+          var cur = (i === ch.curIdx) ? ' cur' : '';
+          html += '<div class="t-col' + cur + '" title="' + esc(ch.labels[i]) + ': ' + v + ' ครั้ง">' +
+                  '<div class="t-val">' + (v || '') + '</div>' +
+                  '<div class="t-bar" style="height:' + hgt + '%"></div>' +
+                  '<div class="t-lbl">' + esc(ch.labels[i]) + '</div></div>';
         });
         html += '</div></div>';
       }
 
-      // รายวัน
-      var maxDay = 0;
-      (d.dayCounts || []).forEach(function (c) { if (c > maxDay) maxDay = c; });
-      html += '<div class="card"><div class="dash-title">📈 จำนวนข้อผิดพลาดรายวัน</div><div class="rep-days">';
-      (d.dayCounts || []).forEach(function (c, i) {
-        var h = maxDay ? Math.round(c * 100 / maxDay) : 0;
-        html += '<div class="d-col" title="วันที่ ' + (i + 1) + ': ' + c + ' ครั้ง">' +
-                '<div class="d-bar" style="height:' + h + '%"></div>' +
-                '<div class="d-num">' + (i + 1) + '</div></div>';
-      });
-      html += '</div></div>';
-
-      html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท');
-      html += repTable('พนักงานที่เกี่ยวข้อง', '🧑‍🏭', d.employees, 'พนักงาน');
-      html += repTable('ผู้รายงาน', '👤', d.reporters, 'ผู้รายงาน');
+      if (d.total) {
+        html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท');
+        html += repTable('พนักงานที่เกี่ยวข้อง', '🧑‍🏭', d.employees, 'พนักงาน');
+        html += repTable('ผู้รายงาน', '👤', d.reporters, 'ผู้รายงาน');
+      }
       return html;
     }
   </script>
