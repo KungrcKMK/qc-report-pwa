@@ -1,7 +1,7 @@
 /* Service Worker - QCControl
    navigation/HTML = network-first (อัปเดตทันทีเมื่อมีเน็ต, ใช้ cache เมื่อ offline)
    static อื่นๆ = cache-first */
-var CACHE = 'qc-shell-v26';
+var CACHE = 'qc-shell-v27';
 var SHELL = [
   './',
   './index.html',
@@ -11,12 +11,16 @@ var SHELL = [
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ];
 
+/* ตัวใหม่จะ "รอคิว" ไว้ ไม่แย่งทำงานเอง — หน้าเว็บจะขึ้นป๊อปอัพให้ผู้ใช้กด "อัปเดต"
+   แล้วส่ง SKIP_WAITING มาบอกให้สลับตัว (ครั้งแรกสุดที่ยังไม่มีตัวคุมอยู่ จะ activate ทันทีอยู่แล้ว) */
 self.addEventListener('install', function (e) {
   e.waitUntil(
-    caches.open(CACHE)
-      .then(function (c) { return c.addAll(SHELL); })
-      .then(function () { return self.skipWaiting(); })
+    caches.open(CACHE).then(function (c) { return c.addAll(SHELL); })
   );
+});
+
+self.addEventListener('message', function (e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', function (e) {

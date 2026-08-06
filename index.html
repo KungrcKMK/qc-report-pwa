@@ -58,6 +58,25 @@
     .tab-err.active { background: linear-gradient(135deg,#d97706,#f59e0b); }
     .err-accent { color: #b45309; }
     .btn-err { background: linear-gradient(135deg,#d97706,#f59e0b); }
+    /* ป๊อปอัพแจ้งเวอร์ชันใหม่ */
+    .update-pop {
+      display: none; position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 9999;
+      background: #111827; color: #fff; border-radius: 14px; padding: 14px 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+      align-items: center; gap: 12px; font-size: 14px;
+    }
+    .update-pop.show { display: flex; }
+    .update-pop .txt { flex: 1; line-height: 1.5; }
+    .update-pop .txt b { display: block; font-size: 15px; margin-bottom: 2px; }
+    .update-pop .sub { font-size: 12px; color: #9ca3af; }
+    .update-pop button {
+      border: none; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer;
+      padding: 10px 16px; font-size: 14px;
+    }
+    .update-pop .go { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; }
+    .update-pop .later { background: transparent; color: #9ca3af; padding: 10px 4px; font-weight: 600; }
+    @media print { .update-pop { display: none !important; } }
+
     /* รายชื่อที่เลือกไว้จาก dropdown (กด ✕ เพื่อเอาออก) */
     .sel-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .sel-list:empty { display: none; }
@@ -421,6 +440,15 @@
 
     <div id="queueBadge" class="queue-badge"></div>
 
+    <div id="updatePop" class="update-pop">
+      <div class="txt">
+        <b>🎉 มีเวอร์ชันใหม่</b>
+        <span class="sub">กดอัปเดตเพื่อใช้ตัวล่าสุด (ข้อมูลที่กรอกค้างไว้จะหาย)</span>
+      </div>
+      <button type="button" class="later" id="updateLater">ไว้ก่อน</button>
+      <button type="button" class="go" id="updateNow">อัปเดต</button>
+    </div>
+
     <div id="formPage">
     <div id="alert" class="alert"></div>
 
@@ -539,32 +567,6 @@
             <select id="eErrType"><option value="">-- เลือกประเภท --</option></select>
             <input type="text" id="eErrTypeNew" class="combo-new" placeholder="พิมพ์ประเภทใหม่ แล้วกด Enter" style="display:none">
             <div id="errorTypeList" class="sel-list"></div>
-          </div>
-
-          <div class="field">
-            <label>⚙️ จุด / กระบวนการ</label>
-            <select id="eStage"><option value="">-- ไม่ระบุ --</option></select>
-            <input type="text" id="eStageNew" class="combo-new" placeholder="พิมพ์กระบวนการใหม่" style="display:none">
-          </div>
-
-          <div class="field">
-            <label>🍯 ผลิตภัณฑ์ / งานที่ทำ</label>
-            <select id="eProduct"><option value="">-- ไม่ระบุ --</option></select>
-            <input type="text" id="eProductNew" class="combo-new" placeholder="พิมพ์ผลิตภัณฑ์/งานใหม่" style="display:none">
-          </div>
-
-          <div class="field">
-            <label>💥 ความเสียหาย (ถ้ามี)</label>
-            <div style="display:flex; gap:8px;">
-              <input type="text" id="eDamageQty" inputmode="decimal" placeholder="จำนวน เช่น 3" style="flex:1;">
-              <select id="eUnit" style="flex:1;"><option value="">-- หน่วย --</option></select>
-            </div>
-            <input type="text" id="eUnitNew" class="combo-new" placeholder="พิมพ์หน่วยใหม่" style="display:none">
-          </div>
-
-          <div class="field">
-            <label>🛠 การแก้ไขที่ทำไปแล้ว</label>
-            <textarea id="eAction" placeholder="เช่น แจ้งหัวหน้าแล้ว / ทำใหม่ทั้งล็อต"></textarea>
           </div>
 
           <div class="field">
@@ -770,7 +772,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v26 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v27 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -1734,15 +1736,10 @@
           listEl.innerHTML = res.rows.map(function (r) {
             if (isErr) {
               var emp = r.employee ? ' · 🧑‍🏭 ' + esc(r.employee) : ''; // ช่องนี้เก็บได้หลายคน คั่นด้วย ,
-              var dmg = [r.damageQty, r.damageUnit].filter(Boolean).join(' ');
               return '<div class="hist-row" data-row="' + r.rowIndex + '">' +
                 '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
                 '<div class="hist-cat err-accent">⚠️ ' + esc(r.errorTypes || '-') + '</div>' +
                 '<div class="hist-sub">👤 ' + esc(r.reporter || '-') + emp + '</div>' +
-                ((r.stage || r.product || dmg) ? '<div class="hist-sub" style="color:#6b7280">' +
-                  (r.stage ? '⚙️ ' + esc(r.stage) + ' ' : '') + (r.product ? '🍯 ' + esc(r.product) + ' ' : '') +
-                  (dmg ? '💥 ' + esc(dmg) : '') + '</div>' : '') +
-                (r.action ? '<div class="hist-sub" style="color:#6b7280">🛠 ' + esc(r.action) + '</div>' : '') +
                 (r.note ? '<div class="hist-sub" style="color:#6b7280">📝 ' + esc(r.note) + '</div>' : '') +
                 '</div>';
             }
@@ -2284,8 +2281,8 @@
         rows.push(['งานผิดพลาด: สรุป', 'รวมทั้งเดือน', e.total, '']);
         rows.push(['งานผิดพลาด: สรุป', 'เดือนก่อน', e.prevTotal, '']);
         rows.push(['งานผิดพลาด: สรุป', 'เฉลี่ยต่อวัน', e.avgPerDay, '']);
-        [['ประเภทข้อผิดพลาด', e.errorTypes], ['พนักงาน', e.employees], ['กระบวนการ', e.stages],
-         ['ผลิตภัณฑ์/งาน', e.products], ['ผู้รายงาน', e.reporters]].forEach(function (pair) {
+        [['ประเภทข้อผิดพลาด', e.errorTypes], ['พนักงาน', e.employees],
+         ['ผู้รายงาน', e.reporters]].forEach(function (pair) {
           (pair[1] || []).forEach(function (it) { rows.push(['งานผิดพลาด: ' + pair[0], it.name, it.count, it.pct + '%']); });
         });
         (e.monthTrend || []).forEach(function (m) { rows.push(['งานผิดพลาด: แนวโน้มรายเดือน', m.label + ' ' + m.yearShort, m.total, '']); });
@@ -2496,10 +2493,55 @@
     });
 
     // ===== PWA: register service worker (offline shell) =====
+    // ===== ตรวจเวอร์ชันใหม่ → ขึ้นป๊อปอัพให้กด "อัปเดต" (ไม่ต้องล้าง cache เอง) =====
+    var pendingWorker = null;   // ตัวใหม่ที่รอคิวอยู่
+    var reloadingForUpdate = false;
+
+    function showUpdatePop(worker) {
+      if (!worker) return;
+      pendingWorker = worker;
+      document.getElementById('updatePop').classList.add('show');
+    }
+    function hideUpdatePop() {
+      document.getElementById('updatePop').classList.remove('show');
+    }
+
+    document.getElementById('updateLater').addEventListener('click', hideUpdatePop);
+    document.getElementById('updateNow').addEventListener('click', function () {
+      hideUpdatePop();
+      if (pendingWorker) pendingWorker.postMessage({ type: 'SKIP_WAITING' });
+      // เผื่อบางเบราว์เซอร์ไม่ยิง controllerchange — โหลดใหม่เองภายใน 2 วิ
+      setTimeout(function () { if (!reloadingForUpdate) location.reload(); }, 2000);
+    });
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js').catch(function (e) {
+        navigator.serviceWorker.register('sw.js').then(function (reg) {
+          if (reg.waiting && navigator.serviceWorker.controller) showUpdatePop(reg.waiting);
+
+          reg.addEventListener('updatefound', function () {
+            var nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', function () {
+              // มีตัวคุมอยู่แล้ว = นี่คือ "อัปเดต" ไม่ใช่ติดตั้งครั้งแรก
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdatePop(nw);
+            });
+          });
+
+          // เช็คเวอร์ชันใหม่ตอนกลับมาที่แอป และทุก 30 นาที (PWA ที่เปิดค้างไว้จะได้รู้)
+          function checkUpdate() { try { reg.update(); } catch (e) {} }
+          document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') checkUpdate();
+          });
+          setInterval(checkUpdate, 30 * 60 * 1000);
+        }).catch(function (e) {
           console.warn('SW register failed:', e);
+        });
+
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (reloadingForUpdate) return;
+          reloadingForUpdate = true;
+          location.reload();
         });
       });
     }
@@ -2678,13 +2720,7 @@
 
     function initErrorForm(opts) {
       fillSelect('eReporter', opts.workers);
-      fillSelect('eStage', opts.stages);
-      fillSelect('eProduct', opts.products);
-      fillSelect('eUnit', opts.units);
       initCombo('eReporter', '➕ ชื่ออื่น (พิมพ์เอง)');
-      initCombo('eStage', '➕ พิมพ์เอง');
-      initCombo('eProduct', '➕ พิมพ์เอง');
-      initCombo('eUnit', '➕ พิมพ์เอง');
       fillSelect('eErrType', opts.errorTypes);
       initCombo('eErrType', '➕ พิมพ์เอง');
       fillSelect('eEmployee', opts.workers);
@@ -2700,12 +2736,7 @@
     function buildErrorShareText(d) {
       var lines = ['⚠️ รายงานข้อผิดพลาดในการทำงาน', ''];
       if (d.errorTypes && d.errorTypes.length) lines.push('❗ เรื่อง: ' + d.errorTypes.join(', '));
-      if (d.stage) lines.push('⚙️ จุดที่เกิด: ' + d.stage);
-      if (d.product) lines.push('🍯 งาน/ผลิตภัณฑ์: ' + d.product);
-      var dmg = [d.damageQty, d.damageUnit].filter(Boolean).join(' ');
-      if (dmg) lines.push('💥 ความเสียหาย: ' + dmg);
       if (d.employees && d.employees.length) lines.push('🧑‍🏭 พนักงาน: ' + d.employees.join(', '));
-      if (d.action) lines.push('🛠 แก้ไข: ' + d.action);
       lines.push('');
       if (d.reporter) lines.push('👤 ผู้รายงาน: ' + d.reporter);
       if (d.note) lines.push('📝 หมายเหตุ: ' + d.note);
@@ -2716,11 +2747,6 @@
     function renderErrorCard(d, cb) {
       var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 210;
       var entries = ['❗ เรื่อง: ' + (d.errorTypes && d.errorTypes.length ? d.errorTypes.join(', ') : '-')];
-      if (d.stage) entries.push('⚙️ จุดที่เกิด: ' + d.stage);
-      if (d.product) entries.push('🍯 งาน/ผลิตภัณฑ์: ' + d.product);
-      var dmg = [d.damageQty, d.damageUnit].filter(Boolean).join(' ');
-      if (dmg) entries.push('💥 ความเสียหาย: ' + dmg);
-      if (d.action) entries.push('🛠 แก้ไข: ' + d.action);
       if (d.note) entries.push('📝 หมายเหตุ: ' + d.note);
 
       function finish(photoImg) {
@@ -2781,11 +2807,6 @@
         reporter: comboValue('eReporter'),
         employees: getCheckedEmployees(),
         errorTypes: getCheckedErrorTypes(),
-        stage: comboValue('eStage'),
-        product: comboValue('eProduct'),
-        damageQty: document.getElementById('eDamageQty').value.trim(),
-        damageUnit: comboValue('eUnit'),
-        action: document.getElementById('eAction').value.trim(),
         note: document.getElementById('eNote').value.trim(),
         photo: errPhotoDataUrl ? { dataUrl: errPhotoDataUrl } : null,
         foundAt: foundAtVal,
@@ -2878,9 +2899,7 @@
             lastErrReport = {
               reporter: originalData.reporter, employees: originalData.employees,
               errorTypes: originalData.errorTypes,
-              stage: originalData.stage, product: originalData.product,
-              damageQty: originalData.damageQty, damageUnit: originalData.damageUnit,
-              action: originalData.action, note: originalData.note,
+              note: originalData.note,
               photo: originalData.photo, time: originalData.time || fmtNow(),
               cardImage: cardUrl
             };
@@ -2895,14 +2914,11 @@
 
             var nf = res.newFields || {};
             if (nf.reporter) comboEnsureOption('eReporter', originalData.reporter);
-            if (nf.stage) comboEnsureOption('eStage', originalData.stage);
-            if (nf.product) comboEnsureOption('eProduct', originalData.product);
-            if (nf.unit) comboEnsureOption('eUnit', originalData.damageUnit);
 
             // reset แต่เก็บผู้รายงานไว้ (คนเดิมมักรายงานหลายครั้ง)
             var keepReporter = document.getElementById('eReporter').value;
             errForm.reset();
-            ['eReporter', 'eEmployee', 'eErrType', 'eStage', 'eProduct', 'eUnit'].forEach(function (id) {
+['eReporter', 'eEmployee', 'eErrType'].forEach(function (id) {
               document.getElementById(id + 'New').style.display = 'none';
             });
             document.getElementById('eReporter').value = keepReporter;
@@ -3004,8 +3020,6 @@
 
       html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท');
       html += repTable('พนักงานที่เกี่ยวข้อง', '🧑‍🏭', d.employees, 'พนักงาน');
-      html += repTable('จุด/กระบวนการ', '⚙️', d.stages, 'กระบวนการ');
-      html += repTable('ผลิตภัณฑ์/งาน', '🍯', d.products, 'ผลิตภัณฑ์');
       html += repTable('ผู้รายงาน', '👤', d.reporters, 'ผู้รายงาน');
       return html;
     }
