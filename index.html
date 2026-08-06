@@ -65,7 +65,6 @@
       background: #fff; color: #6b7280; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
     }
     .sev-btn.active { background: #fef3c7; border-color: #d97706; color: #92400e; }
-    .sev-btn.sev3.active { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
     .install-banner { display: none; background: #dbeafe; color: #1e3a8a; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 13px; align-items: center; gap: 8px; }
     .install-banner.show { display: flex; }
     .install-banner b { flex: 1; }
@@ -530,11 +529,6 @@
           </div>
 
           <div class="field">
-            <label>🚦 ระดับความรุนแรง</label>
-            <div class="sev-row" id="sevRow"></div>
-          </div>
-
-          <div class="field">
             <label>⚙️ จุด / กระบวนการ</label>
             <select id="eStage"><option value="">-- ไม่ระบุ --</option></select>
             <input type="text" id="eStageNew" class="combo-new" placeholder="พิมพ์กระบวนการใหม่" style="display:none">
@@ -680,7 +674,7 @@
         </div>
         <div class="filter-row" id="hErrRow" style="display:none;">
           <select id="hErrType"><option value="">ทุกประเภทข้อผิดพลาด</option></select>
-          <select id="hSev"><option value="">ทุกระดับความรุนแรง</option></select>
+          <select id="hEmp"><option value="">พนักงานทุกคน</option></select>
         </div>
         <div class="filter-row">
           <input type="date" id="hFrom">
@@ -763,7 +757,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v22 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v23 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -1654,7 +1648,7 @@
       fill('hCat', opts.categories);
       fill('hRep', opts.workers);
       fill('hErrType', opts.errorTypes);
-      fill('hSev', opts.severities);
+      fill('hEmp', opts.workers);
       historyFiltersInited = true;
       // default 30 วันล่าสุด
       var today = new Date();
@@ -1704,7 +1698,7 @@
         from: document.getElementById('hFrom').value,
         to: document.getElementById('hTo').value,
         errorType: document.getElementById('hErrType').value,
-        severity: document.getElementById('hSev').value,
+        employee: document.getElementById('hEmp').value,
         reporter: rep,
         q: document.getElementById('hQ').value.trim(),
         offset: historyOffset, limit: historyLimit
@@ -1726,13 +1720,12 @@
           if (!res.rows.length) { listEl.innerHTML = '<div class="hist-empty">ไม่พบรายการ</div>'; return; }
           listEl.innerHTML = res.rows.map(function (r) {
             if (isErr) {
-              var sev = r.severity ? ' · 🚦 ' + esc(r.severity) : '';
               var emp = r.employee ? ' · 🧑‍🏭 ' + esc(r.employee) : '';
               var dmg = [r.damageQty, r.damageUnit].filter(Boolean).join(' ');
               return '<div class="hist-row" data-row="' + r.rowIndex + '">' +
                 '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
                 '<div class="hist-cat err-accent">⚠️ ' + esc(r.errorTypes || '-') + '</div>' +
-                '<div class="hist-sub">👤 ' + esc(r.reporter || '-') + emp + sev + '</div>' +
+                '<div class="hist-sub">👤 ' + esc(r.reporter || '-') + emp + '</div>' +
                 ((r.stage || r.product || dmg) ? '<div class="hist-sub" style="color:#6b7280">' +
                   (r.stage ? '⚙️ ' + esc(r.stage) + ' ' : '') + (r.product ? '🍯 ' + esc(r.product) + ' ' : '') +
                   (dmg ? '💥 ' + esc(dmg) : '') + '</div>' : '') +
@@ -1794,7 +1787,7 @@
       document.getElementById('hCat').value = '';
       document.getElementById('hRep').value = '';
       document.getElementById('hErrType').value = '';
-      document.getElementById('hSev').value = '';
+      document.getElementById('hEmp').value = '';
       document.getElementById('hMineOnly').checked = false;
       document.getElementById('hQ').value = '';
       var today = new Date();
@@ -2061,7 +2054,7 @@
     // สีของแต่ละซัพพลายเออร์ในกราฟแนวโน้ม — "อื่นๆ" เป็นเทาเสมอ
     var SUP_COLORS = ['#dc2626', '#ea580c', '#0891b2', '#7c3aed', '#16a34a', '#db2777'];
     function supColor(series, i) {
-      if (series && series.color) return series.color; // ให้ผู้เรียกกำหนดสีเองได้ (เช่น ระดับความรุนแรง)
+      if (series && series.color) return series.color; // ให้ผู้เรียกกำหนดสีเองได้
       if (series && series.isOther) return '#9ca3af';
       return SUP_COLORS[i % SUP_COLORS.length];
     }
@@ -2278,19 +2271,11 @@
         rows.push(['งานผิดพลาด: สรุป', 'รวมทั้งเดือน', e.total, '']);
         rows.push(['งานผิดพลาด: สรุป', 'เดือนก่อน', e.prevTotal, '']);
         rows.push(['งานผิดพลาด: สรุป', 'เฉลี่ยต่อวัน', e.avgPerDay, '']);
-        Object.keys(e.severityCounts || {}).forEach(function (k) {
-          rows.push(['งานผิดพลาด: ความรุนแรง', k, e.severityCounts[k], '']);
-        });
         [['ประเภทข้อผิดพลาด', e.errorTypes], ['พนักงาน', e.employees], ['กระบวนการ', e.stages],
          ['ผลิตภัณฑ์/งาน', e.products], ['ผู้รายงาน', e.reporters]].forEach(function (pair) {
           (pair[1] || []).forEach(function (it) { rows.push(['งานผิดพลาด: ' + pair[0], it.name, it.count, it.pct + '%']); });
         });
         (e.monthTrend || []).forEach(function (m) { rows.push(['งานผิดพลาด: แนวโน้มรายเดือน', m.label + ' ' + m.yearShort, m.total, '']); });
-        ((e.severityTrend || {}).series || []).forEach(function (s) {
-          (e.monthTrend || []).forEach(function (m, i) {
-            rows.push(['งานผิดพลาด: แนวโน้ม ' + s.name, m.label + ' ' + m.yearShort, s.values[i] || 0, '']);
-          });
-        });
         (e.dayCounts || []).forEach(function (c, i) { rows.push(['งานผิดพลาด: รายวัน', 'วันที่ ' + (i + 1), c, '']); });
       }
       downloadCSV('qc-monthly-' + d.year + '-' + (d.month < 10 ? '0' : '') + d.month + '.csv', headers, rows);
@@ -2509,13 +2494,11 @@
 
   <script>
     // ===== รายงานข้อผิดพลาดในการทำงานของพนักงาน (แท็บ ⚠️ ผิดพลาด) =====
-    var SEVERITIES = ['เล็กน้อย', 'ปานกลาง', 'รุนแรง'];
     var errAlertEl = document.getElementById('errAlert');
     var errForm = document.getElementById('errForm');
     var eSubmitBtn = document.getElementById('eSubmitBtn');
     var errPhotoDataUrl = null;
     var lastErrReport = null;
-    var errSeverity = '';
     var errAlertTimer = null;
 
     function showErrAlert(type, msg) {
@@ -2604,24 +2587,6 @@
       if (e.key === 'Enter') { e.preventDefault(); addCustomErrorType(); }
     });
 
-    // ----- ระดับความรุนแรง (เลือกได้อันเดียว กดซ้ำ = ยกเลิก) -----
-    function buildSeverityButtons() {
-      var row = document.getElementById('sevRow');
-      row.innerHTML = '';
-      SEVERITIES.forEach(function (s, i) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'sev-btn' + (i === 2 ? ' sev3' : '');
-        b.textContent = s;
-        b.addEventListener('click', function () {
-          errSeverity = (errSeverity === s) ? '' : s;
-          var all = row.querySelectorAll('.sev-btn');
-          for (var j = 0; j < all.length; j++) all[j].classList.toggle('active', all[j].textContent === errSeverity);
-        });
-        row.appendChild(b);
-      });
-    }
-
     function initErrorForm(opts) {
       fillSelect('eReporter', opts.workers);
       fillSelect('eEmployee', opts.workers);
@@ -2634,8 +2599,6 @@
       initCombo('eProduct', '➕ พิมพ์เอง');
       initCombo('eUnit', '➕ พิมพ์เอง');
       (opts.errorTypes || []).forEach(function (t) { addErrorTypeChip(t, false); });
-      if (opts.severities && opts.severities.length) SEVERITIES = opts.severities;
-      buildSeverityButtons();
       try {
         var n = new Date();
         function p(x) { return (x < 10 ? '0' : '') + x; }
@@ -2647,7 +2610,6 @@
     function buildErrorShareText(d) {
       var lines = ['⚠️ รายงานข้อผิดพลาดในการทำงาน', ''];
       if (d.errorTypes && d.errorTypes.length) lines.push('❗ เรื่อง: ' + d.errorTypes.join(', '));
-      if (d.severity) lines.push('🚦 ความรุนแรง: ' + d.severity);
       if (d.stage) lines.push('⚙️ จุดที่เกิด: ' + d.stage);
       if (d.product) lines.push('🍯 งาน/ผลิตภัณฑ์: ' + d.product);
       var dmg = [d.damageQty, d.damageUnit].filter(Boolean).join(' ');
@@ -2664,7 +2626,6 @@
     function renderErrorCard(d, cb) {
       var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 210;
       var entries = ['❗ เรื่อง: ' + (d.errorTypes && d.errorTypes.length ? d.errorTypes.join(', ') : '-')];
-      if (d.severity) entries.push('🚦 ความรุนแรง: ' + d.severity);
       if (d.stage) entries.push('⚙️ จุดที่เกิด: ' + d.stage);
       if (d.product) entries.push('🍯 งาน/ผลิตภัณฑ์: ' + d.product);
       var dmg = [d.damageQty, d.damageUnit].filter(Boolean).join(' ');
@@ -2730,7 +2691,6 @@
         reporter: comboValue('eReporter'),
         employee: comboValue('eEmployee'),
         errorTypes: getCheckedErrorTypes(),
-        severity: errSeverity,
         stage: comboValue('eStage'),
         product: comboValue('eProduct'),
         damageQty: document.getElementById('eDamageQty').value.trim(),
@@ -2826,7 +2786,7 @@
 
             lastErrReport = {
               reporter: originalData.reporter, employee: originalData.employee,
-              errorTypes: originalData.errorTypes, severity: originalData.severity,
+              errorTypes: originalData.errorTypes,
               stage: originalData.stage, product: originalData.product,
               damageQty: originalData.damageQty, damageUnit: originalData.damageUnit,
               action: originalData.action, note: originalData.note,
@@ -2857,8 +2817,6 @@
             });
             document.getElementById('eReporter').value = keepReporter;
             document.querySelectorAll('#errorTypes .chk').forEach(function (el) { el.classList.remove('active'); });
-            errSeverity = '';
-            document.querySelectorAll('#sevRow .sev-btn').forEach(function (el) { el.classList.remove('active'); });
             clearErrPhoto();
           } else {
             showErrAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด'));
@@ -2877,7 +2835,6 @@
   <script>
     // ===== ส่วน "งานผิดพลาด" ในรายงานสรุปรายเดือน (ต่อท้ายส่วนสิ่งแปลกปลอม) =====
     var errMonthData = null;
-    var SEV_COLORS = { 'เล็กน้อย': '#16a34a', 'ปานกลาง': '#d97706', 'รุนแรง': '#dc2626' };
 
     function loadErrorMonthlySection(year, month) {
       var contEl = document.getElementById('monthContent');
@@ -2921,14 +2878,10 @@
         '<div class="rep-kpi"><div class="v err-accent">' + d.avgPerDay + '</div><div class="l">เฉลี่ยต่อวัน</div></div>' +
         '<div class="rep-kpi"><div class="v err-accent">' + d.activeDays + '</div><div class="l">จำนวนวันที่เกิด (จาก ' + d.daysInMonth + ' วัน)</div></div>' +
         '</div>';
-      var sc = d.severityCounts || {};
-      html += '<div class="rep-note">🚦 ความรุนแรง: ' +
-        '<b style="color:#16a34a">เล็กน้อย ' + (sc['เล็กน้อย'] || 0) + '</b> · ' +
-        '<b style="color:#d97706">ปานกลาง ' + (sc['ปานกลาง'] || 0) + '</b> · ' +
-        '<b style="color:#dc2626">รุนแรง ' + (sc['รุนแรง'] || 0) + '</b>' +
-        ((sc['ไม่ระบุ'] || 0) ? ' · ไม่ระบุ ' + sc['ไม่ระบุ'] : '') +
-        (d.busiestDay ? ' · 📌 วันที่เกิดมากสุด: วันที่ ' + d.busiestDay + ' (' + d.busiestCount + ' ครั้ง)' : '') +
-        '</div></div>';
+      if (d.busiestDay) {
+        html += '<div class="rep-note">📌 วันที่เกิดมากสุด: วันที่ ' + d.busiestDay + ' (' + d.busiestCount + ' ครั้ง)</div>';
+      }
+      html += '</div>';
 
       // แนวโน้มรายเดือน (แท่ง)
       var trend = d.monthTrend || [];
@@ -2944,20 +2897,6 @@
                   '<div class="t-lbl">' + esc(m.label) + '<br>' + esc(m.yearShort) + '</div></div>';
         });
         html += '</div></div>';
-      }
-
-      // แนวโน้มแยกระดับความรุนแรง (เส้น) — ใช้ตัววาดเดียวกับกราฟซัพพลายเออร์
-      var sevSeries = ((d.severityTrend || {}).series || []).map(function (s) {
-        return { name: s.name, values: s.values, total: s.total, color: SEV_COLORS[s.name] || '#6b7280' };
-      });
-      if (trend.length && sevSeries.length && sevSeries.some(function (s) { return s.total > 0; })) {
-        html += '<div class="card"><div class="dash-title">🚦 แนวโน้มตามระดับความรุนแรง (' + trend.length + ' เดือนล่าสุด)</div>';
-        html += '<div class="sup-legend">';
-        sevSeries.forEach(function (s, i) {
-          html += '<div class="sup-legend-item"><div class="sup-legend-dot" style="background:' + supColor(s, i) + '"></div>' +
-                  esc(s.name) + ' (' + s.total + ')</div>';
-        });
-        html += '</div>' + supLineChart(trend, sevSeries) + '</div>';
       }
 
       // รายวัน
