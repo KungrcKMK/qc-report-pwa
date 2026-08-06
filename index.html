@@ -801,7 +801,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v32 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v33 · 2026-08-06</span></div>
   </div>
 
   <script>
@@ -1194,20 +1194,25 @@
 
     // เรียกเมื่อแนบไฟล์รูปไปกับ share ไม่ได้ (เบราว์เซอร์/แอปไม่รองรับ Web Share ไฟล์ — พบบ่อยใน in-app browser เช่น LINE)
     // สำคัญ: ห้ามทิ้งรูปการ์ดไปเฉยๆ — ดาวน์โหลดให้ผู้ใช้แนบเอง ไม่งั้นข้อมูลหาย (มีแต่ข้อความ)
-    function shareTextFallback(text, cardUrl) {
+    // opts: { title, filename, alert } — รายงานคนละชนิดต้องใช้ชื่อเรื่อง/ชื่อไฟล์ของตัวเอง
+    function shareTextFallback(text, cardUrl, opts) {
+      opts = opts || {};
+      var title = opts.title || 'รายงานสิ่งแปลกปลอม';
+      var filename = opts.filename || 'qc-report.jpg';
+      var notify = opts.alert || showAlert;
       if (cardUrl) {
         try {
           var a = document.createElement('a');
-          a.href = cardUrl; a.download = 'qc-report.jpg';
+          a.href = cardUrl; a.download = filename;
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
         } catch (e) {}
       }
       if (navigator.share) {
-        navigator.share({ title: 'รายงานสิ่งแปลกปลอม', text: text }).catch(function () {});
-        if (cardUrl) showAlert('info', '📷 บันทึกรูปการ์ดลงเครื่องแล้ว (เบราว์เซอร์นี้แนบรูปพร้อมข้อความไม่ได้) — แนบรูปในแชทเพิ่มได้เลย');
+        navigator.share({ title: title, text: text }).catch(function () {});
+        if (cardUrl) notify('info', '📷 บันทึกรูปการ์ดลงเครื่องแล้ว (เบราว์เซอร์นี้แนบรูปพร้อมข้อความไม่ได้) — แนบรูปในแชทเพิ่มได้เลย');
       } else {
         copyText(text);
-        showAlert('info', cardUrl
+        notify('info', cardUrl
           ? '📋 คัดลอกข้อความ + บันทึกรูปการ์ดแล้ว — วางข้อความและแนบรูปใน LINE / Telegram'
           : '📋 คัดลอกข้อความแล้ว — วางใน LINE / Telegram ได้เลย');
       }
@@ -2848,7 +2853,11 @@
         function fallback(type, msg) {
           if (silentOnFail) return;
           if (msg) showErrAlert(type, msg);
-          shareTextFallback(text, card);
+          shareTextFallback(text, card, {
+            title: 'รายงานข้อผิดพลาดในการทำงาน',
+            filename: 'qc-error.jpg',
+            alert: showErrAlert
+          });
         }
         if (!card) { return fallback('error', '❌ ไม่มีรูปการ์ด — ลองส่งรายงานใหม่'); }
         if (!navigator.share) { return fallback('info', 'ℹ️ เบราว์เซอร์นี้ไม่รองรับการแชร์'); }
