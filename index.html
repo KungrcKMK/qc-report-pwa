@@ -327,6 +327,20 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
     }
+    /* กลุ่ม "ใช้บ่อย" ที่ตรึงไว้บนสุด — ลิสต์เต็มด้านล่างยังเรียงเหมือนเดิม */
+    .top-hint {
+      font-size: 12px;
+      font-weight: 600;
+      color: #b45309;
+      margin: 2px 0 6px;
+    }
+    #categoriesTop .chk { border-color: #fcd34d; background: #fffbeb; }
+    #categoriesTop .chk.active { border-color: #dc2626; background: #fef2f2; }
+    .top-sep {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 12px 0;
+    }
     .chk {
       display: flex;
       align-items: center;
@@ -499,6 +513,11 @@
 
         <div class="field">
           <label>🔍 สิ่งแปลกปลอม (เลือกได้หลายอัน) <span class="req">*</span></label>
+          <div id="categoriesTopWrap" style="display:none">
+            <div class="top-hint">⭐ ใช้บ่อย</div>
+            <div id="categoriesTop" class="checkbox-grid"></div>
+            <div class="top-sep"></div>
+          </div>
           <div id="categories" class="checkbox-grid"></div>
           <div class="add-row">
             <input type="text" id="categoryNew" placeholder="เพิ่มสิ่งแปลกปลอมใหม่">
@@ -801,7 +820,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v38 · 2026-08-06</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v39 · 2026-08-07</span></div>
   </div>
 
   <script>
@@ -885,12 +904,28 @@
       }
     }
 
-    function fillSelect(id, items) {
+    function fillSelect(id, items, top) {
       var sel = document.getElementById(id);
-      (items || []).forEach(function (it) {
+      var all = items || [];
+      function mkOption(it) {
         var opt = document.createElement('option');
-        opt.value = it; opt.textContent = it; sel.appendChild(opt);
-      });
+        opt.value = it; opt.textContent = it;
+        return opt;
+      }
+      // ที่ใช้บ่อยขึ้นก่อนในกลุ่มของตัวเอง แล้วตามด้วยลิสต์เต็มที่เรียงเหมือนเดิม
+      var pinned = (top || []).filter(function (t) { return all.indexOf(t) !== -1; });
+      if (pinned.length) {
+        var gTop = document.createElement('optgroup');
+        gTop.label = '⭐ ใช้บ่อย';
+        pinned.forEach(function (it) { gTop.appendChild(mkOption(it)); });
+        sel.appendChild(gTop);
+        var gAll = document.createElement('optgroup');
+        gAll.label = 'ทั้งหมด';
+        all.forEach(function (it) { gAll.appendChild(mkOption(it)); });
+        sel.appendChild(gAll);
+        return;
+      }
+      all.forEach(function (it) { sel.appendChild(mkOption(it)); });
     }
 
     function initCombo(id, label) {
@@ -924,46 +959,71 @@
     }
 
     // ----- categories (multi-select) -----
-    function addCategoryChip(name, checked) {
+    // รายการที่ใช้บ่อยถูกตรึงไว้บนสุด (#categoriesTop) และยังคงอยู่ในลิสต์เต็ม (#categories)
+    // ด้วย — ตัวเดียวกันจึงมีได้ 2 ช่อง ต้องซิงก์สถานะกันเสมอ
+    var CAT_SEL = '#categoriesTop input[type=checkbox], #categories input[type=checkbox]';
+
+    function syncCategoryBoxes(name, checked) {
+      var boxes = document.querySelectorAll(CAT_SEL);
+      for (var i = 0; i < boxes.length; i++) {
+        if (boxes[i].value !== name) continue;
+        boxes[i].checked = checked;
+        boxes[i].parentNode.classList.toggle('active', checked);
+      }
+    }
+
+    function addCategoryChip(name, checked, gridId) {
       name = String(name).trim();
       if (!name) return null;
-      var grid = document.getElementById('categories');
+      var grid = document.getElementById(gridId || 'categories');
       var lbl = document.createElement('label');
       lbl.className = 'chk' + (checked ? ' active' : '');
       var cb = document.createElement('input');
       cb.type = 'checkbox'; cb.value = name; cb.checked = !!checked;
-      cb.addEventListener('change', function () { lbl.classList.toggle('active', cb.checked); });
+      cb.addEventListener('change', function () { syncCategoryBoxes(name, cb.checked); });
       lbl.appendChild(cb);
       lbl.appendChild(document.createTextNode(name));
       grid.appendChild(lbl);
       return cb;
     }
 
-    function fillCheckboxes(items) {
-      (items || []).forEach(function (it) { addCategoryChip(it, false); });
+    function fillCheckboxes(items, top) {
+      var wrap = document.getElementById('categoriesTopWrap');
+      var grid = document.getElementById('categoriesTop');
+      grid.innerHTML = '';
+      var all = items || [];
+      // ตรึงเฉพาะชื่อที่ยังมีอยู่ในลิสต์จริง
+      var pinned = (top || []).filter(function (t) { return all.indexOf(t) !== -1; });
+      pinned.forEach(function (it) { addCategoryChip(it, false, 'categoriesTop'); });
+      wrap.style.display = pinned.length ? '' : 'none';
+      all.forEach(function (it) { addCategoryChip(it, false, 'categories'); });
     }
 
     function addCustomCategory() {
       var inp = document.getElementById('categoryNew');
       var name = inp.value.trim();
       if (!name) return;
-      var boxes = document.querySelectorAll('#categories input[type=checkbox]');
+      var boxes = document.querySelectorAll(CAT_SEL);
       for (var i = 0; i < boxes.length; i++) {
         if (boxes[i].value.toLowerCase() === name.toLowerCase()) {
-          boxes[i].checked = true;
-          boxes[i].parentNode.classList.add('active');
+          syncCategoryBoxes(boxes[i].value, true);
           inp.value = '';
           return;
         }
       }
-      addCategoryChip(name, true);
+      addCategoryChip(name, true, 'categories');
       inp.value = '';
     }
 
     function getCheckedCategories() {
-      var boxes = document.querySelectorAll('#categories input[type=checkbox]:checked');
-      var result = [];
-      for (var i = 0; i < boxes.length; i++) result.push(boxes[i].value);
+      var boxes = document.querySelectorAll(CAT_SEL);
+      var result = [], seen = {};
+      for (var i = 0; i < boxes.length; i++) {
+        var v = boxes[i].value;
+        if (!boxes[i].checked || seen[v]) continue;   // ตัวเดียวกันโผล่ 2 ที่ ต้องนับครั้งเดียว
+        seen[v] = 1;
+        result.push(v);
+      }
       return result;
     }
 
@@ -976,17 +1036,19 @@
       if (opts.products.length === 0) {
         showAlert('info', 'ยังไม่มีข้อมูลใน Sheet - กรุณา run setupV2Spreadsheet ก่อน');
       }
-      fillSelect('reporter', opts.workers);
-      fillSelect('product', opts.products);
-      fillSelect('stage', opts.stages);
-      fillSelect('supplier', opts.suppliers);
+      // อย่าตั้งชื่อตัวแปรนี้ว่า top — ชนกับ window.top
+      var topUsed = opts.top || {};
+      fillSelect('reporter', opts.workers, topUsed.workers);
+      fillSelect('product', opts.products, topUsed.products);
+      fillSelect('stage', opts.stages, topUsed.stages);
+      fillSelect('supplier', opts.suppliers, topUsed.suppliers);
       fillSelect('unit', opts.units);
       initCombo('reporter', '➕ ชื่ออื่น (พิมพ์เอง)');
       initCombo('product', '➕ พิมพ์เอง');
       initCombo('stage', '➕ พิมพ์เอง');
       initCombo('supplier', '➕ พิมพ์เอง');
       initCombo('unit', '➕ พิมพ์เอง');
-      fillCheckboxes(opts.categories);
+      fillCheckboxes(opts.categories, topUsed.categories);
       // ฟอร์มงานผิดพลาดใช้ options ชุดเดียวกัน (โมดูลอยู่ท้ายไฟล์ — เผื่อยังไม่โหลดจึงเช็คก่อน)
       try { if (typeof initErrorForm === 'function') initErrorForm(opts); } catch (e) { console.warn('initErrorForm failed', e); }
     }
@@ -1610,7 +1672,7 @@
               document.getElementById(id + 'New').style.display = 'none';
             });
             document.getElementById('reporter').value = keepReporter;
-            document.querySelectorAll('#categories .chk').forEach(function (el) {
+            document.querySelectorAll('#categoriesTop .chk, #categories .chk').forEach(function (el) {
               el.classList.remove('active');
             });
             clearPhoto();
