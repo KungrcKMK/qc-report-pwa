@@ -225,6 +225,12 @@
       .container { max-width: 100% !important; padding: 0 !important; }
       table.rep-tbl { font-size: 12px; }
       .rep-kpi .k-val { color: #000 !important; }
+      /* เบราว์เซอร์ตัดพื้นหลังทิ้งตอนพิมพ์ — บังคับให้พิมพ์สีแถบอันดับออกมาด้วย */
+      .rank-share, .rank-share > span, .rank-no {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .rank-row { page-break-inside: avoid; }
       @page { margin: 12mm; }
     }
     .period-sel { display: flex; gap: 6px; margin-bottom: 14px; }
@@ -233,10 +239,15 @@
     .dash-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: #374151; }
     .stat-big { font-size: 34px; font-weight: 800; color: #dc2626; text-align: center; line-height: 1.1; }
     .stat-label { text-align: center; font-size: 13px; color: #6b7280; }
-    .bar-row { margin-bottom: 8px; }
-    .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; color: #374151; }
-    .bar-track { height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
-    .bar-fill { height: 100%; background: linear-gradient(90deg, #dc2626, #ea580c); border-radius: 4px; }
+    /* กราฟอันดับ + สัดส่วน — แถบรวมด้านบน แล้วไล่อันดับด้านล่าง */
+    .rank-share { display: flex; height: 14px; border-radius: 4px; overflow: hidden; gap: 2px; margin-bottom: 12px; }
+    .rank-share > span { display: block; height: 100%; }
+    .rank-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+    .rank-row:last-child { border-bottom: none; }
+    .rank-no { width: 20px; height: 20px; border-radius: 4px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+    .rank-name { flex: 1; font-size: 14px; color: #374151; min-width: 0; overflow-wrap: anywhere; }
+    .rank-cnt { font-size: 14px; font-weight: 700; color: #374151; font-variant-numeric: tabular-nums; }
+    .rank-pct { font-size: 12px; color: #9ca3af; width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
     .score-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f3f4f6; }
     .score-row:last-child { border-bottom: none; }
     .score-rank { font-size: 18px; width: 30px; text-align: center; }
@@ -832,7 +843,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v40 · 2026-08-07</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v41 · 2026-08-07</span></div>
   </div>
 
   <script>
@@ -1467,15 +1478,42 @@
         .getDashboard();
     }
 
+    // สีประจำอันดับ (พื้น / ตัวเลข) — คู่ที่ 3-4 พื้นอ่อน ต้องใช้ตัวหนังสือเข้ม
+    var RANK_BG = ['#c0392f', '#d95926', '#e8926a', '#eda100', '#1baf7a', '#2a78d6', '#e87ba4', '#4a3aa7', '#008300', '#888780'];
+    var RANK_FG = ['#fff', '#fff', '#4a1b0c', '#412402', '#fff', '#fff', '#4b1528', '#fff', '#fff', '#fff'];
+    function rankColor(i) { return { bg: RANK_BG[i % RANK_BG.length], fg: RANK_FG[i % RANK_FG.length] }; }
+
+    // กราฟอันดับ + สัดส่วน ใช้ร่วมกันทั้งหน้าสรุปและรายงานรายเดือน
+    // % คิดจากผลรวมของรายการที่แสดง แถบด้านบนจึงตรงกับตัวเลขเสมอ
+    function rankMarkup(items, drillKind) {
+      var sum = 0;
+      items.forEach(function (it) { sum += (it.count || 0); });
+      if (!sum) sum = 1;
+
+      var share = items.map(function (it, i) {
+        var w = (it.count || 0) * 100 / sum;
+        return '<span style="width:' + w.toFixed(2) + '%;background:' + rankColor(i).bg + '"></span>';
+      }).join('');
+
+      var rows = items.map(function (it, i) {
+        var c = rankColor(i);
+        var pct = Math.round((it.count || 0) * 1000 / sum) / 10;
+        var attrs = drillKind ? ' data-drill="' + drillKind + '" data-val="' + esc(it.name) + '" style="cursor:pointer"' : '';
+        return '<div class="rank-row"' + attrs + '>' +
+               '<span class="rank-no" style="background:' + c.bg + ';color:' + c.fg + '">' + (i + 1) + '</span>' +
+               '<span class="rank-name">' + esc(it.name) + '</span>' +
+               '<span class="rank-cnt">' + it.count + '</span>' +
+               '<span class="rank-pct">' + pct + '%</span>' +
+               '</div>';
+      }).join('');
+
+      return '<div class="rank-share">' + share + '</div>' + rows;
+    }
+
     function renderBars(id, items, emptyMsg, drillKind) {
       var el = document.getElementById(id);
       if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">' + emptyMsg + '</div>'; return; }
-      var max = items[0].count || 1;
-      el.innerHTML = items.map(function (it) {
-        var pct = Math.max(6, Math.round((it.count / max) * 100));
-        var attrs = drillKind ? ' data-drill="' + drillKind + '" data-val="' + esc(it.name) + '" style="cursor:pointer"' : '';
-        return '<div class="bar-row"' + attrs + '><div class="bar-label"><span>' + esc(it.name) + '</span><span>' + it.count + '</span></div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div></div>';
-      }).join('');
+      el.innerHTML = rankMarkup(items, drillKind);
     }
 
     function renderScoreboard(items) {
@@ -2276,6 +2314,14 @@
     }
 
     // noPct = ไม่ต้องมีคอลัมน์ % (ใช้ในสรุปงานผิดพลาด)
+    // การ์ดอันดับของรายงานรายเดือน (ใช้กราฟชุดเดียวกับหน้าสรุป)
+    // repTable ตัวเดิมยังอยู่ เพราะหน้า ⚠️ ผิดพลาด ใช้อยู่
+    function rankCard(title, icon, list) {
+      var html = '<div class="card"><div class="dash-title">' + icon + ' ' + title + '</div>';
+      if (!list || !list.length) return html + '<div class="rep-empty">ไม่มีข้อมูลในเดือนนี้</div></div>';
+      return html + rankMarkup(list) + '</div>';
+    }
+
     function repTable(title, icon, list, colName, noPct) {
       var html = '<div class="card"><div class="dash-title">' + icon + ' ' + title + '</div>';
       if (!list || !list.length) {
@@ -2378,11 +2424,11 @@
       });
       html += '</div></div>';
 
-      html += repTable('สิ่งแปลกปลอมที่พบ', '🔍', d.categories, 'สิ่งแปลกปลอม');
-      html += repTable('ผลิตภัณฑ์/วัตถุดิบ', '🍯', d.products, 'ผลิตภัณฑ์');
-      html += repTable('ซัพพลายเออร์', '🏭', d.suppliers, 'ซัพพลายเออร์');
-      html += repTable('จุด/กระบวนการที่พบ', '⚙️', d.stages, 'กระบวนการ');
-      html += repTable('ผู้พบ', '👤', d.reporters, 'ผู้พบ');
+      html += rankCard('สิ่งแปลกปลอมที่พบ', '🔍', d.categories);
+      html += rankCard('ผลิตภัณฑ์/วัตถุดิบ', '🍯', d.products);
+      html += rankCard('ซัพพลายเออร์', '🏭', d.suppliers);
+      html += rankCard('จุด/กระบวนการที่พบ', '⚙️', d.stages);
+      html += rankCard('ผู้พบ', '👤', d.reporters);
 
       // ช่องเซ็นสำหรับที่ประชุม
       html += '<div class="card"><div class="rep-sign">' +
