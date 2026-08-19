@@ -54,10 +54,6 @@
       white-space: nowrap;
     }
     .tab.active { background: linear-gradient(135deg,#dc2626,#ea580c); color: #fff; }
-    /* แท็บงานผิดพลาด — โทนเหลือง/ส้ม แยกจากสิ่งแปลกปลอม (สีแดง) กันกดผิด */
-    .tab-err.active { background: linear-gradient(135deg,#d97706,#f59e0b); }
-    .err-accent { color: #b45309; }
-    .btn-err { background: linear-gradient(135deg,#d97706,#f59e0b); }
     /* ป๊อปอัพแจ้งเวอร์ชันใหม่ */
     .update-pop {
       display: none; position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 9999;
@@ -78,35 +74,6 @@
     @media print { .update-pop { display: none !important; } }
 
     /* รายชื่อที่เลือกไว้จาก dropdown (กด ✕ เพื่อเอาออก) */
-    .sel-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .sel-list:empty { display: none; }
-    .sel-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #fef3c7; color: #92400e; border: 1.5px solid #d97706;
-      border-radius: 999px; padding: 5px 8px 5px 12px; font-size: 13px; font-weight: 600;
-    }
-    .sel-chip button {
-      border: none; background: #d97706; color: #fff; cursor: pointer;
-      width: 18px; height: 18px; line-height: 1; border-radius: 50%;
-      font-family: inherit; font-size: 12px; padding: 0;
-    }
-    .sel-empty { font-size: 12px; color: #9ca3af; margin-top: 6px; }
-
-    /* กราฟแท่งแนวนอน เทียบรายบุคคล (ชื่อไทยยาว แนวนอนอ่านง่ายกว่าแนวตั้ง) */
-    .hbar { margin-top: 8px; }
-    .hbar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-    .hbar-name { width: 88px; flex: none; font-size: 12px; color: #374151; text-align: right;
-                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .hbar-track { flex: 1; min-width: 0; background: #f3f4f6; border-radius: 6px; height: 20px; overflow: hidden; }
-    .hbar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #d97706); border-radius: 6px; min-width: 2px; }
-    .hbar-val { width: 30px; flex: none; font-size: 13px; font-weight: 700; color: #b45309; text-align: right; }
-
-    .sev-row { display: flex; gap: 6px; }
-    .sev-btn {
-      flex: 1; padding: 9px 4px; border: 1.5px solid #e5e7eb; border-radius: 8px;
-      background: #fff; color: #6b7280; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-    }
-    .sev-btn.active { background: #fef3c7; border-color: #d97706; color: #92400e; }
     .install-banner { display: none; background: #dbeafe; color: #1e3a8a; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 13px; align-items: center; gap: 8px; }
     .install-banner.show { display: flex; }
     .install-banner b { flex: 1; }
@@ -170,11 +137,6 @@
     .rep-kpi .k-lab { font-size: 12px; color: #6b7280; margin-top: 2px; }
     .rep-kpi .k-val.up { color: #dc2626; }
     .rep-kpi .k-val.down { color: #059669; }
-    table.rep-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-    table.rep-tbl th, table.rep-tbl td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
-    table.rep-tbl th { background: #f9fafb; font-weight: 700; color: #374151; }
-    table.rep-tbl td.num, table.rep-tbl th.num { text-align: right; width: 64px; white-space: nowrap; }
-    table.rep-tbl tbody tr:nth-child(odd) { background: #fcfcfd; }
     .rep-empty { color: #9ca3af; font-size: 13px; padding: 6px 2px; }
     .rep-days { display: flex; align-items: flex-end; gap: 2px; height: 90px; margin-top: 6px; }
     .rep-days .d-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
@@ -223,7 +185,6 @@
       .header h1, .header .sub { color: #000 !important; }
       .card { box-shadow: none !important; border: 1px solid #e5e7eb; page-break-inside: avoid; margin-bottom: 10px; }
       .container { max-width: 100% !important; padding: 0 !important; }
-      table.rep-tbl { font-size: 12px; }
       .rep-kpi .k-val { color: #000 !important; }
       /* เบราว์เซอร์ตัดพื้นหลังทิ้งตอนพิมพ์ — บังคับให้พิมพ์สีแถบอันดับออกมาด้วย */
       .rank-share, .rank-share > span, .rank-no {
@@ -475,7 +436,6 @@
 
     <div class="tabs">
       <button type="button" class="tab active" data-page="form">🔍<br>แปลกปลอม</button>
-      <button type="button" class="tab tab-err" data-page="err">⚠️<br>ผิดพลาด</button>
       <button type="button" class="tab" data-page="dash">📊<br>สรุป</button>
       <button type="button" class="tab" data-page="history">📜<br>ประวัติ</button>
       <button type="button" class="tab" data-page="qr">📲<br>แชร์</button>
@@ -586,77 +546,6 @@
     </form>
     </div>
 
-    <div id="errPage" style="display:none">
-      <div id="errAlert" class="alert"></div>
-      <form id="errForm">
-        <div class="card">
-          <div class="field">
-            <label>📷 รูปถ่าย (ถ้ามี)</label>
-            <input type="file" id="ePhotoCam" accept="image/*" capture="environment" style="display:none">
-            <input type="file" id="ePhotoGal" accept="image/*" style="display:none">
-            <div id="ePhotoControls" style="display:flex; gap:8px;">
-              <button type="button" class="btn-photo" id="ePhotoCamBtn" style="flex:1;">📷 ถ่ายรูป</button>
-              <button type="button" class="btn-photo" id="ePhotoGalBtn" style="flex:1;">🖼️ จากเครื่อง</button>
-            </div>
-            <div id="ePhotoPreviewWrap" style="display:none; margin-top:10px;">
-              <img id="ePhotoPreview" alt="preview">
-              <button type="button" class="btn-remove" id="ePhotoRemoveBtn">🗑 ลบรูป</button>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>👤 ผู้รายงาน <span class="req">*</span></label>
-            <select id="eReporter"><option value="">-- เลือก --</option></select>
-            <input type="text" id="eReporterNew" class="combo-new" placeholder="พิมพ์ชื่อผู้รายงานใหม่" style="display:none">
-          </div>
-
-          <div class="field">
-            <label>🧑‍🏭 พนักงานที่เกี่ยวข้อง (เลือกได้หลายคน) <span class="req">*</span></label>
-            <select id="eEmployee"><option value="">-- เลือกพนักงาน --</option></select>
-            <input type="text" id="eEmployeeNew" class="combo-new" placeholder="พิมพ์ชื่อพนักงานใหม่ แล้วกด Enter" style="display:none">
-            <div id="employeeList" class="sel-list"></div>
-          </div>
-
-          <div class="field">
-            <label>⚠️ ประเภทข้อผิดพลาด หรือผิดระเบียบ (เลือกได้หลายอัน) <span class="req">*</span></label>
-            <select id="eErrType"><option value="">-- เลือกประเภท --</option></select>
-            <input type="text" id="eErrTypeNew" class="combo-new" placeholder="พิมพ์ประเภทใหม่ แล้วกด Enter" style="display:none">
-            <div id="errorTypeList" class="sel-list"></div>
-          </div>
-
-          <div class="field">
-            <label>📝 หมายเหตุ</label>
-            <textarea id="eNote" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
-          </div>
-
-          <div class="field">
-            <label>🗓 วันเวลาที่เกิด (รายงานย้อนหลัง)</label>
-            <input type="datetime-local" id="eFoundAt">
-            <div style="font-size:12px; color:#9ca3af; margin-top:4px;">เว้นว่าง = ใช้เวลาปัจจุบัน</div>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-err" id="eSubmitBtn">📨 ส่งรายงาน</button>
-        <button type="button" class="btn-share" id="eShareBtn" style="display:none">📤 แชร์รายงานล่าสุดอีกครั้ง</button>
-      </form>
-
-      <div class="section-divider">📊 สรุปการทำงานผิดพลาด หรือ ผิดระเบียบ</div>
-      <div class="card">
-        <div class="sev-row" id="esModeRow">
-          <button type="button" class="sev-btn active" data-mode="month">รายเดือน</button>
-          <button type="button" class="sev-btn" data-mode="year">รายปี</button>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
-          <select id="esMonthM" style="flex:1;"></select>
-          <select id="esMonthY" style="flex:1;"></select>
-          <select id="esYear" style="flex:1; display:none;"></select>
-          <button type="button" class="exec-btn primary" id="esLoadBtn">ดูสรุป</button>
-        </div>
-      </div>
-      <div id="esLoading" class="loading"><div class="spinner"></div>กำลังสรุป...</div>
-      <div id="esContent"></div>
-    </div>
-
     <div id="dashPage" style="display:none">
       <div id="dashLoading" class="loading show"><div class="spinner"></div>กำลังโหลดสรุป...</div>
       <div id="dashContent" style="display:none">
@@ -743,10 +632,6 @@
     <div id="historyPage" style="display:none">
       <div class="card">
         <div class="dash-title">📜 ค้นหา/กรองรายงาน</div>
-        <div class="sev-row" id="hKindRow" style="margin-bottom:10px;">
-          <button type="button" class="sev-btn active" data-kind="qc">🔍 สิ่งแปลกปลอม</button>
-          <button type="button" class="sev-btn" data-kind="error">⚠️ งานผิดพลาด</button>
-        </div>
         <div class="field">
           <input type="text" id="hQ" class="hist-search" placeholder="🔎 ค้นหาคำใดก็ได้ (ผลิตภัณฑ์/หมวด/หมายเหตุ)">
         </div>
@@ -757,10 +642,6 @@
         <div class="filter-row" id="hQcRow2">
           <select id="hCat"><option value="">หมวดทั้งหมด</option></select>
           <select id="hRep"><option value="">ผู้พบทั้งหมด</option></select>
-        </div>
-        <div class="filter-row" id="hErrRow" style="display:none;">
-          <select id="hErrType"><option value="">ทุกประเภทข้อผิดพลาด</option></select>
-          <select id="hEmp"><option value="">พนักงานทุกคน</option></select>
         </div>
         <div class="filter-row">
           <input type="date" id="hFrom">
@@ -843,7 +724,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v41 · 2026-08-07</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v42 · 2026-08-07</span></div>
   </div>
 
   <script>
@@ -853,8 +734,7 @@
     (function () {
       var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };
       // แหล่งเดียวของรายชื่อ action — ต้องครบทุกตัวที่แอปเรียก ไม่งั้น wrapper ข้างล่างจะ throw
-      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport',
-                     'saveErrorReport', 'searchErrorReports', 'deleteErrorReport', 'getErrorSummary', 'ping'];
+      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport', 'ping'];
       window.__API_ACTIONS = ACTIONS;
       function makeRunner() {
         var success = null, failure = null;
@@ -1096,8 +976,6 @@
       initCombo('supplier', '➕ พิมพ์เอง');
       initCombo('unit', '➕ พิมพ์เอง');
       fillCheckboxes(opts.categories, topUsed.categories);
-      // ฟอร์มงานผิดพลาดใช้ options ชุดเดียวกัน (โมดูลอยู่ท้ายไฟล์ — เผื่อยังไม่โหลดจึงเช็คก่อน)
-      try { if (typeof initErrorForm === 'function') initErrorForm(opts); } catch (e) { console.warn('initErrorForm failed', e); }
     }
 
     function onOptionsError(err) {
@@ -1428,7 +1306,7 @@
 
     // ----- tab navigation (รายงาน / สรุป / แชร์) -----
     function switchPage(page) {
-      var map = { form: 'formPage', err: 'errPage', dash: 'dashPage', history: 'historyPage', qr: 'qrPage' };
+      var map = { form: 'formPage', dash: 'dashPage', history: 'historyPage', qr: 'qrPage' };
       Object.keys(map).forEach(function (k) {
         document.getElementById(map[k]).style.display = (k === page) ? '' : 'none';
       });
@@ -1437,7 +1315,6 @@
         tabs[i].classList.toggle('active', tabs[i].getAttribute('data-page') === page);
       }
       if (page === 'dash') { loadDashboard(false); initMonthPage(); }
-      if (page === 'err') initErrSummary();
       if (page === 'history') { initHistoryFilters(); runHistorySearch(); }
       if (page === 'qr') {
         document.getElementById('qrMsg').textContent = '';
@@ -1822,26 +1699,6 @@
     var historyTotal = 0;
     var historyFiltersInited = false;
     var historyDrillFilter = null; // {kind, val}
-    var historyKind = 'qc';        // 'qc' = สิ่งแปลกปลอม, 'error' = งานผิดพลาด
-
-    // สลับประเภทรายงานในหน้าประวัติ — ซ่อน/แสดงตัวกรองให้ตรงชนิด
-    document.querySelectorAll('#hKindRow .sev-btn').forEach(function (b) {
-      b.addEventListener('click', function () {
-        historyKind = b.getAttribute('data-kind');
-        document.querySelectorAll('#hKindRow .sev-btn').forEach(function (x) {
-          x.classList.toggle('active', x === b);
-        });
-        var isErr = historyKind === 'error';
-        document.getElementById('hQcRow1').style.display = isErr ? 'none' : '';
-        document.getElementById('hQcRow2').style.display = isErr ? 'none' : '';
-        document.getElementById('hErrRow').style.display = isErr ? '' : 'none';
-        document.getElementById('hQ').placeholder = isErr
-          ? '🔎 ค้นหาคำใดก็ได้ (ประเภท/พนักงาน/การแก้ไข)'
-          : '🔎 ค้นหาคำใดก็ได้ (ผลิตภัณฑ์/หมวด/หมายเหตุ)';
-        historyOffset = 0;
-        runHistorySearch(true);
-      });
-    });
 
     function initHistoryFilters() {
       if (historyFiltersInited) {
@@ -1864,8 +1721,6 @@
       fill('hProd', opts.products);
       fill('hCat', opts.categories);
       fill('hRep', opts.workers);
-      fill('hErrType', opts.errorTypes);
-      fill('hEmp', opts.workers);
       historyFiltersInited = true;
       // default 30 วันล่าสุด
       var today = new Date();
@@ -1910,16 +1765,7 @@
         try { mine = localStorage.getItem('defaultReporter') || ''; } catch (e) {}
         if (mine) rep = mine;
       }
-      var isErr = (historyKind === 'error');
-      var params = isErr ? {
-        from: document.getElementById('hFrom').value,
-        to: document.getElementById('hTo').value,
-        errorType: document.getElementById('hErrType').value,
-        employee: document.getElementById('hEmp').value,
-        reporter: rep,
-        q: document.getElementById('hQ').value.trim(),
-        offset: historyOffset, limit: historyLimit
-      } : {
+      var params = {
         from: document.getElementById('hFrom').value,
         to: document.getElementById('hTo').value,
         supplier: document.getElementById('hSup').value,
@@ -1936,15 +1782,6 @@
           countEl.textContent = 'พบ ' + res.total + ' รายการ' + (res.total > historyLimit ? ' (แสดง ' + (res.offset + 1) + '-' + Math.min(res.offset + res.rows.length, res.total) + ')' : '');
           if (!res.rows.length) { listEl.innerHTML = '<div class="hist-empty">ไม่พบรายการ</div>'; return; }
           listEl.innerHTML = res.rows.map(function (r) {
-            if (isErr) {
-              var emp = r.employee ? ' · 🧑‍🏭 ' + esc(r.employee) : ''; // ช่องนี้เก็บได้หลายคน คั่นด้วย ,
-              return '<div class="hist-row" data-row="' + r.rowIndex + '">' +
-                '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
-                '<div class="hist-cat err-accent">⚠️ ' + esc(r.errorTypes || '-') + '</div>' +
-                '<div class="hist-sub">👤 ' + esc(r.reporter || '-') + emp + '</div>' +
-                (r.note ? '<div class="hist-sub" style="color:#6b7280">📝 ' + esc(r.note) + '</div>' : '') +
-                '</div>';
-            }
             var sup = r.supplier ? ' · 🏭 ' + esc(r.supplier) : '';
             return '<div class="hist-row" data-row="' + r.rowIndex + '">' +
               '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
@@ -1968,27 +1805,12 @@
           listEl.querySelectorAll('.hist-row').forEach(function (el) {
             el.addEventListener('click', function () {
               var row = res.rows.find(function (x) { return x.rowIndex == el.getAttribute('data-row'); });
-              if (isErr) confirmDeleteErrorRow(row);
-              else openEditModal(row);
+              openEditModal(row);
             });
           });
         })
         .withFailureHandler(function (err) { listEl.innerHTML = '<div class="hist-empty">❌ ' + esc(err) + '</div>'; });
-      if (isErr) runner.searchErrorReports(params);
-      else runner.searchReports(params);
-    }
-
-    // รายงานงานผิดพลาดยังไม่มีหน้าแก้ไข — แตะแถวเพื่อลบ (ยืนยันก่อน)
-    function confirmDeleteErrorRow(row) {
-      if (!row) return;
-      if (!confirm('ลบรายงานข้อผิดพลาดนี้?\n\n⚠️ ' + (row.errorTypes || '-') + '\n🗓 ' + row.timestamp + '\n👤 ' + (row.reporter || '-'))) return;
-      google.script.run
-        .withSuccessHandler(function (res) {
-          if (res && res.ok) runHistorySearch(false);
-          else alert('ลบไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
-        })
-        .withFailureHandler(function (err) { alert('ลบไม่สำเร็จ: ' + err); })
-        .deleteErrorReport({ rowIndex: row.rowIndex, actor: (function () { try { return localStorage.getItem('defaultReporter') || ''; } catch (e) { return ''; } })() });
+      runner.searchReports(params);
     }
 
     document.getElementById('hSearch').addEventListener('click', function () { runHistorySearch(true); });
@@ -1998,8 +1820,6 @@
       document.getElementById('hProd').value = '';
       document.getElementById('hCat').value = '';
       document.getElementById('hRep').value = '';
-      document.getElementById('hErrType').value = '';
-      document.getElementById('hEmp').value = '';
       document.getElementById('hMineOnly').checked = false;
       document.getElementById('hQ').value = '';
       var today = new Date();
@@ -2109,12 +1929,11 @@
         req.onerror = function () { reject(req.error); };
       });
     }
-    // kind: 'error' = รายงานงานผิดพลาด, ไม่ระบุ = รายงานสิ่งแปลกปลอม (ของเดิม)
-    function queueAdd(data, kind) {
+    function queueAdd(data) {
       return openQueueDB().then(function (db) {
         return new Promise(function (resolve, reject) {
           var tx = db.transaction(DB_STORE, 'readwrite');
-          tx.objectStore(DB_STORE).add({ data: data, kind: kind || 'qc', ts: new Date().toISOString() });
+          tx.objectStore(DB_STORE).add({ data: data, ts: new Date().toISOString() });
           tx.oncomplete = function () { resolve(); };
           tx.onerror = function () { reject(tx.error); };
         });
@@ -2162,8 +1981,7 @@
           var runner = google.script.run
             .withSuccessHandler(function (res) { if (res && res.ok) { queueDelete(item.id).then(updateQueueBadge); } })
             .withFailureHandler(function () {});
-          if (item.kind === 'error') runner.saveErrorReport(item.data);
-          else runner.saveReport(item.data);
+          runner.saveReport(item.data);
         });
       });
     }
@@ -2313,31 +2131,13 @@
       return s + '</svg>';
     }
 
-    // noPct = ไม่ต้องมีคอลัมน์ % (ใช้ในสรุปงานผิดพลาด)
     // การ์ดอันดับของรายงานรายเดือน (ใช้กราฟชุดเดียวกับหน้าสรุป)
-    // repTable ตัวเดิมยังอยู่ เพราะหน้า ⚠️ ผิดพลาด ใช้อยู่
     function rankCard(title, icon, list) {
       var html = '<div class="card"><div class="dash-title">' + icon + ' ' + title + '</div>';
       if (!list || !list.length) return html + '<div class="rep-empty">ไม่มีข้อมูลในเดือนนี้</div></div>';
       return html + rankMarkup(list) + '</div>';
     }
 
-    function repTable(title, icon, list, colName, noPct) {
-      var html = '<div class="card"><div class="dash-title">' + icon + ' ' + title + '</div>';
-      if (!list || !list.length) {
-        html += '<div class="rep-empty">ไม่มีข้อมูลในเดือนนี้</div></div>';
-        return html;
-      }
-      html += '<table class="rep-tbl"><thead><tr><th class="num">#</th><th>' + colName +
-              '</th><th class="num">ครั้ง</th>' + (noPct ? '' : '<th class="num">%</th>') + '</tr></thead><tbody>';
-      list.forEach(function (it, i) {
-        html += '<tr><td class="num">' + (i + 1) + '</td><td>' + esc(it.name) +
-                '</td><td class="num">' + it.count + '</td>' +
-                (noPct ? '' : '<td class="num">' + it.pct + '%</td>') + '</tr>';
-      });
-      html += '</tbody></table></div>';
-      return html;
-    }
 
     function renderMonthlyReport(d) {
       var html = '';
@@ -2744,544 +2544,6 @@
     }
   </script>
 
-  <script>
-    // ===== รายงานข้อผิดพลาดในการทำงานของพนักงาน (แท็บ ⚠️ ผิดพลาด) =====
-    var errAlertEl = document.getElementById('errAlert');
-    var errForm = document.getElementById('errForm');
-    var eSubmitBtn = document.getElementById('eSubmitBtn');
-    var errPhotoDataUrl = null;
-    var lastErrReport = null;
-    var errAlertTimer = null;
-
-    function showErrAlert(type, msg) {
-      errAlertEl.className = 'alert show ' + type;
-      errAlertEl.textContent = msg;
-      if (errAlertTimer) clearTimeout(errAlertTimer);
-      if (type !== 'error') errAlertTimer = setTimeout(function () { errAlertEl.className = 'alert'; }, 12000);
-      scrollAlertIntoView(errAlertEl);
-    }
-
-    // ----- รูปถ่าย -----
-    var ePhotoCam = document.getElementById('ePhotoCam');
-    var ePhotoGal = document.getElementById('ePhotoGal');
-    var ePhotoCamBtn = document.getElementById('ePhotoCamBtn');
-    var ePhotoGalBtn = document.getElementById('ePhotoGalBtn');
-    var ePhotoControls = document.getElementById('ePhotoControls');
-    var ePhotoPreview = document.getElementById('ePhotoPreview');
-    var ePhotoPreviewWrap = document.getElementById('ePhotoPreviewWrap');
-
-    ePhotoCamBtn.addEventListener('click', function () { ePhotoCam.click(); });
-    ePhotoGalBtn.addEventListener('click', function () { ePhotoGal.click(); });
-    document.getElementById('ePhotoRemoveBtn').addEventListener('click', clearErrPhoto);
-
-    function eHandlePick(input, btn, origLabel) {
-      var file = input.files && input.files[0];
-      if (!file) return;
-      btn.textContent = '⏳ กำลังย่อรูป...';
-      resizeImage(file, 1280, 0.7, function (dataUrl) {
-        btn.textContent = origLabel;
-        if (!dataUrl) { showErrAlert('error', 'อ่านรูปไม่ได้ ลองใหม่'); return; }
-        errPhotoDataUrl = dataUrl;
-        ePhotoPreview.src = dataUrl;
-        ePhotoPreviewWrap.style.display = '';
-        ePhotoControls.style.display = 'none';
-      });
-    }
-    ePhotoCam.addEventListener('change', function () { eHandlePick(ePhotoCam, ePhotoCamBtn, '📷 ถ่ายรูป'); });
-    ePhotoGal.addEventListener('change', function () { eHandlePick(ePhotoGal, ePhotoGalBtn, '🖼️ จากเครื่อง'); });
-
-    function clearErrPhoto() {
-      errPhotoDataUrl = null;
-      ePhotoCam.value = ''; ePhotoGal.value = '';
-      ePhotoPreview.src = '';
-      ePhotoPreviewWrap.style.display = 'none';
-      ePhotoControls.style.display = 'flex';
-    }
-
-    // ----- ประเภทข้อผิดพลาด: เลือกจาก dropdown ทีละอัน สะสมเป็นรายการด้านล่าง -----
-    var selectedErrorTypes = [];
-
-    function renderErrorTypeList() {
-      var box = document.getElementById('errorTypeList');
-      box.innerHTML = '';
-      selectedErrorTypes.forEach(function (name) {
-        var chip = document.createElement('span');
-        chip.className = 'sel-chip';
-        chip.appendChild(document.createTextNode(name));
-        var x = document.createElement('button');
-        x.type = 'button';
-        x.textContent = '✕';
-        x.setAttribute('aria-label', 'เอา ' + name + ' ออก');
-        x.addEventListener('click', function () { removeErrorType(name); });
-        chip.appendChild(x);
-        box.appendChild(chip);
-      });
-    }
-    function addErrorType(name) {
-      name = String(name || '').trim();
-      if (!name) return;
-      var dup = selectedErrorTypes.some(function (n) { return n.toLowerCase() === name.toLowerCase(); });
-      if (!dup) selectedErrorTypes.push(name);
-      renderErrorTypeList();
-    }
-    function removeErrorType(name) {
-      selectedErrorTypes = selectedErrorTypes.filter(function (n) { return n !== name; });
-      renderErrorTypeList();
-    }
-    function clearErrorTypes() {
-      selectedErrorTypes = [];
-      renderErrorTypeList();
-    }
-    function getCheckedErrorTypes() { return selectedErrorTypes.slice(); }
-
-    (function () {
-      var sel = document.getElementById('eErrType');
-      var txt = document.getElementById('eErrTypeNew');
-      sel.addEventListener('change', function () {
-        if (sel.value === NEW_VALUE) { txt.style.display = ''; txt.focus(); return; }
-        if (sel.value) { addErrorType(sel.value); }
-        txt.style.display = 'none';
-        sel.value = ''; // คืน dropdown เป็นค่าว่าง พร้อมเลือกอันถัดไป
-      });
-      function commitTyped() {
-        var name = txt.value.trim();
-        if (!name) return;
-        addErrorType(name);
-        txt.value = '';
-        txt.style.display = 'none';
-        sel.value = '';
-      }
-      txt.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); commitTyped(); }
-      });
-      txt.addEventListener('blur', commitTyped);
-    })();
-    // ----- พนักงานที่เกี่ยวข้อง: เลือกจาก dropdown ทีละคน สะสมเป็นรายการด้านล่าง -----
-    var selectedEmployees = [];
-
-    function renderEmployeeList() {
-      var box = document.getElementById('employeeList');
-      box.innerHTML = '';
-      selectedEmployees.forEach(function (name) {
-        var chip = document.createElement('span');
-        chip.className = 'sel-chip';
-        chip.appendChild(document.createTextNode(name));
-        var x = document.createElement('button');
-        x.type = 'button';
-        x.textContent = '✕';
-        x.setAttribute('aria-label', 'เอา ' + name + ' ออก');
-        x.addEventListener('click', function () { removeEmployee(name); });
-        chip.appendChild(x);
-        box.appendChild(chip);
-      });
-    }
-    function addEmployee(name) {
-      name = String(name || '').trim();
-      if (!name) return;
-      var dup = selectedEmployees.some(function (n) { return n.toLowerCase() === name.toLowerCase(); });
-      if (!dup) selectedEmployees.push(name);
-      renderEmployeeList();
-    }
-    function removeEmployee(name) {
-      selectedEmployees = selectedEmployees.filter(function (n) { return n !== name; });
-      renderEmployeeList();
-    }
-    function clearEmployees() {
-      selectedEmployees = [];
-      renderEmployeeList();
-    }
-    function getCheckedEmployees() { return selectedEmployees.slice(); }
-
-    (function () {
-      var sel = document.getElementById('eEmployee');
-      var txt = document.getElementById('eEmployeeNew');
-      sel.addEventListener('change', function () {
-        if (sel.value === NEW_VALUE) { txt.style.display = ''; txt.focus(); return; }
-        if (sel.value) { addEmployee(sel.value); }
-        txt.style.display = 'none';
-        sel.value = ''; // คืน dropdown เป็นค่าว่าง พร้อมเลือกคนถัดไป
-      });
-      function commitTyped() {
-        var name = txt.value.trim();
-        if (!name) return;
-        addEmployee(name);
-        txt.value = '';
-        txt.style.display = 'none';
-        sel.value = '';
-      }
-      txt.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); commitTyped(); }
-      });
-      txt.addEventListener('blur', commitTyped);
-    })();
-
-
-    function initErrorForm(opts) {
-      fillSelect('eReporter', opts.workers);
-      initCombo('eReporter', '➕ ชื่ออื่น (พิมพ์เอง)');
-      fillSelect('eErrType', opts.errorTypes);
-      initCombo('eErrType', '➕ พิมพ์เอง');
-      fillSelect('eEmployee', opts.workers);
-      initCombo('eEmployee', '➕ ชื่ออื่น (พิมพ์เอง)');
-      try {
-        var n = new Date();
-        function p(x) { return (x < 10 ? '0' : '') + x; }
-        document.getElementById('eFoundAt').max = n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()) + 'T' + p(n.getHours()) + ':' + p(n.getMinutes());
-      } catch (e) {}
-    }
-
-    // ----- ข้อความ + การ์ดสำหรับแชร์ -----
-    function buildErrorShareText(d) {
-      var lines = ['⚠️ รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ', ''];
-      if (d.errorTypes && d.errorTypes.length) lines.push('❗ เรื่อง: ' + d.errorTypes.join(', '));
-      if (d.employees && d.employees.length) lines.push('🧑‍🏭 พนักงาน: ' + d.employees.join(', '));
-      lines.push('');
-      if (d.reporter) lines.push('👤 ผู้รายงาน: ' + d.reporter);
-      if (d.note) lines.push('📝 หมายเหตุ: ' + d.note);
-      lines.push('🗓 ' + (d.time || fmtNow()));
-      return lines.join('\n');
-    }
-
-    function renderErrorCard(d, cb) {
-      var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 210;
-      var entries = ['❗ เรื่อง: ' + (d.errorTypes && d.errorTypes.length ? d.errorTypes.join(', ') : '-')];
-      // พนักงานที่เกี่ยวข้องอยู่ในเนื้อการ์ด (พื้นที่ขาว) และเรียงเป็นลำดับ — หัวการ์ดเหลือแค่ผู้รายงาน
-      if (d.employees && d.employees.length) {
-        entries.push('🧑‍🏭 พนักงานที่เกี่ยวข้อง:');
-        d.employees.forEach(function (n, i) { entries.push('      ' + (i + 1) + '. ' + n); });
-      }
-      if (d.note) entries.push('📝 หมายเหตุ: ' + d.note);
-
-      function finish(photoImg) {
-        var meas = document.createElement('canvas').getContext('2d');
-        meas.font = FS + 'px sans-serif';
-        var maxW = W - PAD * 2, rows = [];
-        entries.forEach(function (e) { wrapText(meas, e, maxW).forEach(function (ln) { rows.push(ln); }); });
-
-        var bodyTop = headerH + 40;
-        var afterBody = bodyTop + rows.length * LH + 12;
-        var pw = W - PAD * 2, ph = 0;
-        if (photoImg) ph = Math.round(pw * photoImg.height / photoImg.width);
-        var footerTop = afterBody + (photoImg ? ph + 28 : 0);
-        var H = footerTop + 62;
-
-        var c = document.createElement('canvas'); c.width = W; c.height = H;
-        var ctx = c.getContext('2d');
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
-        var g = ctx.createLinearGradient(0, 0, W, headerH);
-        g.addColorStop(0, '#d97706'); g.addColorStop(1, '#f59e0b');
-        ctx.fillStyle = g; ctx.fillRect(0, 0, W, headerH);
-        ctx.fillStyle = '#ffffff';
-        // หัวเรื่องยาว — ย่อขนาดฟอนต์ให้พอดีความกว้างการ์ด ไม่ให้ล้นออกนอกกรอบ
-        var title = '⚠️ รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ';
-        var titleSize = 44;
-        ctx.font = 'bold ' + titleSize + 'px sans-serif';
-        while (titleSize > 24 && ctx.measureText(title).width > W - PAD * 2) {
-          titleSize -= 2;
-          ctx.font = 'bold ' + titleSize + 'px sans-serif';
-        }
-        ctx.fillText(title, PAD, 70);
-        ctx.font = '28px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 115);
-
-        var badgeY = 140, badgeH = 50;
-        ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.fillRect(PAD, badgeY, W - PAD * 2, badgeH);
-        ctx.fillStyle = '#b45309';
-        ctx.font = 'bold 30px sans-serif';
-        ctx.fillText('👤 ผู้รายงาน: ' + (d.reporter || '-'), PAD + 18, badgeY + 35);
-
-        ctx.fillStyle = '#1f2937'; ctx.font = FS + 'px sans-serif';
-        var y = bodyTop + FS;
-        rows.forEach(function (ln) { ctx.fillText(ln, PAD, y); y += LH; });
-
-        if (photoImg) ctx.drawImage(photoImg, PAD, afterBody, pw, ph);
-
-        ctx.fillStyle = '#9ca3af'; ctx.font = '24px sans-serif';
-        ctx.fillText('QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)', PAD, footerTop + 38);
-
-        try { cb(c.toDataURL('image/jpeg', 0.85)); } catch (e) { cb(null); }
-      }
-
-      if (d.photo && d.photo.dataUrl) {
-        var im = new Image();
-        im.onload = function () { finish(im); };
-        im.onerror = function () { finish(null); };
-        im.src = d.photo.dataUrl;
-      } else { finish(null); }
-    }
-
-    function errCurrentData() {
-      var foundAtVal = document.getElementById('eFoundAt').value;
-      return {
-        reporter: comboValue('eReporter'),
-        employees: getCheckedEmployees(),
-        errorTypes: getCheckedErrorTypes(),
-        note: document.getElementById('eNote').value.trim(),
-        photo: errPhotoDataUrl ? { dataUrl: errPhotoDataUrl } : null,
-        foundAt: foundAtVal,
-        time: foundAtVal ? fmtFoundAt(foundAtVal) : fmtNow()
-      };
-    }
-
-    // silentOnFail: แชร์อัตโนมัติหลังบันทึก — ถ้าไม่ได้ให้เงียบ ปล่อยให้กดปุ่มเอง
-    function shareErrorReport(preRenderedCard, silentOnFail) {
-      var d = errCurrentData();
-      var hasData = d.errorTypes && d.errorTypes.length;
-      if (!hasData && lastErrReport) d = lastErrReport;
-      if (!d.reporter && (!d.errorTypes || !d.errorTypes.length)) {
-        showErrAlert('error', 'กรอกข้อมูลก่อนแชร์');
-        return;
-      }
-      var text = buildErrorShareText(d);
-      var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      if (!isIOS) copyText(text);
-
-      var cached = preRenderedCard || (d && d.cardImage);
-      function shareWithCard(card) {
-        function fallback(type, msg) {
-          if (silentOnFail) return;
-          if (msg) showErrAlert(type, msg);
-          shareTextFallback(text, card, {
-            title: 'รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ',
-            filename: 'qc-error.jpg',
-            alert: showErrAlert
-          });
-        }
-        if (!card) { return fallback('error', '❌ ไม่มีรูปการ์ด — ลองส่งรายงานใหม่'); }
-        if (!navigator.share) { return fallback('info', 'ℹ️ เบราว์เซอร์นี้ไม่รองรับการแชร์'); }
-        if (!navigator.canShare) { return fallback('info', 'ℹ️ เบราว์เซอร์นี้เช็คไฟล์แนบไม่ได้ — บันทึกรูปการ์ดแทน'); }
-        var file;
-        try { file = new File([dataURLtoBlob(card)], 'qc-error.jpg', { type: 'image/jpeg' }); }
-        catch (e) { return fallback('error', '⚠️ แปลงรูปเป็นไฟล์ไม่สำเร็จ: ' + e.message); }
-        var canShareFile;
-        try { canShareFile = navigator.canShare({ files: [file] }); } catch (e) { canShareFile = false; }
-        if (!canShareFile) { return fallback('info', 'ℹ️ แอปนี้แนบไฟล์รูปไม่ได้ (พบบ่อยใน LINE) — บันทึกรูปการ์ดลงเครื่องแทน'); }
-        var payload = { files: [file], title: 'รายงานข้อผิดพลาดในการปฏิบัติงาน หรือ ผิดระเบียบ' };
-        if (!isIOS) payload.text = text;
-        navigator.share(payload).catch(function (err) {
-          if (err && err.name === 'AbortError') return;
-          fallback('error', '⚠️ แชร์ไม่สำเร็จ (' + (err && err.name || err || 'unknown') + ') — บันทึกรูปการ์ดลงเครื่องแทน');
-        });
-      }
-      if (cached) shareWithCard(cached);
-      else renderErrorCard(d, shareWithCard);
-    }
-
-    document.getElementById('eShareBtn').addEventListener('click', function () { this.classList.remove('hot'); shareErrorReport(); });
-
-    errForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var data = errCurrentData();
-
-      if (!data.reporter) {
-        showErrAlert('error', document.getElementById('eReporter').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผู้รายงาน' : 'กรุณาเลือกผู้รายงาน');
-        return;
-      }
-      if (data.employees.length === 0) { showErrAlert('error', 'กรุณาเลือกพนักงานที่เกี่ยวข้องอย่างน้อย 1 คน'); return; }
-      if (data.errorTypes.length === 0) { showErrAlert('error', 'กรุณาเลือกประเภทข้อผิดพลาดอย่างน้อย 1 อย่าง'); return; }
-
-      eSubmitBtn.disabled = true;
-      eSubmitBtn.textContent = '⏳ กำลังส่ง...';
-      showErrAlert('info', data.photo ? 'กำลังสร้างการ์ด + บันทึก...' : 'กำลังบันทึก...');
-
-      renderErrorCard(data, function (cardUrl) {
-        var payload = {};
-        Object.keys(data).forEach(function (k) { payload[k] = data[k]; });
-        payload.photo = null; // อัปโหลดเฉพาะการ์ด ไม่เก็บรูปต้นฉบับซ้ำ
-        if (cardUrl) payload.cardDataUrl = cardUrl;
-        submitErrorReport(payload, data, cardUrl);
-      });
-    });
-
-    function submitErrorReport(payload, originalData, cardUrl) {
-      google.script.run
-        .withSuccessHandler(function (res) {
-          eSubmitBtn.disabled = false;
-          eSubmitBtn.textContent = '📨 ส่งรายงาน';
-          if (res && res.ok) {
-            var msg;
-            if (res.test) msg = '🧪 ' + res.message;
-            else {
-              msg = '✅ ' + res.message + (res.rowIndex ? ' (row ' + res.rowIndex + ')' : '');
-              if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
-            }
-            msg += '\n📤 กดปุ่มแชร์ด้านล่าง 👇 (ถ้าหน้าต่างแชร์ไม่เด้งเอง)';
-            showErrAlert(res.test ? 'info' : 'success', msg);
-
-            lastErrReport = {
-              reporter: originalData.reporter, employees: originalData.employees,
-              errorTypes: originalData.errorTypes,
-              note: originalData.note,
-              photo: originalData.photo, time: originalData.time || fmtNow(),
-              cardImage: cardUrl
-            };
-
-            // บันทึกจริงแล้วต้องรีเฟรชสรุปด้านล่างด้วย ไม่งั้นผู้ใช้เลื่อนลงมาแล้วยังเห็นเลขเดิม
-            // (โหมดทดสอบ Admin ไม่ได้บันทึก จึงไม่ต้องโหลดใหม่)
-            if (!res.test) { try { loadErrSummary(); } catch (e) {} }
-
-            shareErrorReport(cardUrl, true);
-            var sb = document.getElementById('eShareBtn');
-            sb.style.display = '';
-            sb.textContent = '📤 แชร์การ์ดเข้า LINE / แชท';
-            sb.classList.add('hot');
-            setTimeout(function () { scrollIntoViewSafe(sb); }, 120);
-            setTimeout(function () { sb.classList.remove('hot'); }, 6000);
-
-            var nf = res.newFields || {};
-            if (nf.reporter) comboEnsureOption('eReporter', originalData.reporter);
-
-            // reset แต่เก็บผู้รายงานไว้ (คนเดิมมักรายงานหลายครั้ง)
-            var keepReporter = document.getElementById('eReporter').value;
-            errForm.reset();
-['eReporter', 'eEmployee', 'eErrType'].forEach(function (id) {
-              document.getElementById(id + 'New').style.display = 'none';
-            });
-            document.getElementById('eReporter').value = keepReporter;
-            clearErrorTypes();
-            clearEmployees();
-            clearErrPhoto();
-          } else {
-            showErrAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด'));
-          }
-        })
-        .withFailureHandler(function (err) {
-          eSubmitBtn.disabled = false;
-          eSubmitBtn.textContent = '📨 ส่งรายงาน';
-          showErrAlert('error', '❌ ' + err);
-        })
-        .saveErrorReport(payload);
-    }
-  </script>
-
-
-
-
-  <script>
-    // ===== สรุปงานผิดพลาด (ในแท็บ ⚠️ ผิดพลาด) — เลือกดูรายวัน / รายเดือน / รายปี =====
-    var esMode = 'month';
-    var esInited = false;
-
-    var TH_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-
-    function esSyncControls() {
-      var isMonth = (esMode === 'month');
-      document.getElementById('esMonthM').style.display = isMonth ? '' : 'none';
-      document.getElementById('esMonthY').style.display = isMonth ? '' : 'none';
-      document.getElementById('esYear').style.display = isMonth ? 'none' : '';
-    }
-
-    function initErrSummary() {
-      if (esInited) return;
-      esInited = true;
-      var n = new Date();
-      // เดือน/ปี เป็น dropdown ภาษาไทย (input type=month แสดงเป็นอังกฤษตามเครื่อง บังคับไม่ได้)
-      var mSel = document.getElementById('esMonthM');
-      mSel.innerHTML = '';
-      TH_MONTHS.forEach(function (name, i) {
-        var o = document.createElement('option');
-        o.value = String(i + 1);
-        o.textContent = name;
-        mSel.appendChild(o);
-      });
-      mSel.value = String(n.getMonth() + 1);
-
-      function fillYears(sel, prefix) {
-        sel.innerHTML = '';
-        for (var y = n.getFullYear(); y >= n.getFullYear() - 4; y--) {
-          var o = document.createElement('option');
-          o.value = String(y);
-          o.textContent = prefix + (y + 543);
-          sel.appendChild(o);
-        }
-        sel.value = String(n.getFullYear());
-      }
-      fillYears(document.getElementById('esMonthY'), 'พ.ศ. ');
-      fillYears(document.getElementById('esYear'), 'ปี ');
-      esSyncControls();
-      loadErrSummary();
-    }
-
-    document.querySelectorAll('#esModeRow .sev-btn').forEach(function (b) {
-      b.addEventListener('click', function () {
-        esMode = b.getAttribute('data-mode');
-        document.querySelectorAll('#esModeRow .sev-btn').forEach(function (x) {
-          x.classList.toggle('active', x === b);
-        });
-        esSyncControls();
-        loadErrSummary();
-      });
-    });
-    document.getElementById('esLoadBtn').addEventListener('click', loadErrSummary);
-    ['esMonthM', 'esMonthY', 'esYear'].forEach(function (id) {
-      document.getElementById(id).addEventListener('change', loadErrSummary);
-    });
-
-    function loadErrSummary() {
-      var params = { mode: esMode };
-      if (esMode === 'year') {
-        params.year = document.getElementById('esYear').value;
-      } else {
-        var mm = Number(document.getElementById('esMonthM').value);
-        params.month = document.getElementById('esMonthY').value + '-' + (mm < 10 ? '0' : '') + mm;
-      }
-
-      var loadEl = document.getElementById('esLoading');
-      var contEl = document.getElementById('esContent');
-      loadEl.classList.add('show');
-      contEl.innerHTML = '';
-
-      google.script.run
-        .withSuccessHandler(function (res) {
-          loadEl.classList.remove('show');
-          if (!res || !res.ok) {
-            contEl.innerHTML = '<div class="card"><div class="rep-empty">❌ ' + esc((res && res.message) || 'สรุปไม่สำเร็จ') + '</div></div>';
-            return;
-          }
-          contEl.innerHTML = renderErrSummary(res);
-        })
-        .withFailureHandler(function (err) {
-          loadEl.classList.remove('show');
-          contEl.innerHTML = '<div class="card"><div class="rep-empty">❌ ' + esc(err) + '</div></div>';
-        })
-        .getErrorSummary(params);
-    }
-
-    // กราฟแท่งแนวนอน เทียบพนักงานทุกคนที่มีรายงานในช่วงนั้น (เรียงมากไปน้อย)
-    function empBarChart(list) {
-      list = list || [];
-      if (!list.length) return '';
-      var maxV = 0;
-      list.forEach(function (e) { if (e.count > maxV) maxV = e.count; });
-      var html = '<div class="card"><div class="dash-title">🧑‍🏭 เทียบรายบุคคล (' + list.length + ' คน)</div><div class="hbar">';
-      list.forEach(function (e) {
-        var w = maxV ? Math.round(e.count * 100 / maxV) : 0;
-        html += '<div class="hbar-row" title="' + esc(e.name) + ': ' + e.count + ' ครั้ง">' +
-                '<div class="hbar-name">' + esc(e.name) + '</div>' +
-                '<div class="hbar-track"><div class="hbar-fill" style="width:' + w + '%"></div></div>' +
-                '<div class="hbar-val">' + e.count + '</div>' +
-                '</div>';
-      });
-      return html + '</div></div>';
-    }
-
-    function renderErrSummary(d) {
-      var html = '';
-
-      if (!d.total) {
-        html += '<div class="card"><div class="rep-empty">ไม่มีรายงานข้อผิดพลาดใน' +
-                (d.mode === 'year' ? 'ปีนี้' : 'เดือนนี้') + ' (' + esc(d.label) + ')</div></div>';
-      }
-
-      if (d.total) {
-        html += repTable('ประเภทข้อผิดพลาด', '⚠️', d.errorTypes, 'ประเภท', true);
-        html += empBarChart(d.employees);
-      }
-      return html;
-    }
-  </script>
 
 </body>
 </html>
