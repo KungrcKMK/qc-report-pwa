@@ -226,17 +226,15 @@
     .delta.up { color: #dc2626; }
     .delta.down { color: #16a34a; }
     .delta.flat { color: #9ca3af; }
-    .trend-wrap { display: flex; align-items: flex-end; gap: 1px; height: 150px; padding: 4px 0 22px; width: 100%; overflow: hidden; }
-    .trend-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 1px; position: relative; }
-    .trend-bar { width: 100%; background: linear-gradient(180deg, #dc2626, #ea580c); border-radius: 2px 2px 0 0; min-height: 2px; }
-    .trend-bar.zero { background: #e5e7eb; min-height: 3px; }
-    .trend-bar.future { background: transparent; min-height: 0; }
-    .trend-bar.today { box-shadow: 0 0 0 2px rgba(220,38,38,0.25); }
-    .trend-col.future .trend-label { color: #d1d5db; }
-    .trend-col.today .trend-label { color: #dc2626; font-weight: 700; }
-    .trend-label { font-size: 8px; color: #9ca3af; white-space: nowrap; line-height: 1; margin-top: 3px; text-align: center; }
-    .trend-val { font-size: 9px; color: #6b7280; font-weight: 700; line-height: 1; text-align: center; min-height: 10px; }
-    .trend-month { font-size: 12px; color: #6b7280; margin-top: -6px; margin-bottom: 8px; }
+    /* กราฟเส้นแนวโน้ม — ปุ่ม ◀ ▶ สลับ รายสัปดาห์ / รายเดือน / รายปี */
+    .trend-nav { display: flex; align-items: center; gap: 8px; margin: -4px 0 6px; }
+    .trend-arrow { flex: 0 0 auto; width: 38px; height: 38px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; color: #dc2626; font-size: 14px; font-family: inherit; cursor: pointer; padding: 0; }
+    .trend-arrow:active { background: #fef2f2; border-color: #fca5a5; }
+    .trend-nav-mid { flex: 1; text-align: center; min-width: 0; }
+    .trend-mode { font-size: 15px; font-weight: 700; color: #374151; }
+    .trend-period { font-size: 12px; color: #6b7280; margin-top: 1px; }
+    .trend-wrap { width: 100%; }
+    .trend-wrap svg { width: 100%; height: auto; display: block; }
     .supcat-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
     .supcat-row:last-child { border-bottom: none; }
     .supcat-head { display: flex; justify-content: space-between; font-weight: 700; color: #374151; font-size: 14px; margin-bottom: 4px; }
@@ -565,8 +563,15 @@
           <div class="kpi"><div class="v" id="kpiPrev">0</div><div class="l">ช่วงก่อนหน้า</div></div>
         </div>
         <div class="card">
-          <div class="dash-title">📈 แนวโน้มประจำเดือน</div>
-          <div class="trend-month" id="trendMonth"></div>
+          <div class="dash-title">📈 แนวโน้ม</div>
+          <div class="trend-nav">
+            <button type="button" class="trend-arrow" id="trendPrev" aria-label="สลับช่วงก่อนหน้า">◀</button>
+            <div class="trend-nav-mid">
+              <div class="trend-mode" id="trendMode">รายเดือน</div>
+              <div class="trend-period" id="trendPeriod"></div>
+            </div>
+            <button type="button" class="trend-arrow" id="trendNext" aria-label="สลับช่วงถัดไป">▶</button>
+          </div>
           <div id="trendChart" class="trend-wrap"></div>
         </div>
         <div class="card">
@@ -724,7 +729,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v42 · 2026-08-07</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v43 · 2026-09-17</span></div>
   </div>
 
   <script>
@@ -1430,37 +1435,96 @@
       }
     }
 
-    function renderTrend(trend) {
+    // ===== กราฟเส้นแนวโน้ม: สลับ รายสัปดาห์ / รายเดือน / รายปี ด้วยปุ่ม ◀ ▶ =====
+    var TREND_MODES = ['week', 'month', 'year'];
+    var TREND_MODE_LABEL = { week: 'รายสัปดาห์', month: 'รายเดือน', year: 'รายปี' };
+    var trendMode = 'month';
+    try { var savedTm = localStorage.getItem('trendMode'); if (TREND_MODES.indexOf(savedTm) !== -1) trendMode = savedTm; } catch (e) {}
+
+    // ชุดข้อมูลของช่วงที่เลือก — backend เก่าที่ยังไม่มี trends จะถอยไปใช้รายเดือนแบบเดิม
+    function trendData() {
+      if (!dashData) return null;
+      if (dashData.trends && dashData.trends[trendMode]) return dashData.trends[trendMode];
+      var t = dashData.trend;
+      if (t && t.values && t.values.length) return { labels: t.labels, values: t.values, todayIdx: t.todayIdx, label: t.monthLabel || '' };
+      return null;
+    }
+
+    function shiftTrendMode(dir) {
+      var i = TREND_MODES.indexOf(trendMode);
+      trendMode = TREND_MODES[(i + dir + TREND_MODES.length) % TREND_MODES.length];
+      try { localStorage.setItem('trendMode', trendMode); } catch (e) {}
+      renderTrend();
+    }
+    document.getElementById('trendPrev').addEventListener('click', function () { shiftTrendMode(-1); });
+    document.getElementById('trendNext').addEventListener('click', function () { shiftTrendMode(1); });
+
+    // วาดกราฟเส้นเป็น SVG (ไม่ใช้ไลบรารี) — viewBox คงที่ 1000 หน่วย ให้ตัวหนังสือดูเท่ากันทุกช่วง
+    function trendLineSvg(t) {
+      var W = 1000, H = 380, padL = 34, padR = 34, padT = 50, padB = 54;
+      var n = t.values.length;
+      var todayIdx = (typeof t.todayIdx === 'number') ? t.todayIdx : n - 1;
+      if (todayIdx > n - 1) todayIdx = n - 1;
+      var max = 0;
+      for (var m = 0; m <= todayIdx; m++) if (t.values[m] > max) max = t.values[m];
+      if (max < 1) max = 1;
+      var innerW = W - padL - padR, innerH = H - padT - padB, baseY = padT + innerH;
+      var step = n > 1 ? innerW / (n - 1) : 0;
+      function x(i) { return n > 1 ? padL + i * step : padL + innerW / 2; }
+      function y(v) { return baseY - (v / max) * innerH; }
+      var dense = n > 16;            // รายเดือน 28-31 จุด → ย่อตัวหนังสือ
+      var fsAxis = dense ? 24 : 26, fsVal = dense ? 26 : 28;
+
+      var pts = [];
+      for (var i = 0; i <= todayIdx; i++) pts.push([x(i), y(t.values[i] || 0)]);
+
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="กราฟเส้นแนวโน้มจำนวนรายงาน">';
+      [0.5, 1].forEach(function (f) {
+        var gy = baseY - f * innerH;
+        s += '<line x1="' + padL + '" y1="' + gy.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + gy.toFixed(1) + '" stroke="#f3f4f6" stroke-width="2"/>';
+      });
+      s += '<line x1="' + padL + '" y1="' + baseY + '" x2="' + (W - padR) + '" y2="' + baseY + '" stroke="#e5e7eb" stroke-width="2"/>';
+      if (todayIdx >= 0) {
+        s += '<line x1="' + x(todayIdx).toFixed(1) + '" y1="' + padT + '" x2="' + x(todayIdx).toFixed(1) + '" y2="' + baseY + '" stroke="#fecaca" stroke-width="2" stroke-dasharray="6 6"/>';
+      }
+      if (pts.length) {
+        var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+        if (pts.length > 1) {
+          s += '<path d="' + d + ' L' + pts[pts.length - 1][0].toFixed(1) + ' ' + baseY + ' L' + pts[0][0].toFixed(1) + ' ' + baseY + ' Z" fill="#dc2626" fill-opacity="0.08"/>';
+          s += '<path d="' + d + '" fill="none" stroke="#dc2626" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>';
+        }
+        for (var k = 0; k < pts.length; k++) {
+          var v = t.values[k] || 0, isToday = k === todayIdx;
+          s += '<circle cx="' + pts[k][0].toFixed(1) + '" cy="' + pts[k][1].toFixed(1) + '" r="' + (isToday ? 9 : 6) + '" fill="' + (isToday ? '#dc2626' : '#fff') + '" stroke="#dc2626" stroke-width="3"/>';
+          if (v > 0) {
+            // ขอบขาวรอบตัวเลข (paint-order) กันเส้นชันข้างๆ ทับจนอ่านไม่ออก
+            s += '<text x="' + pts[k][0].toFixed(1) + '" y="' + (pts[k][1] - 15).toFixed(1) + '" text-anchor="middle" stroke="#fff" stroke-width="7" stroke-linejoin="round" paint-order="stroke" font-size="' + fsVal + '" font-weight="700" fill="#374151">' + v + '</text>';
+          }
+        }
+      }
+      for (var j = 0; j < n; j++) {
+        var future = j > todayIdx, today = j === todayIdx;
+        s += '<text x="' + x(j).toFixed(1) + '" y="' + (baseY + 34) + '" text-anchor="middle" font-size="' + fsAxis + '" fill="' +
+             (today ? '#dc2626' : (future ? '#d1d5db' : '#9ca3af')) + '"' + (today ? ' font-weight="700"' : '') + '>' +
+             esc(String(t.labels[j] || '')) + '</text>';
+      }
+      return s + '</svg>';
+    }
+
+    function renderTrend() {
       var el = document.getElementById('trendChart');
-      var monthEl = document.getElementById('trendMonth');
-      if (!trend || !trend.values || !trend.values.length) {
+      var modeEl = document.getElementById('trendMode');
+      var perEl = document.getElementById('trendPeriod');
+      var t = trendData();
+      var hasModes = !!(dashData && dashData.trends);
+      modeEl.textContent = TREND_MODE_LABEL[hasModes ? trendMode : 'month'];
+      if (!t || !t.values || !t.values.length) {
         el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูล</div>';
-        if (monthEl) monthEl.textContent = '';
+        perEl.textContent = '';
         return;
       }
-      if (monthEl) monthEl.textContent = trend.monthLabel || '';
-
-      var max = Math.max.apply(null, trend.values);
-      if (max < 1) max = 1;
-      var n = trend.values.length;
-      var todayIdx = (typeof trend.todayIdx === 'number') ? trend.todayIdx : (n - 1);
-      el.innerHTML = trend.values.map(function (v, i) {
-        var isFuture = i > todayIdx;
-        var isToday = i === todayIdx;
-        var h = isFuture ? 0 : Math.round((v / max) * 100);
-        var barCls = 'trend-bar';
-        if (isFuture) barCls += ' future';
-        else if (v === 0) barCls += ' zero';
-        if (isToday && v > 0) barCls += ' today';
-        var colCls = 'trend-col';
-        if (isFuture) colCls += ' future';
-        if (isToday) colCls += ' today';
-        var valStr = (!isFuture && v > 0) ? v : '';
-        return '<div class="' + colCls + '">' +
-          '<div class="trend-val">' + valStr + '</div>' +
-          '<div class="' + barCls + '" style="height:' + (isFuture ? 0 : Math.max(h, 2)) + 'px"></div>' +
-          '<div class="trend-label">' + esc(trend.labels[i] || '') + '</div></div>';
-      }).join('');
+      perEl.textContent = (t.label || '') + (typeof t.total === 'number' ? ' · รวม ' + t.total + ' ครั้ง' : '');
+      el.innerHTML = trendLineSvg(t);
     }
 
     function renderSupCat(items) {
@@ -1497,7 +1561,7 @@
       if (!dashData) return;
       var p = dashData.periods[currentPeriod];
       renderKPIs(p);
-      renderTrend(dashData.trend);
+      renderTrend();
       var unk = document.getElementById('unknownSupNote');
       if (unk) {
         if (p.unknownSuppliers && p.unknownSuppliers > 0) {
