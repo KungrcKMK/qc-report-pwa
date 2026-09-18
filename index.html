@@ -336,6 +336,27 @@
     }
     .chk input { margin-right: 8px; accent-color: #dc2626; transform: scale(1.2); }
     .chk.active { border-color: #dc2626; background: #fef2f2; color: #dc2626; font-weight: 600; }
+    /* แท็บ 🔧 แจ้งซ่อม — โทนน้ำเงิน แยกจากรายงาน QC สีแดง */
+    .tab[data-page="maint"].active { background: linear-gradient(135deg, #1d4ed8, #0891b2); }
+    .btn.btn-maint { background: linear-gradient(135deg, #1d4ed8, #0891b2); } /* .btn ประกาศทีหลัง ต้องชนะด้วย specificity */
+    .mt-head { margin-bottom: 12px; }
+    .mt-title { font-size: 16px; font-weight: 800; color: #1e3a8a; }
+    .mt-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .mt-hint { font-weight: 400; color: #9ca3af; font-size: 12px; }
+    .radio-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .radio-row .chk > span { display: flex; flex-direction: column; line-height: 1.25; }
+    #maintPage .chk input { accent-color: #1d4ed8; }
+    #maintPage .chk.active { border-color: #1d4ed8; background: #eff6ff; color: #1e40af; }
+    .impact-more { margin-top: 8px; padding: 10px; border: 1px dashed #93c5fd; border-radius: 8px; background: #f8fbff; }
+    .ml-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #374151; }
+    .ml-row:last-child { border-bottom: none; }
+    .ml-top { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; color: #1e3a8a; }
+    .ml-top .t { font-weight: 500; color: #9ca3af; font-size: 12px; white-space: nowrap; }
+    .ml-sub { margin-top: 2px; }
+    .ml-sym { color: #6b7280; font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ml-act { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .ml-act a, .ml-act button { font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; text-decoration: none; font-family: inherit; cursor: pointer; }
+    .ml-act button:disabled { opacity: .6; }
 
     .add-row { display: flex; gap: 8px; margin-top: 8px; }
     .add-row input { flex: 1; }
@@ -434,6 +455,7 @@
 
     <div class="tabs">
       <button type="button" class="tab active" data-page="form">🔍<br>แปลกปลอม</button>
+      <button type="button" class="tab" data-page="maint">🔧<br>แจ้งซ่อม</button>
       <button type="button" class="tab" data-page="dash">📊<br>สรุป</button>
       <button type="button" class="tab" data-page="history">📜<br>ประวัติ</button>
       <button type="button" class="tab" data-page="qr">📲<br>แชร์</button>
@@ -542,6 +564,102 @@
       <button type="submit" class="btn" id="submitBtn">📨 ส่งรายงาน</button>
       <button type="button" class="btn-share" id="shareBtn" style="display:none">📤 แชร์รายงานล่าสุดอีกครั้ง</button>
     </form>
+    </div>
+
+    <div id="maintPage" style="display:none">
+      <div id="mAlert" class="alert"></div>
+      <form id="maintForm">
+        <div class="card">
+          <div class="mt-head">
+            <div class="mt-title">🔧 ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์</div>
+            <div class="mt-sub">FM-MT-02 Rev02 · ส่วนที่ 1 ผู้แจ้งกรอก · ระบบออกเลขที่ MR ให้เมื่อส่งสำเร็จ</div>
+          </div>
+
+          <div class="field">
+            <label>🏭 แจ้งซ่อมโรงงาน <span class="req">*</span></label>
+            <select id="mSite"><option value="">-- เลือกโรงงาน --</option></select>
+            <input type="text" id="mSiteNew" class="combo-new" placeholder="พิมพ์ชื่อโรงงาน เช่น สุพรรณคิวฟู้ดส์" style="display:none">
+          </div>
+
+          <div class="field">
+            <label>📷 รูปถ่ายจุดเสีย (ถ้ามี)</label>
+            <input type="file" id="mPhotoCam" accept="image/*" capture="environment" style="display:none">
+            <input type="file" id="mPhotoGal" accept="image/*" style="display:none">
+            <div id="mPhotoControls" style="display:flex; gap:8px;">
+              <button type="button" class="btn-photo" id="mPhotoCamBtn" style="flex:1;">📷 ถ่ายรูป</button>
+              <button type="button" class="btn-photo" id="mPhotoGalBtn" style="flex:1;">🖼️ จากเครื่อง</button>
+            </div>
+            <div id="mPhotoPreviewWrap" style="display:none; margin-top:10px;">
+              <img id="mPhotoPreview" alt="preview">
+              <button type="button" class="btn-remove" id="mPhotoRemoveBtn">🗑 ลบรูป</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>👤 ผู้แจ้งซ่อม <span class="req">*</span></label>
+            <select id="mReporter"><option value="">-- เลือก --</option></select>
+            <input type="text" id="mReporterNew" class="combo-new" placeholder="พิมพ์ชื่อผู้แจ้งใหม่" style="display:none">
+          </div>
+
+          <div class="field">
+            <label>🏷 ตำแหน่ง / แผนก</label>
+            <input type="text" id="mPosition" list="mPositionList" placeholder="เช่น ผลิต, หัวหน้าเตรียมวัตถุดิบ">
+            <datalist id="mPositionList"></datalist>
+          </div>
+
+          <div class="field">
+            <label>🛠 เครื่องจักร / อุปกรณ์ <span class="req">*</span></label>
+            <select id="mMachine"><option value="">-- เลือก --</option></select>
+            <input type="text" id="mMachineNew" class="combo-new" placeholder="พิมพ์ชื่อเครื่อง เช่น พัดลมดูดอากาศ อาคารเตรียมวัตถุดิบ" style="display:none">
+          </div>
+
+          <div class="field">
+            <label>🔖 รหัสเครื่อง <span class="mt-hint">(ดูป้ายที่เครื่อง / ทะเบียน SD-MT-01)</span></label>
+            <input type="text" id="mMachineCode" placeholder="เช่น SQFM-24-05" autocapitalize="characters">
+          </div>
+
+          <div class="field">
+            <label>🩺 อาการเบื้องต้น <span class="req">*</span></label>
+            <textarea id="mSymptom" placeholder="เช่น พัดลมไม่หมุน มีเสียงดังผิดปกติ"></textarea>
+          </div>
+
+          </div>
+
+          <div class="field">
+            <label>🍯 ผลกระทบต่อผลิตภัณฑ์</label>
+            <div class="radio-row" id="mImpactGroup">
+              <label class="chk active"><input type="radio" name="mImpact" value="no" checked><span>ไม่มี</span></label>
+              <label class="chk"><input type="radio" name="mImpact" value="yes"><span>มี</span></label>
+            </div>
+            <div id="mImpactMore" class="impact-more" style="display:none">
+              <input type="text" id="mImpactDetail" placeholder="ผลิตภัณฑ์ / ล็อต ที่ได้รับผลกระทบ">
+              <label class="chk" id="mQuarantinedWrap" style="margin-top:8px;"><input type="checkbox" id="mQuarantined"><span>กักสินค้าแล้ว</span></label>
+              <input type="text" id="mNcrNo" placeholder="เลข NCR (FM-QC-14) ถ้ามี" style="margin-top:8px;">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>⏰ ต้องการให้ซ่อมเสร็จวันที่/เวลา</label>
+            <input type="datetime-local" id="mNeedBy">
+          </div>
+
+          <div class="field">
+            <label>🗓 วันเวลาที่แจ้ง (แจ้งย้อนหลัง)</label>
+            <input type="datetime-local" id="mReportedAt">
+            <div style="font-size:12px; color:#9ca3af; margin-top:4px;">เว้นว่าง = ใช้เวลาปัจจุบัน</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-maint" id="mSubmitBtn">🔧 ส่งใบแจ้งซ่อม</button>
+        <button type="button" class="btn-share" id="mShareBtn" style="display:none">📤 แชร์ใบแจ้งซ่อมล่าสุดอีกครั้ง</button>
+      </form>
+
+      <div class="section-divider">📄 ใบแจ้งซ่อมล่าสุด</div>
+      <div class="card">
+        <div style="font-size:12px; color:#6b7280; margin-bottom:8px;">เปิด/ดาวน์โหลด PDF ย้อนหลังได้ทุกเมื่อ (เก็บใน Drive ไม่หมดอายุ) · ใบที่ยังไม่มี PDF กด "สร้าง PDF" ได้</div>
+        <div id="mListLoading" class="loading"><div class="spinner"></div>กำลังโหลด...</div>
+        <div id="mList"></div>
+      </div>
     </div>
 
     <div id="dashPage" style="display:none">
@@ -729,7 +847,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v43 · 2026-09-17</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v44 · 2026-09-18</span></div>
   </div>
 
   <script>
@@ -739,7 +857,7 @@
     (function () {
       var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };
       // แหล่งเดียวของรายชื่อ action — ต้องครบทุกตัวที่แอปเรียก ไม่งั้น wrapper ข้างล่างจะ throw
-      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport', 'ping'];
+      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport', 'saveMaintRequest', 'attachMaintForm', 'listMaintRequests', 'ping'];
       window.__API_ACTIONS = ACTIONS;
       function makeRunner() {
         var success = null, failure = null;
@@ -981,6 +1099,8 @@
       initCombo('supplier', '➕ พิมพ์เอง');
       initCombo('unit', '➕ พิมพ์เอง');
       fillCheckboxes(opts.categories, topUsed.categories);
+      // ฟอร์มแจ้งซ่อมใช้ options ชุดเดียวกัน (โมดูลอยู่ท้ายไฟล์ — เผื่อยังไม่โหลดจึงเช็คก่อน)
+      try { if (typeof initMaintForm === 'function') initMaintForm(opts); } catch (e) { console.warn('initMaintForm failed', e); }
     }
 
     function onOptionsError(err) {
@@ -1311,7 +1431,7 @@
 
     // ----- tab navigation (รายงาน / สรุป / แชร์) -----
     function switchPage(page) {
-      var map = { form: 'formPage', dash: 'dashPage', history: 'historyPage', qr: 'qrPage' };
+      var map = { form: 'formPage', maint: 'maintPage', dash: 'dashPage', history: 'historyPage', qr: 'qrPage' };
       Object.keys(map).forEach(function (k) {
         document.getElementById(map[k]).style.display = (k === page) ? '' : 'none';
       });
@@ -1321,6 +1441,7 @@
       }
       if (page === 'dash') { loadDashboard(false); initMonthPage(); }
       if (page === 'history') { initHistoryFilters(); runHistorySearch(); }
+      if (page === 'maint') { try { loadMaintList(); } catch (e) {} }
       if (page === 'qr') {
         document.getElementById('qrMsg').textContent = '';
         renderQr();
@@ -1993,11 +2114,11 @@
         req.onerror = function () { reject(req.error); };
       });
     }
-    function queueAdd(data) {
+    function queueAdd(data, kind) {
       return openQueueDB().then(function (db) {
         return new Promise(function (resolve, reject) {
           var tx = db.transaction(DB_STORE, 'readwrite');
-          tx.objectStore(DB_STORE).add({ data: data, ts: new Date().toISOString() });
+          tx.objectStore(DB_STORE).add({ data: data, kind: kind || 'qc', ts: new Date().toISOString() });
           tx.oncomplete = function () { resolve(); };
           tx.onerror = function () { reject(tx.error); };
         });
@@ -2045,7 +2166,10 @@
           var runner = google.script.run
             .withSuccessHandler(function (res) { if (res && res.ok) { queueDelete(item.id).then(updateQueueBadge); } })
             .withFailureHandler(function () {});
-          runner.saveReport(item.data);
+          // รายการเก่าที่ไม่มี kind = รายงาน QC
+          if (item.kind === 'maint') runner.saveMaintRequest(item.data);
+          else if (item.kind === 'maintpdf') runner.attachMaintForm(item.data);
+          else runner.saveReport(item.data);
         });
       });
     }
@@ -2072,30 +2196,34 @@
             withSuccessHandler: function (cb) { success = cb; return api; },
             withFailureHandler: function (cb) { failure = cb; return api; }
           };
-          // ดึงจากแหล่งเดียว (window.__API_ACTIONS) — saveReport จัดการแยกด้านล่าง (offline queue)
-          (window.__API_ACTIONS || []).filter(function (a) { return a !== 'saveReport'; }).forEach(function (a) {
+          // action ที่ "บันทึก" ต้องเข้าคิวเมื่อออฟไลน์ — แยกชนิดไว้เพื่อส่งกลับให้ถูก action ตอนเน็ตกลับมา
+          var QUEUED = { saveReport: 'qc', saveMaintRequest: 'maint', attachMaintForm: 'maintpdf' };
+          (window.__API_ACTIONS || []).filter(function (a) { return !QUEUED[a]; }).forEach(function (a) {
             api[a] = function (arg) {
               realApi.withSuccessHandler(function (r) { if (success) success(r); })
                      .withFailureHandler(function (e) { if (failure) failure(e); })[a](arg);
             };
           });
-          api.saveReport = function (arg) {
-            if (!navigator.onLine) {
-              queueAdd(arg).then(function () {
-                updateQueueBadge();
-                if (success) success({ ok: true, message: 'เก็บไว้ในคิว (offline)', rowIndex: 0, added: [], newFields: {} });
-              });
-              return;
-            }
-            realApi.withSuccessHandler(function (r) { if (success) success(r); })
-                   .withFailureHandler(function (e) {
-                     // ส่งไม่ได้ → เก็บใส่คิวด้วย
-                     queueAdd(arg).then(function () {
-                       updateQueueBadge();
-                       if (success) success({ ok: true, message: 'ส่งไม่ได้ - เก็บไว้ในคิวแทน', rowIndex: 0, added: [], newFields: {} });
-                     });
-                   }).saveReport(arg);
-          };
+          Object.keys(QUEUED).forEach(function (action) {
+            var kind = QUEUED[action];
+            api[action] = function (arg) {
+              if (!navigator.onLine) {
+                queueAdd(arg, kind).then(function () {
+                  updateQueueBadge();
+                  if (success) success({ ok: true, message: 'เก็บไว้ในคิว (offline)', rowIndex: 0, added: [], newFields: {} });
+                });
+                return;
+              }
+              realApi.withSuccessHandler(function (r) { if (success) success(r); })
+                     .withFailureHandler(function (e) {
+                       // ส่งไม่ได้ → เก็บใส่คิวด้วย
+                       queueAdd(arg, kind).then(function () {
+                         updateQueueBadge();
+                         if (success) success({ ok: true, message: 'ส่งไม่ได้ - เก็บไว้ในคิวแทน', rowIndex: 0, added: [], newFields: {} });
+                       });
+                     })[action](arg);
+            };
+          });
           return api;
         }
       });
@@ -2608,6 +2736,602 @@
     }
   </script>
 
+
+
+  <script>
+    // ===== ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์ FM-MT-02 ส่วนที่ 1 (แท็บ 🔧 แจ้งซ่อม) =====
+    var MAINT_TITLE = 'ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์';
+    var mAlertEl = document.getElementById('mAlert');
+    var maintForm = document.getElementById('maintForm');
+    var mSubmitBtn = document.getElementById('mSubmitBtn');
+    var mPhotoDataUrl = null;
+    var lastMaint = null;
+    var mAlertTimer = null;
+    var maintMachines = [];   // [{name, code}] จากทะเบียน
+    var maintRoles = {};      // {ชื่อพนักงาน: ตำแหน่ง}
+
+    function showMAlert(type, msg) {
+      mAlertEl.className = 'alert show ' + type;
+      mAlertEl.textContent = msg;
+      if (mAlertTimer) clearTimeout(mAlertTimer);
+      if (type !== 'error') mAlertTimer = setTimeout(function () { mAlertEl.className = 'alert'; }, 12000);
+      scrollAlertIntoView(mAlertEl);
+    }
+
+    // ----- รูปถ่าย -----
+    var mPhotoCam = document.getElementById('mPhotoCam');
+    var mPhotoGal = document.getElementById('mPhotoGal');
+    var mPhotoCamBtn = document.getElementById('mPhotoCamBtn');
+    var mPhotoGalBtn = document.getElementById('mPhotoGalBtn');
+    var mPhotoControls = document.getElementById('mPhotoControls');
+    var mPhotoPreview = document.getElementById('mPhotoPreview');
+    var mPhotoPreviewWrap = document.getElementById('mPhotoPreviewWrap');
+    mPhotoCamBtn.addEventListener('click', function () { mPhotoCam.click(); });
+    mPhotoGalBtn.addEventListener('click', function () { mPhotoGal.click(); });
+    document.getElementById('mPhotoRemoveBtn').addEventListener('click', clearMPhoto);
+    function mHandlePick(input, btn, origLabel) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      btn.textContent = '⏳ กำลังย่อรูป...';
+      resizeImage(file, 1280, 0.7, function (dataUrl) {
+        btn.textContent = origLabel;
+        if (!dataUrl) { showMAlert('error', 'อ่านรูปไม่ได้ ลองใหม่'); return; }
+        mPhotoDataUrl = dataUrl;
+        mPhotoPreview.src = dataUrl;
+        mPhotoPreviewWrap.style.display = '';
+        mPhotoControls.style.display = 'none';
+      });
+    }
+    mPhotoCam.addEventListener('change', function () { mHandlePick(mPhotoCam, mPhotoCamBtn, '📷 ถ่ายรูป'); });
+    mPhotoGal.addEventListener('change', function () { mHandlePick(mPhotoGal, mPhotoGalBtn, '🖼️ จากเครื่อง'); });
+    function clearMPhoto() {
+      mPhotoDataUrl = null;
+      mPhotoCam.value = ''; mPhotoGal.value = '';
+      mPhotoPreview.src = '';
+      mPhotoPreviewWrap.style.display = 'none';
+      mPhotoControls.style.display = 'flex';
+    }
+
+    // ----- ปุ่มเลือกแบบชิป (radio) — ไฮไลต์ตัวที่เลือกทั้งกลุ่ม -----
+    function bindChipRadios(groupId, onChange) {
+      var inputs = document.getElementById(groupId).querySelectorAll('input[type=radio]');
+      function sync() {
+        for (var i = 0; i < inputs.length; i++) inputs[i].parentNode.classList.toggle('active', inputs[i].checked);
+      }
+      for (var j = 0; j < inputs.length; j++) {
+        inputs[j].addEventListener('change', function () { sync(); if (onChange) onChange(this.value); });
+      }
+      sync();
+      return sync;
+    }
+    function radioValue(name) {
+      var el = document.querySelector('input[name="' + name + '"]:checked');
+      return el ? el.value : '';
+    }
+    var syncImpact = bindChipRadios('mImpactGroup', function (v) {
+      document.getElementById('mImpactMore').style.display = (v === 'yes') ? '' : 'none';
+    });
+    var mQuarantined = document.getElementById('mQuarantined');
+    mQuarantined.addEventListener('change', function () {
+      document.getElementById('mQuarantinedWrap').classList.toggle('active', mQuarantined.checked);
+    });
+
+    // ----- ทะเบียน: ผู้แจ้ง (+ตำแหน่ง) และเครื่อง (+รหัส) -----
+    function findMachine(name) {
+      for (var i = 0; i < maintMachines.length; i++) if (maintMachines[i].name === name) return maintMachines[i];
+      return null;
+    }
+    function rememberMachineLocal(name, code) {
+      var m = findMachine(name);
+      if (m) { if (code && !m.code) m.code = code; return; }
+      maintMachines.push({ name: name, code: code || '' });
+    }
+    function fillPositionList() {
+      var dl = document.getElementById('mPositionList');
+      dl.innerHTML = '';
+      var seen = {};
+      Object.keys(maintRoles).forEach(function (n) {
+        var r = maintRoles[n];
+        if (!r || seen[r]) return;
+        seen[r] = 1;
+        var o = document.createElement('option'); o.value = r; dl.appendChild(o);
+      });
+    }
+    function initMaintForm(opts) {
+      maintMachines = (opts.machines || []).filter(function (m) { return m && m.name; });
+      maintRoles = opts.workerRoles || {};
+      fillSelect('mSite', opts.sites || []);
+      initCombo('mSite', '➕ พิมพ์เอง');
+      // คืนโรงงานที่เลือกครั้งก่อน — เฉพาะเมื่อยังอยู่ในรายการ ไม่งั้น select จะโชว์ว่างเปล่าแทน placeholder
+      try {
+        var lastSite = localStorage.getItem('maintSite');
+        var siteSel = document.getElementById('mSite');
+        if (lastSite && Array.prototype.some.call(siteSel.options, function (o) { return o.value === lastSite; })) siteSel.value = lastSite;
+      } catch (e) {}
+      fillSelect('mReporter', opts.workers, (opts.top || {}).workers);
+      initCombo('mReporter', '➕ ชื่ออื่น (พิมพ์เอง)');
+      fillSelect('mMachine', maintMachines.map(function (m) { return m.name; }));
+      initCombo('mMachine', '➕ พิมพ์เอง');
+      fillPositionList();
+      try {
+        var n = new Date();
+        function p(x) { return (x < 10 ? '0' : '') + x; }
+        document.getElementById('mReportedAt').max = n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()) + 'T' + p(n.getHours()) + ':' + p(n.getMinutes());
+      } catch (e) {}
+    }
+    // เลือกผู้แจ้ง → เติมตำแหน่งให้ถ้ารู้จัก (ไม่ทับที่ผู้ใช้พิมพ์เอง)
+    document.getElementById('mReporter').addEventListener('change', function () {
+      var pos = document.getElementById('mPosition');
+      if (this.value && this.value !== NEW_VALUE && maintRoles[this.value] && !pos.value.trim()) pos.value = maintRoles[this.value];
+    });
+    // เลือกเครื่อง → เติมรหัสจากทะเบียน (เปลี่ยนเครื่องแล้วรหัสเก่าต้องไม่ค้าง)
+    document.getElementById('mMachine').addEventListener('change', function () {
+      var codeEl = document.getElementById('mMachineCode');
+      var m = (this.value && this.value !== NEW_VALUE) ? findMachine(this.value) : null;
+      codeEl.value = (m && m.code) ? m.code : '';
+    });
+
+    // ----- ข้อมูลจากฟอร์ม -----
+    function maintCurrentData() {
+      var repAt = document.getElementById('mReportedAt').value;
+      var impactYes = radioValue('mImpact') === 'yes';
+      return {
+        site: comboValue('mSite'),
+        reporter: comboValue('mReporter'),
+        position: document.getElementById('mPosition').value.trim(),
+        machine: comboValue('mMachine'),
+        machineCode: document.getElementById('mMachineCode').value.trim().toUpperCase(),
+        symptom: document.getElementById('mSymptom').value.trim(),
+        productImpact: impactYes,
+        impactDetail: impactYes ? document.getElementById('mImpactDetail').value.trim() : '',
+        quarantined: impactYes && document.getElementById('mQuarantined').checked,
+        ncrNo: impactYes ? document.getElementById('mNcrNo').value.trim() : '',
+        needBy: document.getElementById('mNeedBy').value,
+        reportedAt: repAt,
+        time: repAt ? fmtFoundAt(repAt) : fmtNow(),
+        photo: mPhotoDataUrl ? { dataUrl: mPhotoDataUrl } : null
+      };
+    }
+
+    // ----- ข้อความ + การ์ดสำหรับแชร์ -----
+    function impactText(d) {
+      if (!d.productImpact) return 'ไม่มี';
+      var parts = ['มี'];
+      if (d.impactDetail) parts.push(d.impactDetail);
+      if (d.quarantined) parts.push('กักสินค้าแล้ว');
+      if (d.ncrNo) parts.push('NCR ' + d.ncrNo);
+      return parts.join(' · ');
+    }
+    function buildMaintShareText(d) {
+      var lines = ['🔧 ' + MAINT_TITLE + ' (FM-MT-02)'];
+      if (d.mrNo) lines.push('เลขที่ ' + d.mrNo);
+      lines.push('🗓 ' + (d.time || fmtNow()), '');
+      if (d.site) lines.push('🏭 โรงงาน: ' + d.site);
+      lines.push('🛠 เครื่อง: ' + (d.machine || '-') + (d.machineCode ? ' [' + d.machineCode + ']' : ''));
+      lines.push('🩺 อาการ: ' + (d.symptom || '-'));
+      lines.push('🍯 ผลกระทบต่อผลิตภัณฑ์: ' + impactText(d));
+      if (d.needBy) lines.push('⏰ ต้องการเสร็จ: ' + fmtFoundAt(d.needBy));
+      lines.push('', '👤 ผู้แจ้ง: ' + (d.reporter || '-') + (d.position ? ' (' + d.position + ')' : ''));
+      return lines.join('\n');
+    }
+
+    // ----- การ์ด = ใบ FM-MT-02 ขนาด A4 (1240×1754 @150dpi) กรอกส่วนที่ 1 ให้แล้ว
+    //       ส่วนที่ 2–3 เว้นว่างตามใบจริง → โหลดไปพิมพ์/เขียนต่อได้เลย -----
+    function maintFormFileName(d) { return 'FM-MT-02_' + (d.mrNo || 'draft') + '.pdf'; }
+
+    // สร้าง PDF หน้าเดียว (A4) ฝังรูป JPEG เต็มหน้า — เขียนโครง PDF เองไม่ใช้ไลบรารี (ออฟไลน์ก็ทำได้)
+    function jpegToPdf(jpegDataUrl, w, h) {
+      var img = atob(String(jpegDataUrl).split(',')[1]);   // binary string 1 ตัวอักษร = 1 ไบต์
+      var PW = '595.28', PH = '841.89';                       // A4 portrait (pt)
+      var content = 'q ' + PW + ' 0 0 ' + PH + ' 0 0 cm /Im1 Do Q';
+      var objs = [
+        '<< /Type /Catalog /Pages 2 0 R >>',
+        '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH + '] /Resources << /XObject << /Im1 4 0 R >> >> /Contents 5 0 R >>',
+        '<< /Type /XObject /Subtype /Image /Width ' + w + ' /Height ' + h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + img.length + ' >>\nstream\n' + img + '\nendstream',
+        '<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream'
+      ];
+      var pdf = '%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n';
+      var offsets = [];
+      objs.forEach(function (o, i) { offsets.push(pdf.length); pdf += (i + 1) + ' 0 obj\n' + o + '\nendobj\n'; });
+      var xref = pdf.length;
+      pdf += 'xref\n0 ' + (objs.length + 1) + '\n0000000000 65535 f \n';
+      offsets.forEach(function (off) { pdf += ('0000000000' + off).slice(-10) + ' 00000 n \n'; });
+      pdf += 'trailer\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n';
+      return 'data:application/pdf;base64,' + btoa(pdf);
+    }
+    function maintPdfFromCanvas(c) { return jpegToPdf(c.toDataURL('image/jpeg', 0.92), c.width, c.height); }
+    function renderMaintPdf(d, cb) {
+      renderMaintCanvas(d, function (c) {
+        var url = null;
+        try { url = maintPdfFromCanvas(c); } catch (e) {}
+        cb(url);
+      });
+    }
+
+    // "dd/mm/yyyy HH:MM" → { date: 'dd/mm/yy (พ.ศ.)', time: 'HH.MM น.' } ตามแบบใบกระดาษ
+    function thDT(str) {
+      var m = String(str || '').match(/^(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}))?/);
+      if (!m) return { date: String(str || ''), time: '' };
+      return { date: m[1] + '/' + m[2] + '/' + String(+m[3] + 543).slice(-2), time: m[4] ? m[4] + '.' + m[5] + ' น.' : '' };
+    }
+
+    // ตัดบรรทัดที่ช่องว่างก่อน (คำอังกฤษ/วงเล็บไม่ขาดกลางคำ) — คำเดียวที่ยาวเกินค่อยตัดทีละตัวอักษร
+    // โดยไม่แยกสระ/วรรณยุกต์ไทยออกจากพยัญชนะ (wrapText กลางตัดได้ทุกตัวอักษร)
+    function wrapTh(ctx, text, maxW) {
+      var COMB = /[\u0E31\u0E34-\u0E3A\u0E47-\u0E4E]/;
+      text = String(text == null ? '' : text);
+      var lines = [], line = '';
+      function pushChars(tok) {
+        for (var i = 0; i < tok.length; i++) {
+          var ch = tok.charAt(i);
+          if (ctx.measureText(line + ch).width > maxW && line && !COMB.test(ch)) { lines.push(line); line = ch; }
+          else line += ch;
+        }
+      }
+      var tokens = text.split(' ');
+      for (var t = 0; t < tokens.length; t++) {
+        var tok = tokens[t];
+        var cand = line ? line + ' ' + tok : tok;
+        if (ctx.measureText(cand).width <= maxW) { line = cand; continue; }
+        if (ctx.measureText(tok).width > maxW) { if (line) line += ' '; pushChars(tok); continue; }
+        if (line) lines.push(line);
+        line = tok;
+      }
+      if (line || !lines.length) lines.push(line);
+      return lines;
+    }
+
+    function renderMaintCanvas(d, cb) {
+      var W = 1240, H = 1754, M = 50, CW = W - M * 2;
+      var FS = 21, LH = 28, PADX = 10, PADY = 6;
+      var BLUE = '#1a4fd6', INK = '#111', LINE = '#222', SEC = '#dfe8f3', HEAD = '#f3f4f6';
+      var c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+      function font(bold, size) { ctx.font = (bold ? 'bold ' : '') + (size || FS) + 'px sans-serif'; }
+      function box(x, y, w, h, bg) {
+        if (bg) { ctx.fillStyle = bg; ctx.fillRect(x, y, w, h); }
+        ctx.strokeStyle = LINE; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5);
+      }
+      // เซลล์ = { w, text, bold, blue, bg, center } — แถวสูงตามบรรทัดที่ยาวที่สุด
+      function rowHeight(cells) {
+        var n = 1;
+        cells.forEach(function (cl) {
+          if (cl.text === undefined) return;
+          font(cl.bold); cl.lines = wrapTh(ctx, cl.text, cl.w - PADX * 2);
+          if (cl.lines.length > n) n = cl.lines.length;
+        });
+        return Math.max(cells.minH || 0, n * LH + PADY * 2);
+      }
+      function drawRow(x, y, cells, h) {
+        cells.forEach(function (cl) {
+          box(x, y, cl.w, h, cl.bg);
+          font(cl.bold); ctx.fillStyle = cl.blue ? BLUE : INK;
+          var ty = y + PADY + FS;
+          (cl.lines || []).forEach(function (ln) {
+            if (cl.center) { ctx.textAlign = 'center'; ctx.fillText(ln, x + cl.w / 2, ty); ctx.textAlign = 'left'; }
+            else ctx.fillText(ln, x + PADX, ty);
+            ty += LH;
+          });
+          x += cl.w;
+        });
+        return y + h;
+      }
+      function table(x, y, rows) { rows.forEach(function (cells) { y = drawRow(x, y, cells, rowHeight(cells)); }); return y; }
+      function mrow(cells, minH) { cells.minH = minH; return cells; }
+      function section(y, title) {
+        box(M, y, CW, 34, SEC); font(true, 23); ctx.fillStyle = INK; ctx.textAlign = 'center';
+        ctx.fillText(title, W / 2, y + 25); ctx.textAlign = 'left';
+        return y + 34;
+      }
+      // ข้อความหลายสีในบรรทัดเดียว: parts = [{ t, bold, blue }]
+      function runs(x, y, parts) {
+        parts.forEach(function (pt) {
+          font(pt.bold); ctx.fillStyle = pt.blue ? BLUE : INK;
+          ctx.fillText(pt.t, x, y); x += ctx.measureText(pt.t).width;
+        });
+      }
+      function sigBlock(y, leftLines, rightLines, leftRole, rightRole) {
+        var half = CW / 2, SH = 118;
+        box(M, y, half, SH); box(M + half, y, half, SH);
+        runs(M + PADX, y + 32, leftLines[0]); runs(M + PADX, y + 76, leftLines[1]);
+        runs(M + half + PADX, y + 32, rightLines[0]); runs(M + half + PADX, y + 76, rightLines[1]);
+        font(false); ctx.fillStyle = INK; ctx.textAlign = 'center';
+        ctx.fillText(leftRole, M + half / 2, y + 108); ctx.fillText(rightRole, M + half + half / 2, y + 108);
+        ctx.textAlign = 'left';
+        return y + SH;
+      }
+      // เว้นวรรคหลังกล่องเป็น no-break space → กล่องกับคำของมันไม่ถูกตัดคนละบรรทัด
+      function cbx(on) { return on ? '■\u00A0' : '□\u00A0'; }
+      var DOT = '..............', DOTL = '........................';
+
+      // ---------- หัวกระดาษ ----------
+      var y = M;
+      // ไม่ใส่ชื่อบริษัทมุมซ้าย — ใบนี้ใช้ได้ทุกโรงงาน (ชื่อโรงงานอยู่ในแถวแรกของส่วนที่ 1)
+      ctx.textAlign = 'center'; ctx.fillStyle = INK;
+      font(true, 30); ctx.fillText('ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์', W / 2, y + 30);
+      font(false, 20); ctx.fillStyle = '#333'; ctx.fillText('(Maintenance Request)', W / 2, y + 58);
+      ctx.textAlign = 'right'; ctx.fillStyle = INK; font(false, 20);
+      ctx.fillText('FM-MT-02', W - M, y + 22);
+      ctx.fillText('Rev : 02', W - M, y + 48);
+      font(true, 22); ctx.fillStyle = BLUE;
+      ctx.fillText('เลขที่ ' + (d.mrNo || 'MR-..-...'), W - M, y + 80);
+      ctx.textAlign = 'left';
+      y += 92;
+
+      // ---------- ส่วนที่ 1 (กรอกจากแอป — ตัวหนังสือสีน้ำเงิน) ----------
+      var dt = thDT(d.time || fmtNow());
+      var need = d.needBy ? thDT(fmtFoundAt(d.needBy)) : null;
+      var L = 300, V = 370, L2 = 140, V2 = CW - L - V - L2;
+      y = section(y, 'ส่วนที่ 1 การแจ้งซ่อม (ผู้แจ้งกรอก)');
+      y = table(M, y, [
+        [{ w: L, text: 'โรงงาน', bold: true }, { w: CW - L, text: d.site || '', blue: true }],
+        [{ w: L, text: 'วันที่แจ้งซ่อม', bold: true }, { w: V, text: dt.date, blue: true }, { w: L2, text: 'เวลา', bold: true }, { w: V2, text: dt.time, blue: true }],
+        [{ w: L, text: 'เครื่องจักร/อุปกรณ์', bold: true }, { w: V, text: d.machine || '', blue: true }, { w: L2, text: 'รหัสเครื่อง', bold: true }, { w: V2, text: d.machineCode || '', blue: true }],
+        mrow([{ w: L, text: 'อาการเบื้องต้น', bold: true }, { w: CW - L, text: d.symptom || '', blue: true }], 70),
+        [{ w: L, text: 'ผลกระทบต่อผลิตภัณฑ์', bold: true }, { w: CW - L, text: cbx(!d.productImpact) + 'ไม่มี    ' + cbx(d.productImpact) + 'มี → ผลิตภัณฑ์/ล็อต ' + ((d.productImpact && d.impactDetail) ? d.impactDetail : DOTL) + '    ' + cbx(d.productImpact && d.quarantined) + 'กักสินค้าแล้ว    เลข NCR (FM-QC-14) ' + ((d.productImpact && d.ncrNo) ? d.ncrNo : DOT) }],
+        [{ w: L, text: 'ต้องการให้ซ่อมเสร็จวันที่/เวลา', bold: true }, { w: CW - L, text: need ? (need.date + '  ' + need.time) : '', blue: true }]
+      ]);
+      y = sigBlock(y,
+        [[{ t: 'วันที่แจ้งซ่อม ' }, { t: dt.date, blue: true }, { t: '   เวลา ' }, { t: dt.time, blue: true }],
+         [{ t: 'ลงชื่อ ' }, { t: d.reporter || '', blue: true }, { t: '   ตำแหน่ง ' }, { t: d.position || '', blue: true }]],
+        [[{ t: 'วันที่รับแจ้งซ่อม ' + DOT + '   เวลา ' + DOT }],
+         [{ t: 'ลงชื่อ ' + DOTL + '   ตำแหน่ง ' + DOTL }]],
+        'ผู้แจ้งซ่อม', 'ผู้รับแจ้งซ่อม');
+
+      // ---------- ส่วนที่ 2 (เว้นว่างให้ช่างเขียน) ----------
+      y += 10;
+      y = section(y, 'ส่วนที่ 2 การซ่อม (ช่างซ่อมบำรุงกรอก)');
+      y = table(M, y, [
+        [{ w: CW, text: '□\u00A0ซ่อมภายใน    □\u00A0หน่วยงานภายนอก ' + DOTL + DOTL + '    การเบรคดาวน์ (เครื่องหยุดจนต้องหยุดผลิต)  □\u00A0มี  □\u00A0ไม่มี    เวลาที่ใช้ซ่อม ........ ชม. ........ นาที' }],
+        [{ w: L, text: 'สาเหตุที่พบ', bold: true }, { w: CW - L, text: '□\u00A0สึกหรอตามอายุ    □\u00A0ขาดการบำรุงรักษา/หล่อลื่น    □\u00A0ใช้งานผิดวิธี    □\u00A0ไฟฟ้า/ระบบควบคุม    □\u00A0อื่น ๆ ' + DOT }],
+        mrow([{ w: L, text: 'รายละเอียดการซ่อม', bold: true }, { w: CW - L, text: '' }], 90)
+      ]);
+      var P1 = 430, P2 = 140;
+      y = table(M, y, [
+        [{ w: P1, text: 'อะไหล่ที่ถอดออก', bold: true, bg: HEAD, center: true }, { w: P2, text: 'จำนวน', bold: true, bg: HEAD, center: true },
+         { w: P1, text: 'อะไหล่ที่ใส่กลับ', bold: true, bg: HEAD, center: true }, { w: P2, text: 'จำนวน', bold: true, bg: HEAD, center: true }],
+        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 34),
+        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 34),
+        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 34)
+      ]);
+
+      // ---------- ส่วนที่ 3 ----------
+      y += 10;
+      y = section(y, 'ส่วนที่ 3 การปล่อยเครื่องกลับใช้งานด้านสุขลักษณะ (ช่าง + QC/หัวหน้าผลิต)');
+      var half = CW / 2;
+      y = table(M, y, [
+        [{ w: half, text: '□\u00A0นับเครื่องมือ/อะไหล่/น็อต ครบ ไม่ตกค้างในพื้นที่ผลิต' }, { w: half, text: '□\u00A0ทำความสะอาดและฆ่าเชื้อเครื่อง/พื้นที่หลังซ่อมแล้ว (ตาม SD-PD-01)' }],
+        [{ w: half, text: '□\u00A0สารหล่อลื่นที่ใช้เป็น Food grade  /  □\u00A0ไม่ได้ใช้สารหล่อลื่น' }, { w: half, text: '□\u00A0ทดสอบเดินเครื่องแล้วทำงานปกติ    □\u00A0ต้องตรวจสอบเทียบ/Validation ก่อนใช้ (เครื่องจุด CCP)' }]
+      ]);
+      y += 8;
+      y = sigBlock(y,
+        [[{ t: 'วันที่ซ่อมเสร็จ ' + DOT }], [{ t: 'ลงชื่อ ' + DOTL + '   ตำแหน่ง ' + DOTL }]],
+        [[{ t: 'วันที่ตรวจรับงานซ่อม ' + DOT }], [{ t: 'ลงชื่อ ' + DOTL + '   ตำแหน่ง ' + DOTL }]],
+        'ผู้ซ่อม', 'ผู้ตรวจรับงานซ่อม (หัวหน้าฝ่ายที่แจ้ง)');
+      y += 8;
+      y = table(M, y, [[{ w: CW, text: '□\u00A0ลงบันทึกประวัติการซ่อม FM-MT-04 แล้ว วันที่ ' + DOT + ' ผู้บันทึก ' + DOT + '    □\u00A0ต้องทบทวนแผน PM (SD-MT-02)    □\u00A0ออก CAR (FM-DC-03) เลขที่ ' + DOT }]]);
+
+      // ---------- รูปประกอบ (ถ้ามีและยังมีที่ว่าง) + ท้ายกระดาษ ----------
+      var footY = H - 28;
+      function finish(photoImg) {
+        if (photoImg) {
+          var maxH = footY - 24 - (y + 48);
+          if (maxH >= 100) {
+            var ph = Math.min(maxH, 260), pw = Math.round(ph * photoImg.width / photoImg.height);
+            if (pw > CW) { pw = CW; ph = Math.round(pw * photoImg.height / photoImg.width); }
+            font(true, 20); ctx.fillStyle = INK; ctx.fillText('รูปประกอบการแจ้งซ่อม (จากผู้แจ้ง)', M, y + 36);
+            ctx.drawImage(photoImg, M, y + 46, pw, ph);
+          }
+        }
+        font(false, 18); ctx.fillStyle = '#6b7280';
+        ctx.fillText('สร้างจากแอป QCControl · ' + (d.time || fmtNow()) + ' · ส่วนที่ 2–3 กรอกต่อบนกระดาษ', M, footY);
+        cb(c);
+      }
+      if (d.photo && d.photo.dataUrl) {
+        var im = new Image();
+        im.onload = function () { finish(im); };
+        im.onerror = function () { finish(null); };
+        im.src = d.photo.dataUrl;
+      } else { finish(null); }
+    }
+
+    // silentOnFail: แชร์อัตโนมัติหลังบันทึก — ถ้าไม่ได้ให้เงียบ ปล่อยให้กดปุ่มเอง
+    function shareMaint(preRenderedCard, silentOnFail) {
+      var d = lastMaint || maintCurrentData();
+      if (!d.machine && !d.symptom) { showMAlert('error', 'กรอกข้อมูลก่อนแชร์'); return; }
+      var text = buildMaintShareText(d);
+      var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (!isIOS) copyText(text);
+      var cached = preRenderedCard || d.pdfData;
+      function shareWithCard(card) {
+        function fallback(type, msg) {
+          if (silentOnFail) return;
+          if (msg) showMAlert(type, msg);
+          shareTextFallback(text, card, { title: MAINT_TITLE, filename: maintFormFileName(d), alert: showMAlert });
+        }
+        if (!card) { return fallback('error', '❌ ไม่มีใบฟอร์ม — ลองส่งใบแจ้งซ่อมใหม่'); }
+        if (!navigator.share) { return fallback('info', 'ℹ️ เบราว์เซอร์นี้ไม่รองรับการแชร์'); }
+        if (!navigator.canShare) { return fallback('info', 'ℹ️ เบราว์เซอร์นี้เช็คไฟล์แนบไม่ได้ — บันทึกรูปการ์ดแทน'); }
+        var file;
+        try { file = new File([dataURLtoBlob(card)], maintFormFileName(d), { type: 'application/pdf' }); }
+        catch (e) { return fallback('error', '⚠️ แปลงรูปเป็นไฟล์ไม่สำเร็จ: ' + e.message); }
+        // แนบรูปต้นฉบับจากผู้แจ้งไปด้วยเป็นไฟล์ที่ 2 (ใบฟอร์มมีแค่รูปย่อ) — ถ้าแอปปลายทางรับหลายไฟล์ไม่ได้ ก็ส่งเฉพาะใบฟอร์ม
+        var files = [file];
+        if (d.photo && d.photo.dataUrl) {
+          try { files.push(new File([dataURLtoBlob(d.photo.dataUrl)], (d.mrNo || 'MR') + '_photo.jpg', { type: 'image/jpeg' })); } catch (e) {}
+        }
+        var canShareFile;
+        try { canShareFile = navigator.canShare({ files: files }); } catch (e) { canShareFile = false; }
+        if (!canShareFile && files.length > 1) {
+          files = [file];
+          try { canShareFile = navigator.canShare({ files: files }); } catch (e) { canShareFile = false; }
+        }
+        if (!canShareFile) { return fallback('info', 'ℹ️ แอปนี้แนบไฟล์รูปไม่ได้ (พบบ่อยใน LINE) — บันทึกใบฟอร์มลงเครื่องแทน'); }
+        var payload = { files: files, title: MAINT_TITLE + (d.mrNo ? ' ' + d.mrNo : '') };
+        if (!isIOS) payload.text = text;
+        navigator.share(payload).catch(function (err) {
+          if (err && err.name === 'AbortError') return;
+          fallback('error', '⚠️ แชร์ไม่สำเร็จ (' + (err && err.name || err || 'unknown') + ') — บันทึกรูปการ์ดลงเครื่องแทน');
+        });
+      }
+      if (cached) shareWithCard(cached);
+      else renderMaintPdf(d, shareWithCard);
+    }
+    document.getElementById('mShareBtn').addEventListener('click', function () { this.classList.remove('hot'); shareMaint(); });
+
+    // ----- ส่ง: บันทึกก่อน แล้วค่อยสร้างการ์ด เพื่อให้เลขที่ MR อยู่บนการ์ด -----
+    maintForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var data = maintCurrentData();
+      if (!data.site) { showMAlert('error', document.getElementById('mSite').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อโรงงาน' : 'กรุณาเลือกโรงงานที่แจ้งซ่อม'); return; }
+      if (!data.reporter) { showMAlert('error', document.getElementById('mReporter').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผู้แจ้ง' : 'กรุณาเลือกผู้แจ้งซ่อม'); return; }
+      if (!data.machine) { showMAlert('error', document.getElementById('mMachine').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อเครื่องจักร/อุปกรณ์' : 'กรุณาเลือกเครื่องจักร/อุปกรณ์'); return; }
+      if (!data.symptom) { showMAlert('error', 'กรุณาระบุอาการเบื้องต้น'); return; }
+
+      mSubmitBtn.disabled = true;
+      mSubmitBtn.textContent = '⏳ กำลังส่ง...';
+      showMAlert('info', data.photo ? 'กำลังส่งใบแจ้งซ่อม + อัปโหลดรูป...' : 'กำลังส่งใบแจ้งซ่อม...');
+      var payload = {};
+      Object.keys(data).forEach(function (k) { if (k !== 'time') payload[k] = data[k]; });
+      submitMaint(payload, data);
+    });
+
+    function resetMaintForm(keepReporter, keepSite) {
+      maintForm.reset();
+      ['mSite', 'mReporter', 'mMachine'].forEach(function (id) { document.getElementById(id + 'New').style.display = 'none'; });
+      document.getElementById('mSite').value = keepSite || '';
+      document.getElementById('mReporter').value = keepReporter || '';
+      var pos = document.getElementById('mPosition');
+      if (keepReporter && maintRoles[keepReporter]) pos.value = maintRoles[keepReporter];
+      document.getElementById('mMachineCode').value = '';
+      syncImpact();
+      document.getElementById('mImpactMore').style.display = 'none';
+      document.getElementById('mQuarantinedWrap').classList.remove('active');
+      clearMPhoto();
+    }
+
+    function submitMaint(payload, originalData) {
+      google.script.run
+        .withSuccessHandler(function (res) {
+          mSubmitBtn.disabled = false;
+          mSubmitBtn.textContent = '🔧 ส่งใบแจ้งซ่อม';
+          if (!(res && res.ok)) { showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
+
+          var d = {};
+          Object.keys(originalData).forEach(function (k) { d[k] = originalData[k]; });
+          d.mrNo = res.test ? '' : (res.mrNo || '');
+          var msg = res.test ? '🧪 ' + res.message
+                             : '✅ ' + res.message + (res.mrNo ? ' — เลขที่ ' + res.mrNo : '');
+          if (!res.test && res.added && res.added.length) msg += '\n➕ จำค่าใหม่: ' + res.added.join(', ');
+          msg += '\n📄 ใบ FM-MT-02 (PDF) กรอกส่วนที่ 1 ให้แล้ว — เก็บไว้ใน Drive เปิด/โหลดย้อนหลังได้จากรายการด้านล่าง';
+          msg += '\n📤 กดปุ่มแชร์ด้านล่าง 👇 (ถ้าหน้าต่างแชร์ไม่เด้งเอง)';
+          showMAlert(res.test ? 'info' : 'success', msg);
+
+          if (!res.test) {
+            var nf = res.newFields || {};
+            if (nf.site) comboEnsureOption('mSite', originalData.site);
+            try { localStorage.setItem('maintSite', originalData.site || ''); } catch (e) {}
+            if (nf.reporter) comboEnsureOption('mReporter', originalData.reporter);
+            if (nf.machine) { comboEnsureOption('mMachine', originalData.machine); rememberMachineLocal(originalData.machine, originalData.machineCode); }
+            if (nf.position) { maintRoles[originalData.reporter] = originalData.position; fillPositionList(); }
+          }
+
+          renderMaintPdf(d, function (pdfUrl) {
+            d.pdfData = pdfUrl;
+            lastMaint = d;
+            shareMaint(pdfUrl, true);
+            var sb = document.getElementById('mShareBtn');
+            sb.style.display = '';
+            sb.textContent = '📤 แชร์ใบ FM-MT-02 (PDF) เข้า LINE / แชท';
+            sb.classList.add('hot');
+            setTimeout(function () { scrollIntoViewSafe(sb); }, 120);
+            setTimeout(function () { sb.classList.remove('hot'); }, 6000);
+            // เก็บ PDF ไว้ใน Drive ผูกกับเลข MR → ช่างเปิดย้อนหลังได้แม้รูปใน LINE หมดอายุ (ออฟไลน์จะเข้าคิวรอส่ง)
+            if (!res.test && res.mrNo && pdfUrl) {
+              google.script.run
+                .withSuccessHandler(function () { loadMaintList(); })
+                .withFailureHandler(function () { loadMaintList(); })
+                .attachMaintForm({ mrNo: res.mrNo, pdfDataUrl: pdfUrl });
+            }
+          });
+          resetMaintForm(originalData.reporter, originalData.site);
+        })
+        .withFailureHandler(function (err) {
+          mSubmitBtn.disabled = false;
+          mSubmitBtn.textContent = '🔧 ส่งใบแจ้งซ่อม';
+          showMAlert('error', '❌ ' + err);
+        })
+        .saveMaintRequest(payload);
+    }
+
+    // ----- รายการใบแจ้งซ่อมล่าสุด: เปิด PDF/รูปจาก Drive หรือสร้าง PDF ย้อนหลังจากข้อมูลในชีต -----
+    var maintListRows = [];
+    function loadMaintList() {
+      var lEl = document.getElementById('mListLoading'), box = document.getElementById('mList');
+      lEl.classList.add('show');
+      google.script.run
+        .withSuccessHandler(function (res) {
+          lEl.classList.remove('show');
+          if (!res || !res.ok) { box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้' + (res && res.message ? ': ' + esc(res.message) : '') + '</div>'; return; }
+          renderMaintList(res.rows || []);
+        })
+        .withFailureHandler(function (err) { lEl.classList.remove('show'); box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้: ' + esc(err) + '</div>'; })
+        .listMaintRequests({ limit: 20 });
+    }
+    function renderMaintList(rows) {
+      maintListRows = rows;
+      var box = document.getElementById('mList');
+      if (!rows.length) { box.innerHTML = '<div class="dash-empty">ยังไม่มีใบแจ้งซ่อม</div>'; return; }
+      box.innerHTML = rows.map(function (r, i) {
+        var t = thDT(r.time);
+        var acts = r.pdf
+          ? '<a href="' + esc(r.pdf) + '" target="_blank" rel="noopener">📄 เปิด PDF</a>'
+          : '<button type="button" data-regen="' + i + '">📄 สร้าง PDF</button>';
+        if (r.photo) acts += '<a href="' + esc(r.photo) + '" target="_blank" rel="noopener">📷 รูป</a>';
+        return '<div class="ml-row">' +
+          '<div class="ml-top"><span>' + esc(r.mrNo) + '</span><span class="t">' + esc(t.date + ' ' + t.time) + '</span></div>' +
+          '<div class="ml-sub">🏭 ' + esc(r.site) + ' · 🛠 ' + esc(r.machine) + (r.machineCode ? ' [' + esc(r.machineCode) + ']' : '') + '</div>' +
+          '<div class="ml-sym">🩺 ' + esc(r.symptom) + ' · 👤 ' + esc(r.reporter) + '</div>' +
+          '<div class="ml-act">' + acts + '</div></div>';
+      }).join('');
+    }
+    document.getElementById('mList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-regen]');
+      if (!b) return;
+      regenMaintPdf(maintListRows[+b.getAttribute('data-regen')], b);
+    });
+    // "dd/MM/yyyy HH:mm" (จากชีต) → "yyyy-MM-ddTHH:mm" (รูปแบบที่ตัววาดใบใช้กับ needBy)
+    function toLocalInput(str) {
+      var m = String(str || '').match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+      return m ? m[3] + '-' + m[2] + '-' + m[1] + 'T' + m[4] + ':' + m[5] : '';
+    }
+    // สร้างใบ PDF ใหม่จากข้อมูลในชีต (เช่น ใบที่ส่งตอนออฟไลน์) — รูปใน Drive ดึงข้ามโดเมนไม่ได้ ใบจึงไม่มีรูปย่อ
+    function regenMaintPdf(r, btn) {
+      if (!r) return;
+      btn.disabled = true; btn.textContent = '⏳ กำลังสร้าง...';
+      var d = { mrNo: r.mrNo, site: r.site, reporter: r.reporter, position: r.position, machine: r.machine, machineCode: r.machineCode,
+                symptom: r.symptom, productImpact: !!r.productImpact, impactDetail: r.impactDetail, quarantined: !!r.quarantined, ncrNo: r.ncrNo,
+                needBy: toLocalInput(r.needBy), time: r.time, photo: null };
+      function fail(msg) { btn.disabled = false; btn.textContent = '📄 สร้าง PDF'; showMAlert('error', msg); }
+      renderMaintPdf(d, function (pdfUrl) {
+        if (!pdfUrl) return fail('สร้าง PDF ไม่สำเร็จ');
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (!(res && res.ok)) return fail('❌ ' + (res ? res.message : 'ผิดพลาด'));
+            if (!res.pdfUrl) { btn.disabled = false; btn.textContent = '📄 สร้าง PDF'; showMAlert('info', '📥 ' + res.message); return; }
+            r.pdf = res.pdfUrl;
+            renderMaintList(maintListRows);
+            showMAlert('success', '📄 เก็บ PDF ของ ' + r.mrNo + ' ไว้ใน Drive แล้ว');
+          })
+          .withFailureHandler(function (err) { fail('❌ ' + err); })
+          .attachMaintForm({ mrNo: r.mrNo, pdfDataUrl: pdfUrl });
+      });
+    }
+  </script>
 
 </body>
 </html>
