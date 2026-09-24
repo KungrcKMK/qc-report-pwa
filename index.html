@@ -865,7 +865,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v47 · 2026-09-24</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v48 · 2026-09-24</span></div>
   </div>
 
   <script>
@@ -877,6 +877,18 @@
       // แหล่งเดียวของรายชื่อ action — ต้องครบทุกตัวที่แอปเรียก ไม่งั้น wrapper ข้างล่างจะ throw
       var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport', 'saveMaintRequest', 'attachMaintForm', 'listMaintRequests', 'ping'];
       window.__API_ACTIONS = ACTIONS;
+      var WRITE_ACTIONS = { saveReport: 1, updateReport: 1, deleteReport: 1, saveMaintRequest: 1, attachMaintForm: 1 };
+      // Apps Script ตอบเป็นหน้า HTML แทน JSON เป็นครั้งคราว → แปลงเองและลองใหม่ได้ (r.json() เดิมพังทันที)
+      function fetchJson(url, opts, tries) {
+        return fetch(url, opts).then(function (r) { return r.text(); }).then(function (txt) {
+          try { return JSON.parse(txt); }
+          catch (e) { var err = new Error('เซิร์ฟเวอร์ตอบผิดรูปแบบชั่วคราว (ไม่ใช่ JSON)'); err.nonJson = true; throw err; }
+        }).catch(function (err) {
+          if (tries > 1) return new Promise(function (res) { setTimeout(res, 1200); }).then(function () { return fetchJson(url, opts, tries - 1); });
+          throw err;
+        });
+      }
+      window.__fetchJson = fetchJson;
       function makeRunner() {
         var success = null, failure = null;
         var api = {
@@ -885,14 +897,12 @@
         };
         ACTIONS.forEach(function (action) {
           api[action] = function (arg) {
-            var p;
-            if (GET_ACTIONS[action]) {
-              p = fetch(APP_URL + '?action=' + action).then(function (r) { return r.json(); });
-            } else {
-              // POST แบบ text/plain (default ของ fetch) เพื่อเลี่ยง CORS preflight
-              p = fetch(APP_URL, { method: 'POST', body: JSON.stringify({ action: action, data: arg }) })
-                    .then(function (r) { return r.json(); });
-            }
+            // การอ่านลองซ้ำได้ 3 ครั้ง; การเขียนส่งครั้งเดียว (ชั้นคิวจะลองซ้ำเองด้วย reqId เดิม → backend ไม่สร้างแถวซ้ำ)
+            var tries = WRITE_ACTIONS[action] ? 1 : 3;
+            // POST แบบ text/plain (default ของ fetch) เพื่อเลี่ยง CORS preflight
+            var p = GET_ACTIONS[action]
+              ? fetchJson(APP_URL + '?action=' + action, undefined, tries)
+              : fetchJson(APP_URL, { method: 'POST', body: JSON.stringify({ action: action, data: arg }) }, tries);
             p.then(function (res) { if (success) success(res); })
              .catch(function (err) { if (failure) failure(String((err && err.message) || err)); });
           };
@@ -1122,8 +1132,15 @@
     }
 
     function onOptionsError(err) {
-      loadingEl.classList.remove('show');
       showAlert('error', 'โหลดข้อมูลไม่ได้: ' + err);
+      loadingEl.classList.add('show');
+      loadingEl.innerHTML = '<button type="button" id="optsRetryBtn" style="padding:10px 18px; border:1.5px solid #dc2626; border-radius:8px; background:#fff; color:#dc2626; font-family:inherit; font-weight:600; cursor:pointer;">🔄 ลองโหลดใหม่</button>';
+      document.getElementById('optsRetryBtn').addEventListener('click', loadOptions);
+    }
+    function loadOptions() {
+      loadingEl.classList.add('show');
+      loadingEl.innerHTML = '<div class="spinner"></div>กำลังโหลด...';
+      google.script.run.withSuccessHandler(onOptionsLoaded).withFailureHandler(onOptionsError).getOptions();
     }
 
     document.getElementById('categoryAddBtn').addEventListener('click', addCustomCategory);
@@ -1192,10 +1209,7 @@
       reader.readAsDataURL(file);
     }
 
-    google.script.run
-      .withSuccessHandler(onOptionsLoaded)
-      .withFailureHandler(onOptionsError)
-      .getOptions();
+    loadOptions();
 
     // ----- share to LINE / Telegram / etc. -----
     function fmtNow() {
@@ -2222,9 +2236,12 @@
                      .withFailureHandler(function (e) { if (failure) failure(e); })[a](arg);
             };
           });
+          function genReqId() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
           Object.keys(QUEUED).forEach(function (action) {
             var kind = QUEUED[action];
             api[action] = function (arg) {
+              // รหัสคำขอติดไปกับข้อมูล (คิวเก็บตัวเดียวกัน) → ส่งซ้ำกี่ครั้ง backend ก็บันทึกแค่ครั้งเดียว
+              if (arg && typeof arg === 'object' && !arg.reqId) arg.reqId = genReqId();
               if (!navigator.onLine) {
                 queueAdd(arg, kind).then(function () {
                   updateQueueBadge();
@@ -2232,14 +2249,20 @@
                 });
                 return;
               }
-              realApi.withSuccessHandler(function (r) { if (success) success(r); })
-                     .withFailureHandler(function (e) {
-                       // ส่งไม่ได้ → เก็บใส่คิวด้วย
-                       queueAdd(arg, kind).then(function () {
-                         updateQueueBadge();
-                         if (success) success({ ok: true, message: 'ส่งไม่ได้ - เก็บไว้ในคิวแทน', rowIndex: 0, added: [], newFields: {} });
-                       });
-                     })[action](arg);
+              var attempt = 0;
+              function send() {
+                attempt++;
+                realApi.withSuccessHandler(function (r) { if (success) success(r); })
+                       .withFailureHandler(function (e) {
+                         if (attempt < 2) { setTimeout(send, 1500); return; } // ลองซ้ำ 1 ครั้งด้วย reqId เดิม (กรณีเซิร์ฟเวอร์ตอบ HTML ชั่วคราว)
+                         // ยังส่งไม่ได้ → เก็บใส่คิว ส่งใหม่เมื่อเน็ตกลับมา
+                         queueAdd(arg, kind).then(function () {
+                           updateQueueBadge();
+                           if (success) success({ ok: true, message: 'ส่งไม่ได้ - เก็บไว้ในคิวแทน', rowIndex: 0, added: [], newFields: {} });
+                         });
+                       })[action](arg);
+              }
+              send();
             };
           });
           return api;
