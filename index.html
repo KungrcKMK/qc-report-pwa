@@ -339,6 +339,8 @@
     /* แท็บ 🔧 แจ้งซ่อม — โทนน้ำเงิน แยกจากรายงาน QC สีแดง */
     .tab[data-page="maint"].active { background: linear-gradient(135deg, #1d4ed8, #0891b2); }
     .btn.btn-maint { background: linear-gradient(135deg, #1d4ed8, #0891b2); } /* .btn ประกาศทีหลัง ต้องชนะด้วย specificity */
+    #maintPage .trend-arrow { color: #1d4ed8; }
+    .chip-btn.sm { padding: 7px 12px; font-size: 13px; }
     .mt-head { margin-bottom: 12px; }
     .mt-title { font-size: 16px; font-weight: 800; color: #1e3a8a; }
     .mt-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
@@ -348,6 +350,9 @@
     #maintPage .chk input { accent-color: #1d4ed8; }
     #maintPage .chk.active { border-color: #1d4ed8; background: #eff6ff; color: #1e40af; }
     .impact-more { margin-top: 8px; padding: 10px; border: 1px dashed #93c5fd; border-radius: 8px; background: #f8fbff; }
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip-btn { padding: 10px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151; font-size: 14px; font-family: inherit; cursor: pointer; }
+    .chip-btn.active { border-color: #1d4ed8; background: #eff6ff; color: #1e40af; font-weight: 600; }
     .ml-row { padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #374151; }
     .ml-row:last-child { border-bottom: none; }
     .ml-top { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; color: #1e3a8a; }
@@ -577,8 +582,9 @@
 
           <div class="field">
             <label>🏭 แจ้งซ่อมโรงงาน <span class="req">*</span></label>
-            <select id="mSite"><option value="">-- เลือกโรงงาน --</option></select>
-            <input type="text" id="mSiteNew" class="combo-new" placeholder="พิมพ์ชื่อโรงงาน เช่น สุพรรณคิวฟู้ดส์" style="display:none">
+            <!-- เลือกด้วยปุ่ม (เหมือนกันทุกเครื่อง ไม่พึ่ง dropdown เนทีฟ) — select ซ่อนไว้เป็นตัวเก็บค่าให้ตรรกะเดิม -->
+            <select id="mSite" style="display:none"><option value="">-- เลือกโรงงาน --</option></select>
+            <div id="mSiteChips" class="chip-wrap"></div>
           </div>
 
           <div class="field">
@@ -651,6 +657,20 @@
         <button type="submit" class="btn btn-maint" id="mSubmitBtn">🔧 ส่งใบแจ้งซ่อม</button>
         <button type="button" class="btn-share" id="mShareBtn" style="display:none">📤 แชร์ใบแจ้งซ่อมล่าสุดอีกครั้ง</button>
       </form>
+
+      <div class="section-divider">📈 แนวโน้มใบแจ้งซ่อม</div>
+      <div class="card">
+        <div id="mTrendSites" class="chip-wrap" style="margin-bottom:10px;"></div>
+        <div class="trend-nav">
+          <button type="button" class="trend-arrow" id="mTrendPrev" aria-label="สลับช่วงก่อนหน้า">◀</button>
+          <div class="trend-nav-mid">
+            <div class="trend-mode" id="mTrendMode">รายเดือน</div>
+            <div class="trend-period" id="mTrendPeriod"></div>
+          </div>
+          <button type="button" class="trend-arrow" id="mTrendNext" aria-label="สลับช่วงถัดไป">▶</button>
+        </div>
+        <div id="mTrendChart" class="trend-wrap"><div class="dash-empty">กำลังโหลด...</div></div>
+      </div>
 
       <div class="section-divider">📄 ใบแจ้งซ่อมล่าสุด</div>
       <div class="card">
@@ -845,7 +865,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v46 · 2026-09-18</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v47 · 2026-09-24</span></div>
   </div>
 
   <script>
@@ -2835,17 +2855,39 @@
         var o = document.createElement('option'); o.value = r; dl.appendChild(o);
       });
     }
+    // ปุ่มเลือกโรงงาน: วาดจาก option ของ select#mSite (ตัวเก็บค่า) — กดแล้วเซ็ตค่า + ยิง change ให้ตรรกะเดิมทำงานต่อ
+    function renderSiteChips() {
+      var sel = document.getElementById('mSite'), box = document.getElementById('mSiteChips');
+      if (!sel || !box) return;
+      box.innerHTML = '';
+      var n = 0;
+      Array.prototype.forEach.call(sel.options, function (o) {
+        if (!o.value || o.value === NEW_VALUE) return; // ข้าม placeholder — ไม่มีปุ่ม "พิมพ์เอง" (มีแค่ 2 โรงงาน เพิ่มในแท็บ Sites ของชีตแทน)
+        n++;
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip-btn' + (sel.value === o.value ? ' active' : '');
+        b.textContent = o.textContent;
+        b.addEventListener('click', function () {
+          sel.value = o.value;
+          sel.dispatchEvent(new Event('change'));
+          renderSiteChips();
+        });
+        box.appendChild(b);
+      });
+      if (!n) box.innerHTML = '<div style="font-size:12px; color:#9ca3af;">ยังไม่มีรายชื่อโรงงาน — เพิ่มชื่อในแท็บ Sites ของ Google Sheet แล้วรีเฟรช</div>';
+    }
     function initMaintForm(opts) {
       maintMachines = (opts.machines || []).filter(function (m) { return m && m.name; });
       maintRoles = opts.workerRoles || {};
-      fillSelect('mSite', opts.sites || []);
-      initCombo('mSite', '➕ พิมพ์เอง');
+      fillSelect('mSite', opts.sites || []);   // ไม่มีตัวเลือกพิมพ์เอง
       // คืนโรงงานที่เลือกครั้งก่อน — เฉพาะเมื่อยังอยู่ในรายการ ไม่งั้น select จะโชว์ว่างเปล่าแทน placeholder
       try {
         var lastSite = localStorage.getItem('maintSite');
         var siteSel = document.getElementById('mSite');
         if (lastSite && Array.prototype.some.call(siteSel.options, function (o) { return o.value === lastSite; })) siteSel.value = lastSite;
       } catch (e) {}
+      renderSiteChips();
       fillSelect('mReporter', opts.workers, (opts.top || {}).workers);
       initCombo('mReporter', '➕ ชื่ออื่น (พิมพ์เอง)');
       fillSelect('mMachine', maintMachines.map(function (m) { return m.name; }));
@@ -3193,7 +3235,7 @@
     maintForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var data = maintCurrentData();
-      if (!data.site) { showMAlert('error', document.getElementById('mSite').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อโรงงาน' : 'กรุณาเลือกโรงงานที่แจ้งซ่อม'); return; }
+      if (!data.site) { showMAlert('error', 'กรุณาเลือกโรงงานที่แจ้งซ่อม'); return; }
       if (!data.reporter) { showMAlert('error', document.getElementById('mReporter').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผู้แจ้ง' : 'กรุณาเลือกผู้แจ้งซ่อม'); return; }
       if (!data.machine) { showMAlert('error', document.getElementById('mMachine').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อเครื่องจักร/อุปกรณ์' : 'กรุณาเลือกเครื่องจักร/อุปกรณ์'); return; }
       if (!data.symptom) { showMAlert('error', 'กรุณาระบุอาการเบื้องต้น'); return; }
@@ -3208,8 +3250,9 @@
 
     function resetMaintForm(keepReporter, keepSite) {
       maintForm.reset();
-      ['mSite', 'mReporter', 'mMachine'].forEach(function (id) { document.getElementById(id + 'New').style.display = 'none'; });
+      ['mReporter', 'mMachine'].forEach(function (id) { document.getElementById(id + 'New').style.display = 'none'; });
       document.getElementById('mSite').value = keepSite || '';
+      renderSiteChips();
       document.getElementById('mReporter').value = keepReporter || '';
       var pos = document.getElementById('mPosition');
       if (keepReporter && maintRoles[keepReporter]) pos.value = maintRoles[keepReporter];
@@ -3239,7 +3282,7 @@
 
           if (!res.test) {
             var nf = res.newFields || {};
-            if (nf.site) comboEnsureOption('mSite', originalData.site);
+            if (nf.site) { comboEnsureOption('mSite', originalData.site); document.getElementById('mSite').value = originalData.site; }
             try { localStorage.setItem('maintSite', originalData.site || ''); } catch (e) {}
             if (nf.reporter) comboEnsureOption('mReporter', originalData.reporter);
             if (nf.machine) { comboEnsureOption('mMachine', originalData.machine); rememberMachineLocal(originalData.machine, originalData.machineCode); }
@@ -3278,6 +3321,56 @@
         .saveMaintRequest(payload);
     }
 
+    // ----- แนวโน้มใบแจ้งซ่อม: รวมทุกโรงงาน/แยกโรงงาน × สัปดาห์/เดือน/ปี — ใช้ trendLineSvg / TREND_MODES ตัวเดียวกับหน้าสรุป -----
+    var maintTrends = null;       // { all: {week,month,year}, bySite: {ชื่อ: {...}}, sites: [...] }
+    var mTrendMode = 'month';
+    var mTrendSite = 'all';
+    try { var savedMtm = localStorage.getItem('maintTrendMode'); if (TREND_MODES.indexOf(savedMtm) !== -1) mTrendMode = savedMtm; } catch (e) {}
+    function maintTrendSiteNames() {
+      if (!maintTrends) return [];
+      var names = (maintTrends.sites || []).slice();
+      Object.keys(maintTrends.bySite || {}).forEach(function (k) { if (names.indexOf(k) === -1) names.push(k); });
+      return names;
+    }
+    function renderMaintTrendSites() {
+      var box = document.getElementById('mTrendSites');
+      var names = maintTrendSiteNames();
+      if (mTrendSite !== 'all' && names.indexOf(mTrendSite) === -1) mTrendSite = 'all';
+      var items = [{ key: 'all', label: names.length >= 2 ? 'รวม ' + names.length + ' โรงงาน' : 'รวมทุกโรงงาน' }]
+        .concat(names.map(function (n) { return { key: n, label: n }; }));
+      box.innerHTML = '';
+      items.forEach(function (it) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip-btn sm' + (mTrendSite === it.key ? ' active' : '');
+        b.textContent = it.label;
+        b.addEventListener('click', function () { mTrendSite = it.key; renderMaintTrend(); });
+        box.appendChild(b);
+      });
+    }
+    function renderMaintTrend() {
+      var el = document.getElementById('mTrendChart'), modeEl = document.getElementById('mTrendMode'), perEl = document.getElementById('mTrendPeriod');
+      renderMaintTrendSites();
+      modeEl.textContent = TREND_MODE_LABEL[mTrendMode];
+      var src = maintTrends ? (mTrendSite === 'all' ? maintTrends.all : (maintTrends.bySite || {})[mTrendSite]) : null;
+      var t = src && src[mTrendMode];
+      if (!t || !t.values || !t.values.length) {
+        el.innerHTML = '<div class="dash-empty">ยังไม่มีข้อมูล</div>';
+        perEl.textContent = '';
+        return;
+      }
+      perEl.textContent = (t.label || '') + (typeof t.total === 'number' ? ' · รวม ' + t.total + ' ใบ' : '');
+      el.innerHTML = trendLineSvg(t);
+    }
+    function shiftMaintTrend(dir) {
+      var i = TREND_MODES.indexOf(mTrendMode);
+      mTrendMode = TREND_MODES[(i + dir + TREND_MODES.length) % TREND_MODES.length];
+      try { localStorage.setItem('maintTrendMode', mTrendMode); } catch (e) {}
+      renderMaintTrend();
+    }
+    document.getElementById('mTrendPrev').addEventListener('click', function () { shiftMaintTrend(-1); });
+    document.getElementById('mTrendNext').addEventListener('click', function () { shiftMaintTrend(1); });
+
     // ----- รายการใบแจ้งซ่อมล่าสุด: เปิด PDF/รูปจาก Drive หรือสร้าง PDF ย้อนหลังจากข้อมูลในชีต -----
     var maintListRows = [];
     function loadMaintList() {
@@ -3287,6 +3380,8 @@
         .withSuccessHandler(function (res) {
           lEl.classList.remove('show');
           if (!res || !res.ok) { box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้' + (res && res.message ? ': ' + esc(res.message) : '') + '</div>'; return; }
+          maintTrends = res.trends || null;
+          renderMaintTrend();
           renderMaintList(res.rows || []);
         })
         .withFailureHandler(function (err) { lEl.classList.remove('show'); box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้: ' + esc(err) + '</div>'; })
