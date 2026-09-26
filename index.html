@@ -117,6 +117,11 @@
     /* offline queue */
     .queue-badge { display: none; background: #fef3c7; color: #92400e; padding: 8px 10px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
     .queue-badge.show { display: block; }
+    /* ข้อมูลจากแคชในเครื่อง: บอกเวลาของข้อมูล / กำลังอัปเดต */
+    .swr-stamp { font-size: 11px; color: #9ca3af; text-align: right; margin: -2px 2px 8px; min-height: 14px; }
+    .swr-stamp.warn { color: #b45309; }
+    .exec-btn:disabled { opacity: 0.45; cursor: wait; }
+    .ml-act button:disabled { opacity: 0.45; cursor: wait; }
     /* exec actions */
     .exec-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
     .exec-btn { padding: 11px 6px; border: 1.5px solid #e5e7eb; border-radius: 10px; background: #fff; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
@@ -176,7 +181,7 @@
       body { background: #fff; }
       /* ซ่อนเฉพาะส่วนควบคุม — หน้าไหนเปิดอยู่ก็พิมพ์หน้านั้น (inline display คุมอยู่แล้ว) */
       .tabs, .install-banner, .queue-badge, .exec-actions, .month-actions,
-      .period-sel, #dashRefreshBtn, .footer, .loading, .btn, .btn-share { display: none !important; }
+      .period-sel, #dashRefreshBtn, .footer, .loading, .btn, .btn-share, .swr-stamp { display: none !important; }
       /* กดพิมพ์จากส่วนไหน ให้ออกเฉพาะส่วนนั้น (สรุปกับรายงานเดือนอยู่หน้าเดียวกัน) */
       body.print-month #dashContent { display: none !important; }
       body.print-month .section-divider { display: none !important; }
@@ -402,6 +407,8 @@
     }
     .btn-photo:active { background: #fef2f2; }
     #photoPreview { width: 100%; border-radius: 8px; border: 1.5px solid #e5e7eb; display: block; }
+    /* รูปแจ้งซ่อม: ย่อให้อยู่ในจอเสมอ — กว้างไม่เกินการ์ด สูงไม่เกิน 60% ของจอ (รูปแนวตั้งไม่ล้นจอมือถือ) */
+    #mPhotoPreview { display: block; max-width: 100%; max-height: 60vh; width: auto; height: auto; margin: 0 auto; border-radius: 8px; border: 1.5px solid #e5e7eb; }
     .btn-remove {
       margin-top: 8px; width: 100%; padding: 9px;
       background: #fee2e2; color: #991b1b;
@@ -593,7 +600,7 @@
         <div class="card">
           <div class="mt-head">
             <div class="mt-title">🔧 ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์</div>
-            <div class="mt-sub">FM-MT-02 Rev02 · ส่วนที่ 1 ผู้แจ้งกรอก · ระบบออกเลขที่ MR ให้เมื่อส่งสำเร็จ</div>
+            <div class="mt-sub">FM-MT-02 Rev03 (บังคับใช้ 24/09/69) · ส่วนที่ 1 ผู้แจ้งกรอก · ระบบออกเลขที่ MR ให้เมื่อส่งสำเร็จ</div>
           </div>
           <div id="mEditBar" class="edit-bar" style="display:none">
             <span>✏️ กำลังแก้ไข <b id="mEditNo"></b></span>
@@ -710,6 +717,7 @@
     <div id="dashPage" style="display:none">
       <div id="dashLoading" class="loading show"><div class="spinner"></div>กำลังโหลดสรุป...</div>
       <div id="dashContent" style="display:none">
+        <div id="dashStamp" class="swr-stamp"></div>
         <div class="exec-actions">
           <button type="button" class="exec-btn primary" id="execShareBtn">📋 สรุปผู้บริหาร</button>
           <button type="button" class="exec-btn" id="execPrintBtn">🖨 พิมพ์</button>
@@ -836,7 +844,7 @@
         <h3 id="modalTitle">✏️ แก้ไขรายงาน</h3>
         <div class="field">
           <label>👤 ผู้พบ</label>
-          <input type="text" id="mReporter">
+          <input type="text" id="eReporter">
         </div>
         <div class="field">
           <label>🍯 ผลิตภัณฑ์/วัตถุดิบ</label>
@@ -892,7 +900,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v52 · 2026-09-26</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v53 · 2026-09-26</span></div>
   </div>
 
   <script>
@@ -941,6 +949,38 @@
       Object.defineProperty(window.google.script, 'run', { configurable: true, get: makeRunner });
     })();
 
+    // ===== แคชในเครื่อง: โชว์ข้อมูลชุดล่าสุดทันที แล้วค่อยอัปเดตจากเซิร์ฟเวอร์ตามหลัง =====
+    // Apps Script ตอบช้า 1.5–3 วิ ทุกคำขอ (เปิดแอปครั้งแรกของรอบอาจถึง 6 วิ) → จำผลล่าสุดไว้ในเครื่อง
+    // ของจริงอยู่ในชีตเสมอ ที่นี่เป็นแค่สำเนาไว้โชว์ก่อน · เปลี่ยนรูปแบบข้อมูลที่ backend ส่งมาเมื่อไหร่ให้เปลี่ยนเลขใน LC_PREFIX
+    var LC_PREFIX = 'qcc1:';
+    function lcGet(key) {
+      try { var v = localStorage.getItem(LC_PREFIX + key); return v ? JSON.parse(v) : null; } catch (e) { return null; }
+    }
+    function lcKeys(group) {
+      var out = [];
+      try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf(LC_PREFIX + group) === 0) out.push(k); } } catch (e) {}
+      return out;
+    }
+    // keepMax: เก็บแค่ n ชุดล่าสุดของกลุ่ม (เช่น ผลค้นหาประวัติแต่ละตัวกรอง) กันเครื่องเต็ม
+    function lcSet(key, data, group, keepMax) {
+      try {
+        localStorage.setItem(LC_PREFIX + key, JSON.stringify({ t: Date.now(), d: data }));
+        if (group && keepMax) {
+          lcKeys(group).map(function (k) { var t = 0; try { t = JSON.parse(localStorage.getItem(k)).t || 0; } catch (e) {} return { k: k, t: t }; })
+            .sort(function (a, b) { return b.t - a.t; })
+            .slice(keepMax).forEach(function (it) { localStorage.removeItem(it.k); });
+        }
+      } catch (e) {}
+    }
+    function lcDrop(group) { lcKeys(group).forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} }); }
+    // เวลาของข้อมูลที่โชว์อยู่: วันนี้ = "14:05" · วันอื่น = "25/09 14:05"
+    function lcStamp(t) {
+      var d = new Date(t), now = new Date();
+      function p(n) { return (n < 10 ? '0' : '') + n; }
+      var hm = p(d.getHours()) + ':' + p(d.getMinutes());
+      return d.toDateString() === now.toDateString() ? hm : p(d.getDate()) + '/' + p(d.getMonth() + 1) + ' ' + hm;
+    }
+
     var alertEl = document.getElementById('alert');
     var form = document.getElementById('form');
     var loadingEl = document.getElementById('loadingOptions');
@@ -988,6 +1028,10 @@
     function fillSelect(id, items, top) {
       var sel = document.getElementById(id);
       var all = items || [];
+      // เติมซ้ำได้ (ตัวเลือกจากแคชในเครื่อง → ของใหม่จากเซิร์ฟเวอร์): ล้างของเดิมออกก่อน เหลือแค่ตัวเลือกว่าง "-- เลือก --"
+      var blank = sel.querySelector('option[value=""]');
+      sel.innerHTML = '';
+      if (blank) sel.appendChild(blank);
       function mkOption(it) {
         var opt = document.createElement('option');
         opt.value = it; opt.textContent = it;
@@ -1015,6 +1059,8 @@
       opt.value = NEW_VALUE; opt.textContent = label;
       sel.appendChild(opt);
       var txt = document.getElementById(id + 'New');
+      if (sel.__comboBound) return;   // เติมตัวเลือกซ้ำได้ แต่ผูก listener ครั้งเดียว
+      sel.__comboBound = true;
       sel.addEventListener('change', function () {
         if (sel.value === NEW_VALUE) { txt.style.display = ''; txt.focus(); }
         else txt.style.display = 'none';
@@ -1164,10 +1210,69 @@
       loadingEl.innerHTML = '<button type="button" id="optsRetryBtn" style="padding:10px 18px; border:1.5px solid #dc2626; border-radius:8px; background:#fff; color:#dc2626; font-family:inherit; font-weight:600; cursor:pointer;">🔄 ลองโหลดใหม่</button>';
       document.getElementById('optsRetryBtn').addEventListener('click', loadOptions);
     }
+    // ตัวเลือกชุดใหม่มาถึงตอนผู้ใช้กรอกฟอร์มไปแล้ว → เติมใหม่แต่คืนค่าที่เลือก/ติ๊กไว้ทั้งหมด
+    var OPT_SELECTS = ['reporter', 'product', 'stage', 'supplier', 'unit', 'mSite', 'mReporter', 'mMachine'];
+    function applyOptionsKeepingInput(opts) {
+      var keep = {};
+      OPT_SELECTS.forEach(function (id) { var el = document.getElementById(id); if (el) keep[id] = el.value; });
+      var checked = getCheckedCategories();
+      var moreOpen = document.getElementById('categoriesMore').open;
+      onOptionsLoaded(opts);
+      OPT_SELECTS.forEach(function (id) {
+        var el = document.getElementById(id), v = keep[id];
+        if (!el || !v) return;
+        var has = Array.prototype.some.call(el.options, function (o) { return o.value === v; });
+        if (!has) comboEnsureOption(id, v);   // ของที่เพิ่งพิมพ์เพิ่ม/ถูกลบจากชีต — ยังต้องอยู่ในฟอร์มที่กรอกค้างไว้
+        el.value = v;
+      });
+      checked.forEach(function (name) {
+        var exists = Array.prototype.some.call(document.querySelectorAll(CAT_SEL), function (b) { return b.value === name; });
+        if (exists) {
+          syncCategoryBoxes(name, true);
+        } else {
+          addCategoryChip(name, true, 'categoriesTop');
+          document.getElementById('categoriesTopWrap').style.display = '';
+        }
+      });
+      if (moreOpen) document.getElementById('categoriesMore').open = true;
+      try { if (typeof renderSiteChips === 'function') renderSiteChips(); } catch (e) {}
+    }
+    // ถ้าผู้ใช้กำลังเปิดรายการเลือกอยู่ (มือถือ) อย่าเปลี่ยนตัวเลือกใต้มือ — รอให้ปิดก่อน
+    function whenNotPicking(fn) {
+      var a = document.activeElement;
+      if (a && a.tagName === 'SELECT') {
+        a.addEventListener('blur', function once() { a.removeEventListener('blur', once); setTimeout(fn, 50); });
+        return;
+      }
+      fn();
+    }
+    // เปิดแอป: ใช้ตัวเลือกที่จำไว้ในเครื่องทันที (ฟอร์มพร้อมกรอกไม่ต้องรอเน็ต) แล้วดึงชุดใหม่มาทับเงียบๆ
     function loadOptions() {
-      loadingEl.classList.add('show');
-      loadingEl.innerHTML = '<div class="spinner"></div>กำลังโหลด...';
-      google.script.run.withSuccessHandler(onOptionsLoaded).withFailureHandler(onOptionsError).getOptions();
+      var cached = lcGet('opts');
+      var shown = false;
+      if (cached && cached.d && Array.isArray(cached.d.products)) {
+        try { onOptionsLoaded(cached.d); shown = true; }
+        catch (e) { console.warn('cached options failed', e); }
+      }
+      if (!shown) {
+        loadingEl.classList.add('show');
+        loadingEl.innerHTML = '<div class="spinner"></div>กำลังโหลด...';
+      }
+      google.script.run
+        .withSuccessHandler(function (opts) {
+          if (!opts || !Array.isArray(opts.products)) {
+            var msg = (opts && opts.message) || 'ข้อมูลตัวเลือกไม่ครบ';
+            if (!shown) onOptionsError(msg); else console.warn('refresh options failed', msg);
+            return;
+          }
+          lcSet('opts', opts);
+          if (!shown) { onOptionsLoaded(opts); return; }
+          if (JSON.stringify(opts) !== JSON.stringify(cached.d)) whenNotPicking(function () { applyOptionsKeepingInput(opts); });
+        })
+        .withFailureHandler(function (err) {
+          if (!shown) onOptionsError(err); else console.warn('refresh options failed', err); // มีชุดในเครื่องแล้ว ใช้ต่อได้
+        })
+        .getOptions();
     }
 
     document.getElementById('categoryAddBtn').addEventListener('click', addCustomCategory);
@@ -1236,7 +1341,10 @@
       reader.readAsDataURL(file);
     }
 
-    loadOptions();
+    // ตัวเลือกจากแคชในเครื่องเติมฟอร์มได้ทันที (ไม่รอเน็ต) → ต้องรอสคริปต์ทุกก้อนโหลดครบก่อน
+    // ไม่งั้น initMaintForm (อยู่ท้ายไฟล์) ยังไม่ถูกประกาศ ฟอร์มแจ้งซ่อมจะว่าง
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadOptions);
+    else loadOptions();
 
     // ----- share to LINE / Telegram / etc. -----
     function fmtNow() {
@@ -1521,24 +1629,68 @@
 
     function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
 
+    // โชว์สรุปชุดล่าสุด (ในหน่วยความจำ หรือที่จำไว้ในเครื่อง) ทันที แล้วดึงของใหม่มาทับทุกครั้งที่เข้าแท็บ
+    // ระหว่างที่ยังเป็นข้อมูลเก่า ปุ่มส่งสรุปผู้บริหาร/พิมพ์/CSV ถูกพักไว้ กันส่งตัวเลขเก่าออกไป
+    var dashDataAt = 0;      // เวลาของข้อมูลที่โชว์อยู่
+    var dashFetchedAt = 0;   // ดึงสดจากเซิร์ฟเวอร์ครั้งล่าสุด (รอบนี้ของแอป)
+    var dashSeq = 0;
+    function showDashContent() {
+      document.getElementById('dashLoading').classList.remove('show');
+      document.getElementById('dashContent').style.display = '';
+    }
+    function setDashStamp(state, err) {
+      var el = document.getElementById('dashStamp');
+      el.className = 'swr-stamp' + (state === 'failed' ? ' warn' : '');
+      el.textContent = state === 'updating' ? '🔄 กำลังอัปเดต… (ข้อมูลเมื่อ ' + lcStamp(dashDataAt) + ')'
+        : state === 'failed' ? '⚠️ อัปเดตไม่ได้ — แสดงข้อมูลเมื่อ ' + lcStamp(dashDataAt) + ' · กด 🔄 รีเฟรชข้อมูล ด้านล่าง'
+        : '✓ อัปเดตล่าสุด ' + lcStamp(dashDataAt);
+      document.querySelectorAll('.exec-actions button').forEach(function (b) { b.disabled = (state === 'updating'); });
+    }
     function loadDashboard(force) {
-      if (dashData && !force) { renderDashboard(); return; }
-      document.getElementById('dashLoading').classList.add('show');
-      document.getElementById('dashContent').style.display = 'none';
+      if (!dashData) {
+        var c = lcGet('dash');
+        if (c && c.d && c.d.periods) {
+          try { dashData = c.d; dashDataAt = c.t; showDashContent(); renderDashboard(); }
+          catch (e) { console.warn('cached dashboard failed', e); dashData = null; }
+        }
+      } else {
+        showDashContent();
+        renderDashboard();
+      }
+      // เพิ่งดึงสดไปไม่ถึงนาที (สลับแท็บไปมา) → ใช้ของเดิม ไม่ต้องยิงซ้ำ
+      if (!force && dashData && dashFetchedAt && Date.now() - dashFetchedAt < 60000) { setDashStamp('fresh'); return; }
+      if (dashData) setDashStamp('updating');
+      else {
+        document.getElementById('dashLoading').classList.add('show');
+        document.getElementById('dashContent').style.display = 'none';
+      }
+      var seq = ++dashSeq;
       google.script.run
         .withSuccessHandler(function (d) {
-          dashData = d;
-          document.getElementById('dashLoading').classList.remove('show');
-          document.getElementById('dashContent').style.display = '';
+          if (seq !== dashSeq) return;   // มีคำขอใหม่กว่าแล้ว
+          if (!d || !d.periods) {
+            var msg = (d && d.message) || 'ข้อมูลสรุปไม่ครบ';
+            if (dashData) { setDashStamp('failed'); return; }
+            showDashContent();
+            document.getElementById('scoreboard').innerHTML = '<div class="dash-empty">โหลดไม่ได้: ' + esc(msg) + '</div>';
+            return;
+          }
+          dashData = d; dashDataAt = dashFetchedAt = Date.now();
+          lcSet('dash', d);
+          showDashContent();
           renderDashboard();
+          setDashStamp('fresh');
         })
         .withFailureHandler(function (err) {
-          document.getElementById('dashLoading').classList.remove('show');
-          document.getElementById('dashContent').style.display = '';
+          if (seq !== dashSeq) return;
+          if (dashData) { setDashStamp('failed'); return; }
+          showDashContent();
           document.getElementById('scoreboard').innerHTML = '<div class="dash-empty">โหลดไม่ได้: ' + esc(err) + '</div>';
         })
         .getDashboard();
     }
+    // แก้/ลบรายงานแล้ว สรุปชุดเดิมผิดทันที → ทิ้งทั้งในหน่วยความจำและในเครื่อง ให้โหลดใหม่ตอนเข้าแท็บ
+    function dropDashCache() { dashData = null; dashFetchedAt = 0; lcDrop('dash'); }
 
     // สีประจำอันดับ (พื้น / ตัวเลข) — คู่ที่ 3-4 พื้นอ่อน ต้องใช้ตัวหนังสือเข้ม
     var RANK_BG = ['#c0392f', '#d95926', '#e8926a', '#eda100', '#1baf7a', '#2a78d6', '#e87ba4', '#4a3aa7', '#008300', '#888780'];
@@ -1803,7 +1955,7 @@
 
       submitBtn.disabled = true;
       submitBtn.textContent = '⏳ กำลังส่ง...';
-      showAlert('info', data.photo ? 'กำลังสร้างการ์ด + บันทึก...' : 'กำลังบันทึก...');
+      showAlert('info', 'กำลังสร้างการ์ด...');
 
       // render การ์ดก่อน (รวมข้อความ+รูป) แล้วส่งการ์ดให้ backend (ไม่ส่งรูปต้นฉบับ → ประหยัด Drive)
       renderReportCard(data, function (cardUrl) {
@@ -1815,74 +1967,109 @@
       });
     });
 
+    // ส่งรายงาน: เก็บลงคิวในเครื่องก่อน (ปิดแอป/เน็ตหลุดกลางทางก็ไม่หาย) → ให้แชร์การ์ดได้ทันที
+    // ส่วนการบันทึกเข้าชีต (Apps Script 3–8 วิ) วิ่งเบื้องหลัง แล้วค่อยแจ้งผลบนแถบด้านบน
     function submitReport(payload, originalData, cardUrl) {
-      var data = originalData; // ใช้ใน success handler (comboEnsureOption / keepReporter) — กัน ReferenceError ที่ทำให้ค้าง
-      google.script.run
-        .withSuccessHandler(function (res) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = '📨 ส่งรายงาน';
-          if (res && res.ok) {
-            var msg;
-            if (res.test) {
-              msg = '🧪 ' + res.message; // ผู้พบ = Admin → โหมดทดสอบ ไม่บันทึกลงระบบ
-            } else {
-              msg = '✅ ' + res.message + ' (row ' + res.rowIndex + ')';
-              if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
-            }
-            msg += '\n📤 กดปุ่มแชร์ด้านล่าง 👇 (ถ้าหน้าต่างแชร์ไม่เด้งเอง)';
-            showAlert(res.test ? 'info' : 'success', msg);
-
-            // จำชื่อผู้พบไว้ใช้ self-filter ในหน้าประวัติ (ยกเว้นโหมดทดสอบ Admin — ไม่จำ)
-            if (!res.test) { try { localStorage.setItem('defaultReporter', originalData.reporter || ''); } catch (e) {} }
-
-            // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง — เก็บ card ที่ render แล้ว เพื่อแชร์ใหม่ได้ทันที
-            lastReport = {
-              reporter: originalData.reporter, product: originalData.product, categories: originalData.categories,
-              stage: originalData.stage, supplier: originalData.supplier, quantity: originalData.quantity, unit: originalData.unit,
-              note: originalData.note, photo: originalData.photo, time: originalData.time || fmtNow(),
-              cardImage: cardUrl
-            };
-            // ลองเด้งหน้าต่างแชร์อัตโนมัติ (เงียบถ้าทำไม่ได้ — บางมือถือบล็อกหลังบันทึกผ่านเน็ต)
-            shareReport(cardUrl, true);
-            // โชว์ปุ่มแชร์แบบเด่น + กะพริบ + เลื่อนจอไปหา เพื่อให้กดง่ายถ้าจอแชร์ไม่เด้งเอง (แตะเอง = ชัวร์สุด)
-            var sBtn = document.getElementById('shareBtn');
-            sBtn.style.display = '';
-            sBtn.textContent = '📤 แชร์การ์ดเข้า LINE / แชท';
-            sBtn.classList.add('hot');
-            setTimeout(function () { scrollIntoViewSafe(sBtn); }, 120);
-            setTimeout(function () { sBtn.classList.remove('hot'); }, 6000);
-
-            // อัปเดต dropdown ทันทีสำหรับค่าใหม่
-            var nf = res.newFields || {};
-            if (nf.reporter) comboEnsureOption('reporter', data.reporter);
-            if (nf.product) comboEnsureOption('product', data.product);
-            if (nf.stage) comboEnsureOption('stage', data.stage);
-            if (nf.supplier) comboEnsureOption('supplier', data.supplier);
-            if (nf.unit) comboEnsureOption('unit', data.unit);
-
-            // reset แต่เก็บผู้พบไว้ (คนเดิมมักรายงานหลายครั้ง)
-            var keepReporter = data.reporter;
-            form.reset();
-            COMBO_FIELDS.forEach(function (id) {
-              document.getElementById(id + 'New').style.display = 'none';
-            });
-            document.getElementById('reporter').value = keepReporter;
-            document.querySelectorAll('#categoriesTop .chk, #categories .chk').forEach(function (el) {
-              el.classList.remove('active');
-            });
-            document.getElementById('categoriesMore').open = false;
-            updateMoreSummary();
-            clearPhoto();
-          } else {
+      if (!payload.reqId) payload.reqId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+      var isTest = String(originalData.reporter || '').trim().toLowerCase() === 'admin';
+      var queued = (typeof queueAdd === 'function') ? queueAdd(payload, 'qc') : Promise.reject(new Error('no queue'));
+      queued.then(function (id) {
+        if (!navigator.onLine) {
+          reportAccepted(originalData, cardUrl, isTest, '📥 ไม่มีเน็ต — เก็บรายงานไว้ในเครื่องแล้ว จะบันทึกให้อัตโนมัติเมื่อเน็ตกลับมา\n📤 แชร์การ์ดได้เลย 👇');
+          updateQueueBadge();
+          return;
+        }
+        reportAccepted(originalData, cardUrl, isTest, '⏳ กำลังบันทึกเบื้องหลัง — แชร์การ์ดได้เลย 👇\n(รายงานเก็บไว้ในเครื่องแล้ว ไม่หายแม้ปิดแอป)');
+        sendQueuedItem({ id: id, kind: 'qc', data: payload }, function (res, err) { reportSaved(res, err, originalData); });
+      }, function () {
+        // ใช้คิวในเครื่องไม่ได้ (บางเบราว์เซอร์/โหมดส่วนตัว) → รอเซิร์ฟเวอร์ตอบแบบเดิม
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (res && res.ok) { reportAccepted(originalData, cardUrl, !!res.test, ''); reportSaved(res, null, originalData); return; }
+            submitBtn.disabled = false;
+            submitBtn.textContent = '📨 ส่งรายงาน';
             showAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด'));
-          }
-        })
-        .withFailureHandler(function (err) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = '📨 ส่งรายงาน';
-          showAlert('error', '❌ ' + err);
-        })
-        .saveReport(payload);
+          })
+          .withFailureHandler(function (err) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '📨 ส่งรายงาน';
+            showAlert('error', '❌ ' + err);
+          })
+          .saveReport(payload);
+      });
+    }
+
+    // รายงานถูกรับไว้แล้ว (อยู่ในคิวในเครื่อง หรือเซิร์ฟเวอร์ตอบแล้ว) → แชร์ + ล้างฟอร์มรอรายงานถัดไป
+    function reportAccepted(originalData, cardUrl, isTest, msg) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '📨 ส่งรายงาน';
+      if (msg) showAlert('info', msg);
+
+      // จำชื่อผู้พบไว้ใช้ self-filter ในหน้าประวัติ (ยกเว้นโหมดทดสอบ Admin — ไม่จำ)
+      if (!isTest) { try { localStorage.setItem('defaultReporter', originalData.reporter || ''); } catch (e) {} }
+
+      // จำรายงานนี้ไว้สำหรับปุ่มแชร์อีกครั้ง — เก็บ card ที่ render แล้ว เพื่อแชร์ใหม่ได้ทันที
+      lastReport = {
+        reporter: originalData.reporter, product: originalData.product, categories: originalData.categories,
+        stage: originalData.stage, supplier: originalData.supplier, quantity: originalData.quantity, unit: originalData.unit,
+        note: originalData.note, photo: originalData.photo, time: originalData.time || fmtNow(),
+        cardImage: cardUrl
+      };
+      // ลองเด้งหน้าต่างแชร์อัตโนมัติ (เงียบถ้าทำไม่ได้ — ตอนนี้เด้งเร็วขึ้นเพราะไม่ต้องรอเซิร์ฟเวอร์ มือถือจึงบล็อกน้อยลง)
+      shareReport(cardUrl, true);
+      // โชว์ปุ่มแชร์แบบเด่น + กะพริบ + เลื่อนจอไปหา เพื่อให้กดง่ายถ้าจอแชร์ไม่เด้งเอง (แตะเอง = ชัวร์สุด)
+      var sBtn = document.getElementById('shareBtn');
+      sBtn.style.display = '';
+      sBtn.textContent = '📤 แชร์การ์ดเข้า LINE / แชท';
+      sBtn.classList.add('hot');
+      setTimeout(function () { scrollIntoViewSafe(sBtn); }, 120);
+      setTimeout(function () { sBtn.classList.remove('hot'); }, 6000);
+
+      // reset แต่เก็บผู้พบไว้ (คนเดิมมักรายงานหลายครั้ง)
+      var keepReporter = originalData.reporter;
+      form.reset();
+      COMBO_FIELDS.forEach(function (id) {
+        document.getElementById(id + 'New').style.display = 'none';
+      });
+      comboEnsureOption('reporter', keepReporter);   // ชื่อที่พิมพ์เองยังไม่อยู่ในรายการจนกว่าเซิร์ฟเวอร์ตอบ
+      document.getElementById('reporter').value = keepReporter;
+      document.querySelectorAll('#categoriesTop .chk, #categories .chk').forEach(function (el) {
+        el.classList.remove('active');
+      });
+      document.getElementById('categoriesMore').open = false;
+      updateMoreSummary();
+      clearPhoto();
+    }
+
+    // ผลการบันทึกเบื้องหลัง — แจ้งบนแถบด้านบนแบบไม่เลื่อนจอ (ผู้ใช้อาจกำลังกดแชร์หรือกรอกรายงานถัดไปอยู่)
+    function reportSaved(res, err, originalData) {
+      var what = originalData.product ? ': ' + originalData.product : '';
+      if (res && res.ok) {
+        var msg;
+        if (res.test) {
+          msg = '🧪 ' + res.message; // ผู้พบ = Admin → โหมดทดสอบ ไม่บันทึกลงระบบ
+        } else {
+          msg = '✅ บันทึกเข้าระบบแล้ว' + what + (res.rowIndex ? ' (row ' + res.rowIndex + ')' : '');
+          if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
+          dashFetchedAt = 0;   // มีรายงานใหม่ → เข้าหน้าสรุปครั้งหน้าต้องดึงใหม่
+        }
+        showAlertQuiet(res.test ? 'info' : 'success', msg);
+        // อัปเดต dropdown ทันทีสำหรับค่าใหม่
+        var nf = res.newFields || {};
+        if (nf.reporter) comboEnsureOption('reporter', originalData.reporter);
+        if (nf.product) comboEnsureOption('product', originalData.product);
+        if (nf.stage) comboEnsureOption('stage', originalData.stage);
+        if (nf.supplier) comboEnsureOption('supplier', originalData.supplier);
+        if (nf.unit) comboEnsureOption('unit', originalData.unit);
+        return;
+      }
+      showAlertQuiet('error', '⚠️ ยังบันทึกเข้าระบบไม่สำเร็จ' + what + (err ? ' (' + err + ')' : '') +
+        '\n📥 รายงานเก็บไว้ในเครื่องแล้ว ไม่ต้องกรอกใหม่ — จะส่งให้อัตโนมัติเมื่อเน็ตดี/เปิดแอปครั้งถัดไป');
+    }
+    function showAlertQuiet(type, msg) {
+      alertEl.className = 'alert show ' + type;
+      alertEl.textContent = msg;
+      if (type === 'success') setTimeout(function () { if (alertEl.textContent === msg) alertEl.classList.remove('show'); }, 8000);
     }
   </script>
 
@@ -1941,6 +2128,7 @@
     var historyOffset = 0;
     var historyLimit = 25;
     var historyTotal = 0;
+    var historySeq = 0;   // กันผลค้นหาเก่าที่มาช้ากว่ามาทับผลใหม่
     var historyFiltersInited = false;
     var historyDrillFilter = null; // {kind, val}
 
@@ -2019,42 +2207,70 @@
         q: document.getElementById('hQ').value.trim(),
         offset: historyOffset, limit: historyLimit
       };
+      // ผลค้นหาชุดเดียวกันที่จำไว้ในเครื่อง → โชว์ทันทีแบบ "ดูอย่างเดียว" จนกว่าของสดจะมา
+      // (แก้/ลบอ้างเลขแถวในชีต — เลขแถวจากข้อมูลเก่าอาจเลื่อนไปแล้ว ห้ามให้กดแก้จากชุดเก่าเด็ดขาด)
+      var cacheKey = 'hist:' + JSON.stringify(params);
+      var seq = ++historySeq;
+      var cached = lcGet(cacheKey);
+      if (cached && cached.d && cached.d.ok) {
+        try { renderHistory(cached.d, false, cached.t); } catch (e) { console.warn('cached history failed', e); }
+      }
       var runner = google.script.run
         .withSuccessHandler(function (res) {
-          if (!res || !res.ok) { listEl.innerHTML = '<div class="hist-empty">❌ ' + esc((res && res.message) || 'ผิดพลาด') + '</div>'; return; }
-          historyTotal = res.total;
-          countEl.textContent = 'พบ ' + res.total + ' รายการ' + (res.total > historyLimit ? ' (แสดง ' + (res.offset + 1) + '-' + Math.min(res.offset + res.rows.length, res.total) + ')' : '');
-          if (!res.rows.length) { listEl.innerHTML = '<div class="hist-empty">ไม่พบรายการ</div>'; return; }
-          listEl.innerHTML = res.rows.map(function (r) {
-            var sup = r.supplier ? ' · 🏭 ' + esc(r.supplier) : '';
-            return '<div class="hist-row" data-row="' + r.rowIndex + '">' +
-              '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
-              '<div class="hist-cat">🔍 ' + esc(r.categories || '-') + '</div>' +
-              '<div class="hist-sub">🍯 ' + esc(r.product || '-') + sup + ' · 👤 ' + esc(r.reporter || '-') + '</div>' +
-              (r.note ? '<div class="hist-sub" style="color:#6b7280">📝 ' + esc(r.note) + '</div>' : '') +
-              '</div>';
-          }).join('');
-          // pagination
-          var pages = Math.ceil(res.total / historyLimit);
-          if (pages > 1) {
-            var curPage = Math.floor(res.offset / historyLimit) + 1;
-            pagiEl.innerHTML =
-              '<button id="hPrev" ' + (curPage <= 1 ? 'disabled' : '') + '>← ก่อนหน้า</button>' +
-              '<button disabled style="flex:0 0 auto; padding:9px 16px">' + curPage + '/' + pages + '</button>' +
-              '<button id="hNext" ' + (curPage >= pages ? 'disabled' : '') + '>ถัดไป →</button>';
-            var hP = document.getElementById('hPrev'); if (hP) hP.onclick = function () { historyOffset = Math.max(0, historyOffset - historyLimit); runHistorySearch(false); };
-            var hN = document.getElementById('hNext'); if (hN) hN.onclick = function () { historyOffset += historyLimit; runHistorySearch(false); };
-          }
-          // bind row click → modal
-          listEl.querySelectorAll('.hist-row').forEach(function (el) {
-            el.addEventListener('click', function () {
-              var row = res.rows.find(function (x) { return x.rowIndex == el.getAttribute('data-row'); });
-              openEditModal(row);
-            });
-          });
+          if (seq !== historySeq) return;   // ผู้ใช้เปลี่ยนตัวกรอง/หน้าไปแล้ว
+          if (!res || !res.ok) { listEl.innerHTML = '<div class="hist-empty">❌ ' + esc((res && res.message) || 'ผิดพลาด') + '</div>'; countEl.textContent = ''; pagiEl.innerHTML = ''; return; }
+          lcSet(cacheKey, res, 'hist:', 6);
+          renderHistory(res, true);
         })
-        .withFailureHandler(function (err) { listEl.innerHTML = '<div class="hist-empty">❌ ' + esc(err) + '</div>'; });
+        .withFailureHandler(function (err) {
+          if (seq !== historySeq) return;
+          if (cached && cached.d && cached.d.ok) {
+            countEl.textContent = countEl.textContent.replace(/ · 🔄.*$/, '') + ' · ⚠️ อัปเดตไม่ได้ (ข้อมูลเมื่อ ' + lcStamp(cached.t) + ') — กด 🔍 ค้นหา อีกครั้ง';
+            return;
+          }
+          listEl.innerHTML = '<div class="hist-empty">❌ ' + esc(err) + '</div>';
+        });
       runner.searchReports(params);
+    }
+
+    // live = ข้อมูลสดจากเซิร์ฟเวอร์ (กดแถวเพื่อแก้ไขได้) · ไม่ live = ชุดที่จำไว้ในเครื่อง (ดูอย่างเดียว)
+    function renderHistory(res, live, at) {
+      var listEl = document.getElementById('hList');
+      var countEl = document.getElementById('hCount');
+      var pagiEl = document.getElementById('hPagi');
+      pagiEl.innerHTML = '';
+      historyTotal = res.total;
+      countEl.textContent = 'พบ ' + res.total + ' รายการ' + (res.total > historyLimit ? ' (แสดง ' + (res.offset + 1) + '-' + Math.min(res.offset + res.rows.length, res.total) + ')' : '') +
+        (live ? '' : ' · 🔄 กำลังอัปเดต… (ข้อมูลเมื่อ ' + lcStamp(at) + ')');
+      if (!res.rows.length) { listEl.innerHTML = '<div class="hist-empty">ไม่พบรายการ</div>'; return; }
+      listEl.innerHTML = res.rows.map(function (r) {
+        var sup = r.supplier ? ' · 🏭 ' + esc(r.supplier) : '';
+        return '<div class="hist-row" data-row="' + r.rowIndex + '"' + (live ? '' : ' style="opacity:.65; cursor:default"') + '>' +
+          '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
+          '<div class="hist-cat">🔍 ' + esc(r.categories || '-') + '</div>' +
+          '<div class="hist-sub">🍯 ' + esc(r.product || '-') + sup + ' · 👤 ' + esc(r.reporter || '-') + '</div>' +
+          (r.note ? '<div class="hist-sub" style="color:#6b7280">📝 ' + esc(r.note) + '</div>' : '') +
+          '</div>';
+      }).join('');
+      if (!live) return;   // ชุดเก่า: ไม่มีปุ่มเปลี่ยนหน้า/กดแก้ไข จนกว่าของสดจะมา
+      // pagination
+      var pages = Math.ceil(res.total / historyLimit);
+      if (pages > 1) {
+        var curPage = Math.floor(res.offset / historyLimit) + 1;
+        pagiEl.innerHTML =
+          '<button id="hPrev" ' + (curPage <= 1 ? 'disabled' : '') + '>← ก่อนหน้า</button>' +
+          '<button disabled style="flex:0 0 auto; padding:9px 16px">' + curPage + '/' + pages + '</button>' +
+          '<button id="hNext" ' + (curPage >= pages ? 'disabled' : '') + '>ถัดไป →</button>';
+        var hP = document.getElementById('hPrev'); if (hP) hP.onclick = function () { historyOffset = Math.max(0, historyOffset - historyLimit); runHistorySearch(false); };
+        var hN = document.getElementById('hNext'); if (hN) hN.onclick = function () { historyOffset += historyLimit; runHistorySearch(false); };
+      }
+      // bind row click → modal
+      listEl.querySelectorAll('.hist-row').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var row = res.rows.find(function (x) { return x.rowIndex == el.getAttribute('data-row'); });
+          openEditModal(row);
+        });
+      });
     }
 
     document.getElementById('hSearch').addEventListener('click', function () { runHistorySearch(true); });
@@ -2081,7 +2297,7 @@
     function openEditModal(rec) {
       if (!rec) return;
       editingRow = rec.rowIndex;
-      document.getElementById('mReporter').value = rec.reporter || '';
+      document.getElementById('eReporter').value = rec.reporter || '';
       document.getElementById('mProduct').value = rec.product || '';
       document.getElementById('mCategories').value = rec.categories || '';
       document.getElementById('mStage').value = rec.stage || '';
@@ -2103,7 +2319,7 @@
       if (!editingRow) return;
       var btn = this; btn.disabled = true; btn.textContent = '⏳';
       var patch = {
-        reporter: document.getElementById('mReporter').value.trim(),
+        reporter: document.getElementById('eReporter').value.trim(),
         product: document.getElementById('mProduct').value.trim(),
         categories: document.getElementById('mCategories').value,
         stage: document.getElementById('mStage').value.trim(),
@@ -2115,7 +2331,7 @@
       google.script.run
         .withSuccessHandler(function (res) {
           btn.disabled = false; btn.textContent = '💾 บันทึก';
-          if (res && res.ok) { closeModal(); runHistorySearch(false); dashData = null; }
+          if (res && res.ok) { closeModal(); lcDrop('hist:'); runHistorySearch(false); dropDashCache(); }
           else alert('แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
         })
         .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '💾 บันทึก'; alert('ผิดพลาด: ' + err); })
@@ -2128,7 +2344,7 @@
       google.script.run
         .withSuccessHandler(function (res) {
           btn.disabled = false; btn.textContent = '🗑 ลบ';
-          if (res && res.ok) { closeModal(); runHistorySearch(false); dashData = null; }
+          if (res && res.ok) { closeModal(); lcDrop('hist:'); runHistorySearch(false); dropDashCache(); }
           else alert('ลบไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
         })
         .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '🗑 ลบ'; alert('ผิดพลาด: ' + err); })
@@ -2177,8 +2393,8 @@
       return openQueueDB().then(function (db) {
         return new Promise(function (resolve, reject) {
           var tx = db.transaction(DB_STORE, 'readwrite');
-          tx.objectStore(DB_STORE).add({ data: data, kind: kind || 'qc', ts: new Date().toISOString() });
-          tx.oncomplete = function () { resolve(); };
+          var addReq = tx.objectStore(DB_STORE).add({ data: data, kind: kind || 'qc', ts: new Date().toISOString() });
+          tx.oncomplete = function () { resolve(addReq.result); };   // คืนเลข id ในคิว (ใช้ลบออกเมื่อส่งสำเร็จ)
           tx.onerror = function () { reject(tx.error); };
         });
       });
@@ -2207,32 +2423,61 @@
         });
       });
     }
+    // id ในคิวที่กำลังส่งอยู่ — กันส่งซ้ำพร้อมกัน (เช่น กดส่งแล้วสลับแอปไป LINE กลับมาเจอ flush อีกรอบ)
+    // และไม่นับในป้าย "รอส่ง" เพราะกำลังวิ่งอยู่
+    var queueInflight = {};
     function updateQueueBadge() {
       queueGetAll().then(function (items) {
-        if (items.length > 0) {
+        var waiting = items.filter(function (it) { return !queueInflight[it.id]; });
+        if (waiting.length > 0) {
           queueBadge.classList.add('show');
-          queueBadge.textContent = '📤 มีรายงาน ' + items.length + ' รายการ รออยู่ในคิว (offline) — จะส่งให้อัตโนมัติเมื่อเน็ตกลับมา';
+          queueBadge.textContent = '📤 มี ' + waiting.length + ' รายการรอส่ง (เก็บไว้ในเครื่องแล้ว ไม่หาย) — จะส่งให้อัตโนมัติเมื่อเน็ตกลับมา/เปิดแอปครั้งถัดไป';
         } else {
           queueBadge.classList.remove('show');
         }
-      });
+      }).catch(function () {});
+    }
+    var QUEUE_ACTION = { qc: 'saveReport', maint: 'saveMaintRequest', maintpdf: 'attachMaintForm' };
+    // ส่งรายการในคิวไปเซิร์ฟเวอร์ 1 รายการ: สำเร็จ = ลบออกจากคิว · ไม่สำเร็จ = เก็บไว้ (ส่งใหม่ด้วย reqId เดิม backend ไม่สร้างแถวซ้ำ)
+    // เรียก Apps Script ตรง ไม่ผ่านตัวห่อคิว — ตัวห่อจะเอารายการที่ล้มเหลวไปใส่คิวซ้ำอีกชุด
+    // done(res) เมื่อสำเร็จ · done(null, err) เมื่อยังส่งไม่ได้
+    function sendQueuedItem(item, done) {
+      if (queueInflight[item.id]) return;
+      queueInflight[item.id] = 1;
+      var action = QUEUE_ACTION[item.kind] || 'saveReport';   // รายการเก่าที่ไม่มี kind = รายงาน QC
+      var tries = 0;
+      function fail(err) {
+        delete queueInflight[item.id];
+        updateQueueBadge();
+        if (done) done(null, err);
+      }
+      function go() {
+        tries++;
+        window.__rawRun()
+          .withSuccessHandler(function (res) {
+            if (res && res.ok) {
+              queueDelete(item.id).then(function () { delete queueInflight[item.id]; updateQueueBadge(); });
+              if (done) done(res);
+              return;
+            }
+            fail((res && res.message) || 'เซิร์ฟเวอร์ไม่รับรายการ');   // เช่น ล็อกชีตไม่ได้ → ครั้งหน้าลองใหม่
+          })
+          .withFailureHandler(function (err) {
+            if (tries < 2) { setTimeout(go, 1500); return; }   // ลองซ้ำ 1 ครั้ง (Apps Script ตอบ HTML ชั่วคราว)
+            fail(err);
+          })[action](item.data);
+      }
+      go();
     }
     function flushQueue() {
       if (!navigator.onLine) return;
       queueGetAll().then(function (items) {
-        if (!items.length) return;
-        items.forEach(function (item) {
-          var runner = google.script.run
-            .withSuccessHandler(function (res) { if (res && res.ok) { queueDelete(item.id).then(updateQueueBadge); } })
-            .withFailureHandler(function () {});
-          // รายการเก่าที่ไม่มี kind = รายงาน QC
-          if (item.kind === 'maint') runner.saveMaintRequest(item.data);
-          else if (item.kind === 'maintpdf') runner.attachMaintForm(item.data);
-          else runner.saveReport(item.data);
-        });
-      });
+        items.forEach(function (item) { sendQueuedItem(item); });
+      }).catch(function () {});
     }
     window.addEventListener('online', flushQueue);
+    // กลับเข้าแอป (เช่น แชร์เข้า LINE แล้วสลับกลับมา) → ส่งของที่ค้างต่อทันที ไม่ต้องรอเปิดแอปใหม่
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') flushQueue(); });
     window.addEventListener('load', function () {
       updateQueueBadge(); flushQueue();
       // ตั้ง max ของช่อง "วันเวลาที่พบ" = ตอนนี้ (กันเลือกอนาคต; ย้อนหลังได้)
@@ -2246,6 +2491,8 @@
     // wrap saveReport: ถ้า offline → queue + แจ้งผู้ใช้ว่าเก็บไว้แล้ว
     (function () {
       var origGetter = Object.getOwnPropertyDescriptor(window.google.script, 'run');
+      // ตัวเรียก Apps Script ตรงๆ (ไม่มีคิว) — ให้ sendQueuedItem ใช้ส่งของที่อยู่ในคิวแล้ว
+      window.__rawRun = function () { return origGetter.get.call(window.google.script); };
       Object.defineProperty(window.google.script, 'run', {
         configurable: true,
         get: function () {
@@ -2809,6 +3056,8 @@
   <script>
     // ===== ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์ FM-MT-02 ส่วนที่ 1 (แท็บ 🔧 แจ้งซ่อม) =====
     var MAINT_TITLE = 'ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์';
+    // ฉบับของแบบฟอร์ม (หัวใบมุมขวา) — Rev 03 บังคับใช้ 24/09/2569
+    var MAINT_FORM_REV = { code: 'FM-MT-02', rev: '03', effective: '24/09/69' };
     var mAlertEl = document.getElementById('mAlert');
     var maintForm = document.getElementById('maintForm');
     var mSubmitBtn = document.getElementById('mSubmitBtn');
@@ -3151,11 +3400,13 @@
       ctx.textAlign = 'center'; ctx.fillStyle = INK;
       font(true, 30); ctx.fillText('ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์', W / 2, y + 30);
       font(false, 20); ctx.fillStyle = '#333'; ctx.fillText('(Maintenance Request)', W / 2, y + 58);
-      ctx.textAlign = 'right'; ctx.fillStyle = INK; font(false, 20);
-      ctx.fillText('FM-MT-02', W - M, y + 22);
-      ctx.fillText('Rev : 02', W - M, y + 48);
+      // รหัสเอกสาร/ฉบับแก้ไข/วันบังคับใช้ — เปลี่ยนฉบับเมื่อไหร่แก้ที่ MAINT_FORM_REV ที่เดียว (บีบ 4 บรรทัดให้อยู่ในความสูงหัวกระดาษเดิม)
+      ctx.textAlign = 'right'; ctx.fillStyle = INK; font(false, 18);
+      ctx.fillText(MAINT_FORM_REV.code, W - M, y + 18);
+      ctx.fillText('Rev : ' + MAINT_FORM_REV.rev, W - M, y + 39);
+      ctx.fillText('บังคับใช้ ' + MAINT_FORM_REV.effective, W - M, y + 60);
       font(true, 22); ctx.fillStyle = BLUE;
-      ctx.fillText('เลขที่ ' + (d.mrNo || 'MR-..-...'), W - M, y + 80);
+      ctx.fillText('เลขที่ ' + (d.mrNo || 'MR-..-...'), W - M, y + 86);
       ctx.textAlign = 'left';
       y += 92;
 
@@ -3553,34 +3804,70 @@
 
     // ----- รายการใบแจ้งซ่อมล่าสุด: เปิด PDF/รูปจาก Drive หรือสร้าง PDF ย้อนหลังจากข้อมูลในชีต -----
     var maintListRows = [];
+    // false = รายการที่โชว์อยู่มาจากแคชในเครื่อง (อาจเก่า) → ปุ่มแก้ไข/ยกเลิกถูกพักไว้จนกว่าของสดจะมา
+    // กันแก้จากข้อมูลเก่าแล้วไปทับสิ่งที่คนอื่นเพิ่งแก้ในชีต
+    var maintListLive = false;
+    var maintSeq = 0;
     function loadMaintList() {
       var lEl = document.getElementById('mListLoading'), box = document.getElementById('mList');
+      if (!maintListRows.length && !maintListLive) {
+        var c = lcGet('maint');
+        if (c && c.d && Array.isArray(c.d.rows)) {
+          try { maintTrends = c.d.trends || null; renderMaintTrend(); renderMaintList(c.d.rows); }
+          catch (e) { console.warn('cached maint list failed', e); }
+        }
+      }
       lEl.classList.add('show');
+      var seq = ++maintSeq;
       google.script.run
         .withSuccessHandler(function (res) {
+          if (seq !== maintSeq) return;
           lEl.classList.remove('show');
-          if (!res || !res.ok) { box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้' + (res && res.message ? ': ' + esc(res.message) : '') + '</div>'; return; }
+          if (!res || !res.ok) { if (!maintListRows.length) box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้' + (res && res.message ? ': ' + esc(res.message) : '') + '</div>'; else maintStaleNote(res && res.message); return; }
+          lcSet('maint', { rows: res.rows || [], trends: res.trends || null });
           maintTrends = res.trends || null;
           renderMaintTrend();
+          // แผงยืนยันยกเลิกที่เปิดค้างอยู่ (เช่น กดจากรายการในเครื่องก่อนของสดมา) → เปิดต่อที่ใบเดิม พร้อมข้อความที่พิมพ์ไว้
+          var openMr = (maintCancelOpen !== -1 && maintListRows[maintCancelOpen]) ? maintListRows[maintCancelOpen].mrNo : '';
+          var rsEl = document.getElementById('mCancelReason'), byEl = document.getElementById('mCancelBy');
+          var typed = { reason: rsEl ? rsEl.value : '', by: byEl ? byEl.value : '' };
+          maintListLive = true;
           maintCancelOpen = -1;
-          renderMaintList(res.rows || []);
+          var rows = res.rows || [];
+          if (openMr) rows.forEach(function (r, i) { if (r.mrNo === openMr && !r.cancelled) maintCancelOpen = i; });
+          renderMaintList(rows);
+          if (maintCancelOpen !== -1) {
+            var rs2 = document.getElementById('mCancelReason'), by2 = document.getElementById('mCancelBy');
+            if (rs2) rs2.value = typed.reason;
+            if (by2 && typed.by) by2.value = typed.by;
+          }
         })
-        .withFailureHandler(function (err) { lEl.classList.remove('show'); box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้: ' + esc(err) + '</div>'; })
+        .withFailureHandler(function (err) {
+          if (seq !== maintSeq) return;
+          lEl.classList.remove('show');
+          if (!maintListRows.length) box.innerHTML = '<div class="dash-empty">โหลดรายการไม่ได้: ' + esc(err) + '</div>';
+          else maintStaleNote(err);
+        })
         .listMaintRequests({ limit: 20 });
+    }
+    // อัปเดตเบื้องหลังล้มเหลวแต่มีรายการโชว์อยู่แล้ว → บอกในรายการเงียบๆ ไม่เด้ง/ไม่เลื่อนจอ
+    function maintStaleNote(why) {
+      document.getElementById('mList').insertAdjacentHTML('afterbegin', '<div class="swr-stamp warn" style="text-align:left">⚠️ อัปเดตรายการไม่ได้' + (why ? ' (' + esc(why) + ')' : '') + ' — ที่เห็นอาจไม่ใช่ล่าสุด · สลับแท็บแล้วกลับมาเพื่อลองใหม่</div>');
     }
     function renderMaintList(rows) {
       maintListRows = rows;
       var box = document.getElementById('mList');
       if (!rows.length) { box.innerHTML = '<div class="dash-empty">ยังไม่มีใบแจ้งซ่อม</div>'; return; }
+      var lock = maintListLive ? '' : ' disabled title="รอโหลดข้อมูลล่าสุดก่อน"';
       box.innerHTML = rows.map(function (r, i) {
         var t = thDT(r.time);
         var acts = r.pdf
           ? '<a href="' + esc(r.pdf) + '" target="_blank" rel="noopener">📄 เปิด PDF</a>'
-          : '<button type="button" data-regen="' + i + '">📄 สร้าง PDF</button>';
+          : '<button type="button" data-regen="' + i + '"' + lock + '>📄 สร้าง PDF</button>';
         if (r.photo) acts += '<a href="' + esc(r.photo) + '" target="_blank" rel="noopener">📷 รูป</a>';
-        if (r.cancelled && r.pdf) acts += '<button type="button" data-regen="' + i + '">🔄 PDF ใหม่</button>';
-        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-edit-btn" data-edit="' + i + '">✏️ แก้ไข</button>';
-        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-cancel-btn" data-cancel="' + i + '">✖ ยกเลิก</button>';
+        if (r.cancelled && r.pdf) acts += '<button type="button" data-regen="' + i + '"' + lock + '>🔄 PDF ใหม่</button>';
+        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-edit-btn" data-edit="' + i + '"' + lock + '>✏️ แก้ไข</button>';
+        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-cancel-btn" data-cancel="' + i + '"' + lock + '>✖ ยกเลิก</button>';
         var panel = '';
         if (!r.cancelled && maintCancelOpen === i) {
           panel = '<div class="ml-cancel">' +
@@ -3642,6 +3929,7 @@
         .cancelMaintRequest({ mrNo: r.mrNo, by: by, reason: reason });
     }
     document.getElementById('mList').addEventListener('click', function (e) {
+      if (!maintListLive && e.target.closest('button')) return;   // รายการจากแคช: ปุ่มถูกพักไว้ (กันเบราว์เซอร์ที่ยังส่งคลิกจากปุ่ม disabled)
       var ed = e.target.closest('[data-edit]');
       if (ed) { startMaintEdit(maintListRows[+ed.getAttribute('data-edit')]); return; }
       var c = e.target.closest('[data-cancel]');
