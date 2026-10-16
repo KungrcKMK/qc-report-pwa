@@ -216,7 +216,7 @@
     .rank-pct { font-size: 12px; color: #9ca3af; width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
     .score-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f3f4f6; }
     .score-row:last-child { border-bottom: none; }
-    .score-rank { font-size: 18px; width: 30px; text-align: center; }
+    .score-rank { width: 30px; display: flex; justify-content: center; }
     .score-name { flex: 1; font-weight: 600; font-size: 14px; color: #374151; }
     .score-count { font-weight: 700; color: #dc2626; font-size: 14px; }
     .recent-row { font-size: 13px; padding: 7px 0; border-bottom: 1px solid #f3f4f6; color: #374151; }
@@ -778,7 +778,7 @@
           <div id="stageBars"></div>
         </div>
         <div class="card">
-          <div class="dash-title">👤 ผู้พบยอดเยี่ยม</div>
+          <div class="dash-title">👤 จำนวนรายงานแยกตามผู้พบ</div>
           <div id="reporterList"></div>
         </div>
         <div class="card">
@@ -900,7 +900,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v53 · 2026-09-26</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v54 · 2026-10-16</span></div>
   </div>
 
   <script>
@@ -1696,6 +1696,11 @@
     var RANK_BG = ['#c0392f', '#d95926', '#e8926a', '#eda100', '#1baf7a', '#2a78d6', '#e87ba4', '#4a3aa7', '#008300', '#888780'];
     var RANK_FG = ['#fff', '#fff', '#4a1b0c', '#412402', '#fff', '#fff', '#4b1528', '#fff', '#fff', '#fff'];
     function rankColor(i) { return { bg: RANK_BG[i % RANK_BG.length], fg: RANK_FG[i % RANK_FG.length] }; }
+    // กล่องเลขลำดับสี (แทนเหรียญ 🥇🥈🥉) — ใช้ร่วมกันทุกการ์ดจัดอันดับ ให้ดูเป็นทางการเหมือนกันทั้งหน้า
+    function rankBadge(i) {
+      var c = rankColor(i);
+      return '<span class="rank-no" style="background:' + c.bg + ';color:' + c.fg + '">' + (i + 1) + '</span>';
+    }
 
     // กราฟอันดับ + สัดส่วน ใช้ร่วมกันทั้งหน้าสรุปและรายงานรายเดือน
     // % คิดจากผลรวมของรายการที่แสดง แถบด้านบนจึงตรงกับตัวเลขเสมอ
@@ -1733,10 +1738,8 @@
     function renderScoreboard(items) {
       var el = document.getElementById('scoreboard');
       if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มีข้อมูลซัพพรายเออร์ในช่วงนี้</div>'; return; }
-      var medals = ['🥇', '🥈', '🥉'];
       el.innerHTML = items.map(function (it, i) {
-        var rank = i < 3 ? medals[i] : (i + 1) + '.';
-        return '<div class="score-row" style="cursor:pointer" data-drill="supplier" data-val="' + esc(it.name) + '"><div class="score-rank">' + rank + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' ครั้ง ›</div></div>';
+        return '<div class="score-row" style="cursor:pointer" data-drill="supplier" data-val="' + esc(it.name) + '"><div class="score-rank">' + rankBadge(i) + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' ครั้ง ›</div></div>';
       }).join('');
     }
 
@@ -1882,10 +1885,8 @@
     function renderReporters(items) {
       var el = document.getElementById('reporterList');
       if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มี</div>'; return; }
-      var medals = ['🥇', '🥈', '🥉'];
       el.innerHTML = items.map(function (it, i) {
-        var rank = i < 3 ? medals[i] : (i + 1) + '.';
-        return '<div class="score-row"><div class="score-rank">' + rank + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' รายงาน</div></div>';
+        return '<div class="score-row"><div class="score-rank">' + rankBadge(i) + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' รายงาน</div></div>';
       }).join('');
     }
 
@@ -2867,11 +2868,16 @@
       // Suppliers
       ctx.fillStyle = '#1f2937'; ctx.font = 'bold 36px sans-serif';
       ctx.fillText('🏭 ซัพพรายเออร์ที่ต้องเฝ้าระวัง', PAD, y + 30);
-      var medals = ['🥇', '🥈', '🥉'];
       var ry = y + 80;
       topSup.forEach(function (s, i) {
+        // กล่องเลขลำดับสีเดียวกับบนจอ (แทนเหรียญ)
+        var rc = rankColor(i);
+        ctx.fillStyle = rc.bg; ctx.fillRect(PAD + 20, ry + 4, 44, 44);
+        ctx.fillStyle = rc.fg; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(String(i + 1), PAD + 42, ry + 36);
+        ctx.textAlign = 'left';
         ctx.font = 'bold 40px sans-serif'; ctx.fillStyle = '#1f2937';
-        ctx.fillText(medals[i] + '  ' + s.name, PAD + 20, ry + 35);
+        ctx.fillText(s.name, PAD + 82, ry + 35);
         ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right';
         ctx.fillText(s.count + ' ครั้ง', W - PAD - 20, ry + 35);
         ctx.textAlign = 'left';
