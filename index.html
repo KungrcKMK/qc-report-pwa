@@ -211,7 +211,7 @@
       .period-sel, #dashRefreshBtn, .footer, .loading, .btn, .btn-share, .swr-stamp { display: none !important; }
       /* กดพิมพ์จากส่วนไหน ให้ออกเฉพาะส่วนนั้น (สรุปกับรายงานเดือนอยู่หน้าเดียวกัน) */
       body.print-month #dashContent { display: none !important; }
-      body.print-month .section-divider { display: none !important; }
+      .dash-more > summary { display: none !important; }
       body.print-dash #monthSection { display: none !important; }
       .header { background: #fff !important; color: #000 !important; border-bottom-color: #000 !important; box-shadow: none; }
       .header h1, .header .sub { color: #000 !important; }
@@ -249,11 +249,24 @@
     .recent-row:last-child { border-bottom: none; }
     .recent-row .rt { color: var(--muted); font-size: 12px; }
     .dash-empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: 14px; }
-    .kpi-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
-    .kpi { background: var(--surface); border-radius: 12px; padding: 12px 6px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); min-width: 0; overflow: hidden; }
-    .kpi .v { font-size: 24px; font-weight: 800; color: var(--ink); line-height: 1.1; }
-    .kpi .l { font-size: 12px; line-height: 1.3; color: var(--muted); margin-top: 3px; }
-    .kpi .delta { font-size: 12px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* ตัวเลขหลักตัวเดียว + บรรทัดเทียบช่วงก่อนหน้า (เดิม 3 กล่องเท่ากัน ซ้ำกันเมื่อดู "วันนี้") */
+    .kpi-main { background: var(--surface); border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px; }
+    .kpi-main .v { font-size: 34px; font-weight: 800; color: var(--ink); line-height: 1.1; }
+    .kpi-main .l { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+    .kpi-cmp { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+    .kpi-cmp b { color: var(--ink-2); }
+    .kpi-cmp .delta { font-weight: 700; }
+    .kpi-cmp .delta:not(:empty)::before { content: '· '; color: var(--muted); font-weight: 400; }
+    .dash-top { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+    .dash-top .swr-stamp { margin: 0; }
+    .dash-refresh { flex: 0 0 auto; min-height: 44px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+    /* ส่วนพับ: แตะหัวข้อเพื่อเปิด/ปิด */
+    .dash-more { margin-bottom: 12px; }
+    .dash-more > summary { display: flex; align-items: center; min-height: 48px; padding: 0 16px; background: var(--surface); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-weight: 700; color: var(--ink); cursor: pointer; list-style: none; }
+    .dash-more > summary::-webkit-details-marker { display: none; }
+    .dash-more > summary::after { content: '▾'; margin-left: auto; padding-left: 8px; color: var(--muted); transition: transform 0.15s; }
+    .dash-more[open] > summary { margin-bottom: 12px; }
+    .dash-more[open] > summary::after { transform: rotate(180deg); }
     .delta.up { color: var(--danger-text); }
     .delta.down { color: var(--mt); }
     .delta.flat { color: var(--muted); }
@@ -780,21 +793,18 @@
     <div id="dashPage" style="display:none">
       <div id="dashLoading" class="loading show"><div class="spinner"></div>กำลังโหลดสรุป...</div>
       <div id="dashContent" style="display:none">
-        <div id="dashStamp" class="swr-stamp"></div>
-        <div class="exec-actions">
-          <button type="button" class="exec-btn primary" id="execShareBtn"><span aria-hidden="true">📋</span> สรุปผู้บริหาร</button>
-          <button type="button" class="exec-btn" id="execPrintBtn"><span aria-hidden="true">🖨</span> พิมพ์</button>
-          <button type="button" class="exec-btn" id="execCsvBtn"><span aria-hidden="true">📊</span> ดาวน์โหลด CSV</button>
+        <div class="dash-top">
+          <div id="dashStamp" class="swr-stamp"></div>
+          <button type="button" class="dash-refresh" id="dashRefreshBtn">🔄 รีเฟรช</button>
         </div>
         <div class="period-sel">
           <button type="button" data-period="day" class="active">วันนี้</button>
           <button type="button" data-period="week">7 วัน</button>
           <button type="button" data-period="month">30 วัน</button>
         </div>
-        <div class="kpi-row">
-          <div class="kpi"><div class="v" id="kpiTotal">0</div><div class="l">รายงาน (<span id="periodLabel">วันนี้</span>)</div><div class="delta" id="kpiDelta"></div></div>
-          <div class="kpi"><div class="v" id="kpiAvg">0</div><div class="l">เฉลี่ย/วัน</div></div>
-          <div class="kpi"><div class="v" id="kpiPrev">0</div><div class="l">ช่วงก่อนหน้า</div></div>
+        <div class="kpi-main">
+          <div><span class="v" id="kpiTotal">0</span> <span class="l">รายงาน · <span id="periodLabel">วันนี้</span></span></div>
+          <div class="kpi-cmp"><span id="kpiPrevLabel">เมื่อวานถึงเวลานี้</span> <b id="kpiPrev">0</b> <span class="delta" id="kpiDelta"></span><span id="kpiAvgWrap" hidden> · เฉลี่ย <b id="kpiAvg">0</b> ต่อวัน</span></div>
         </div>
         <div class="card">
           <div class="dash-title">📈 แนวโน้ม</div>
@@ -809,50 +819,59 @@
           <div id="trendChart" class="trend-wrap"></div>
         </div>
         <div class="card">
-          <div class="dash-title">🔍 แนวโน้มแยกตามหมวด (top 4)</div>
-          <div class="cat-series-wrap">
-            <div id="catLegend" class="cat-legend"></div>
-            <div id="catSeriesChart" class="cat-series-bars"></div>
-          </div>
+          <div class="dash-title">🔍 สิ่งแปลกปลอมที่พบบ่อย</div>
+          <div id="catBars"></div>
         </div>
         <div class="card">
           <div class="dash-title">🏭 ซัพพรายเออร์ที่ต้องเฝ้าระวัง</div>
           <div id="unknownSupNote" class="unknown-note" style="display:none"></div>
           <div id="scoreboard"></div>
         </div>
-        <div class="card">
-          <div class="dash-title">🔥 ซัพพรายเออร์ × สิ่งแปลกปลอม</div>
-          <div id="supCatList"></div>
+        <details class="dash-more" id="dashMore">
+          <summary>ดูรายละเอียดเพิ่มเติม (6 ส่วน)</summary>
+          <div class="card">
+            <div class="dash-title">🔍 แนวโน้มแยกตามหมวด (top 4)</div>
+            <div class="cat-series-wrap">
+              <div id="catLegend" class="cat-legend"></div>
+              <div id="catSeriesChart" class="cat-series-bars"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="dash-title">🔥 ซัพพรายเออร์ × สิ่งแปลกปลอม</div>
+            <div id="supCatList"></div>
+          </div>
+          <div class="card">
+            <div class="dash-title">⚠️ คู่ที่เจอบ่อย (ผลิตภัณฑ์ + สิ่งแปลกปลอม)</div>
+            <div id="comboList"></div>
+          </div>
+          <div class="card">
+            <div class="dash-title">🍯 ผลิตภัณฑ์/วัตถุดิบที่เจอปัญหา</div>
+            <div id="prodBars"></div>
+          </div>
+          <div class="card">
+            <div class="dash-title">⚙️ กระบวนการที่พบ</div>
+            <div id="stageBars"></div>
+          </div>
+          <div class="card">
+            <div class="dash-title">👤 จำนวนรายงานแยกตามผู้พบ</div>
+            <div id="reporterList"></div>
+          </div>
+        </details>
+        <details class="dash-more">
+          <summary>🕒 รายงานล่าสุด</summary>
+          <div class="card">
+            <div id="recentList"></div>
+          </div>
+        </details>
+        <div class="exec-actions">
+          <button type="button" class="exec-btn primary" id="execShareBtn"><span aria-hidden="true">📋</span> สรุปผู้บริหาร</button>
+          <button type="button" class="exec-btn" id="execPrintBtn"><span aria-hidden="true">🖨</span> พิมพ์</button>
+          <button type="button" class="exec-btn" id="execCsvBtn"><span aria-hidden="true">📊</span> ดาวน์โหลด CSV</button>
         </div>
-        <div class="card">
-          <div class="dash-title">⚠️ คู่ที่เจอบ่อย (ผลิตภัณฑ์ + สิ่งแปลกปลอม)</div>
-          <div id="comboList"></div>
-        </div>
-        <div class="card">
-          <div class="dash-title">🔍 สิ่งแปลกปลอมที่พบบ่อย</div>
-          <div id="catBars"></div>
-        </div>
-        <div class="card">
-          <div class="dash-title">🍯 ผลิตภัณฑ์/วัตถุดิบที่เจอปัญหา</div>
-          <div id="prodBars"></div>
-        </div>
-        <div class="card">
-          <div class="dash-title">⚙️ กระบวนการที่พบ</div>
-          <div id="stageBars"></div>
-        </div>
-        <div class="card">
-          <div class="dash-title">👤 จำนวนรายงานแยกตามผู้พบ</div>
-          <div id="reporterList"></div>
-        </div>
-        <div class="card">
-          <div class="dash-title">🕒 รายงานล่าสุด</div>
-          <div id="recentList"></div>
-        </div>
-        <button type="button" class="btn-share" id="dashRefreshBtn">🔄 รีเฟรชข้อมูล</button>
       </div>
 
-      <div id="monthSection">
-        <div class="section-divider">📅 รายงานสรุปรายเดือน</div>
+      <details id="monthSection" class="dash-more">
+        <summary>📅 รายงานสรุปรายเดือน</summary>
         <div class="card month-actions">
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="month" id="monthPick" aria-label="เดือนของรายงาน" style="flex:1;">
@@ -865,7 +884,7 @@
         </div>
         <div id="monthLoading" class="loading"><div class="spinner"></div>กำลังสร้างรายงาน...</div>
         <div id="monthContent"></div>
-      </div>
+      </details>
     </div>
 
     <div id="historyPage" style="display:none">
@@ -975,7 +994,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ">✕</button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v59 · 2026-10-20</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v60 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -1744,7 +1763,7 @@
       var el = document.getElementById('dashStamp');
       el.className = 'swr-stamp' + (state === 'failed' ? ' warn' : '');
       el.textContent = state === 'updating' ? '🔄 กำลังอัปเดต… (ข้อมูลเมื่อ ' + lcStamp(dashDataAt) + ')'
-        : state === 'failed' ? '⚠️ อัปเดตไม่ได้ — แสดงข้อมูลเมื่อ ' + lcStamp(dashDataAt) + ' · กด 🔄 รีเฟรชข้อมูล ด้านล่าง'
+        : state === 'failed' ? '⚠️ อัปเดตไม่ได้ — แสดงข้อมูลเมื่อ ' + lcStamp(dashDataAt)
         : '✓ อัปเดตล่าสุด ' + lcStamp(dashDataAt);
       document.querySelectorAll('.exec-actions button').forEach(function (b) { b.disabled = (state === 'updating'); });
     }
@@ -1854,8 +1873,12 @@
       }).join('');
     }
 
+    // ช่วงก่อนหน้าที่ backend ใช้เทียบ (วันนี้ = เมื่อวาน เที่ยงคืน→เวลาเดียวกัน)
+    var PREV_LABEL = { day: 'เมื่อวานถึงเวลานี้', week: '7 วันก่อนหน้า', month: '30 วันก่อนหน้า' };
     function renderKPIs(p) {
       document.getElementById('periodLabel').textContent = p.label;
+      document.getElementById('kpiPrevLabel').textContent = PREV_LABEL[currentPeriod];
+      document.getElementById('kpiAvgWrap').hidden = currentPeriod === 'day';   // วันเดียว เฉลี่ย = จำนวนเอง
       document.getElementById('kpiTotal').textContent = p.total;
       document.getElementById('kpiAvg').textContent = p.avgPerDay;
       document.getElementById('kpiPrev').textContent = p.prevTotal;
@@ -2886,9 +2909,9 @@
       }
       html += '<div class="rep-kpis">' +
               '<div class="rep-kpi"><div class="k-val">' + d.total + '</div><div class="k-lab">รายงานทั้งหมด (ครั้ง)</div></div>' +
-              '<div class="rep-kpi"><div class="k-val' + chgCls + '">' + chg + '</div><div class="k-lab">เทียบเดือนก่อน (' + d.prevTotal + ' ครั้ง)</div></div>' +
+              '<div class="rep-kpi"><div class="k-val' + chgCls + '">' + chg + '</div><div class="k-lab">เทียบเดือนก่อน' + (d.prevUntilDay ? ' ถึงวันที่ ' + d.prevUntilDay : '') + ' (' + d.prevTotal + ' ครั้ง)</div></div>' +
               '<div class="rep-kpi"><div class="k-val">' + d.avgPerDay + '</div><div class="k-lab">เฉลี่ยต่อวัน</div></div>' +
-              '<div class="rep-kpi"><div class="k-val">' + d.activeDays + '</div><div class="k-lab">จำนวนวันที่พบ (จาก ' + d.daysInMonth + ' วัน)</div></div>' +
+              '<div class="rep-kpi"><div class="k-val">' + d.activeDays + '</div><div class="k-lab">จำนวนวันที่พบ (จาก ' + (d.prevUntilDay || d.daysInMonth) + ' วัน)</div></div>' +
               '</div>';
       if (d.busiestDay) {
         html += '<div class="rep-sub" style="font-size:12px; color:#6b7280;">📌 วันที่พบมากที่สุด: วันที่ ' +
@@ -2978,8 +3001,11 @@
       document.body.classList.remove('print-month');
       document.body.classList.remove('print-dash');
       document.body.classList.add(cls);
+      var closed = Array.prototype.filter.call(document.querySelectorAll('#dashPage details'), function (d) { return !d.open; });
+      closed.forEach(function (d) { d.open = true; });
       var cleanup = function () {
         document.body.classList.remove(cls);
+        closed.forEach(function (d) { d.open = false; });
         window.removeEventListener('afterprint', cleanup);
       };
       window.addEventListener('afterprint', cleanup);
@@ -2997,7 +3023,7 @@
       var headers = ['ประเภท', 'รายการ', 'จำนวน(ครั้ง)', 'ร้อยละ'];
       var rows = [
         ['สรุป', 'รายงานทั้งหมด', d.total, ''],
-        ['สรุป', 'เดือนก่อนหน้า', d.prevTotal, ''],
+        ['สรุป', 'เดือนก่อนหน้า' + (d.prevUntilDay ? ' (ถึงวันที่ ' + d.prevUntilDay + ')' : ''), d.prevTotal, ''],
         ['สรุป', 'เปลี่ยนแปลง', (d.changePct === null ? '-' : d.changePct + '%'), ''],
         ['สรุป', 'เฉลี่ยต่อวัน', d.avgPerDay, ''],
         ['สรุป', 'จำนวนวันที่พบ', d.activeDays, ''],
@@ -3084,7 +3110,7 @@
       ctx.fillStyle = '#1f2937'; ctx.fillText(deltaStr, W / 2, y + 80);
       ctx.font = '28px sans-serif'; ctx.fillStyle = '#6b7280';
       ctx.fillText('เฉลี่ย ' + p.avgPerDay + ' / วัน', W / 2, y + 130);
-      ctx.fillText('ช่วงก่อนหน้า ' + p.prevTotal + ' ครั้ง', W / 2, y + 170);
+      ctx.fillText(PREV_LABEL[currentPeriod] + ' ' + p.prevTotal + ' ครั้ง', W / 2, y + 170);
       y += kpiH + 30;
 
       // Suppliers
