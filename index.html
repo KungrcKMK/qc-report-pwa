@@ -1013,12 +1013,13 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v65 · 2026-10-20</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v66 · 2026-10-21</span></div>
   </div>
 
   <script>
-    // ===== API config + google.script.run shim (เรียก Apps Script ผ่าน fetch) =====
-    var APP_URL = "https://script.google.com/macros/s/AKfycbwUPZYPy1i1_rhkfpZfDCe0J2ja1W6anuzeuY5pgqe7zXQjazkNluuksfpSpNUqPfcpxw/exec";
+    // ===== API config + google.script.run shim (เรียก backend ผ่าน fetch) =====
+    // backend = Cloudflare Worker (ตั้งแต่ v66) · รับคำขอแบบเดียวกับ Apps Script เดิม ({action, data} / ?action=)
+    var APP_URL = "https://qc-api.pitak-ttg.workers.dev";
     var SHARE_URL = (location.origin + location.pathname).replace(/index\.html$/, '');
     (function () {
       var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };

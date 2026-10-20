@@ -1,7 +1,7 @@
 /* Service Worker - QCControl
    navigation/HTML = network-first (อัปเดตทันทีเมื่อมีเน็ต, ใช้ cache เมื่อ offline)
    static อื่นๆ = cache-first */
-var CACHE = 'qc-shell-v65';
+var CACHE = 'qc-shell-v66';
 var NAV_TIMEOUT_MS = 4000;
 var SHELL = [
   './',
@@ -43,8 +43,9 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var url = new URL(e.request.url);
 
-  // API (Apps Script) → เน็ตตรงๆ ไม่ cache ข้อมูล dynamic
-  if (url.hostname.indexOf('script.google') !== -1 ||
+  // API (Cloudflare Worker / Apps Script เดิม) → เน็ตตรงๆ ไม่ cache ข้อมูล dynamic
+  if (/\.workers\.dev$/.test(url.hostname) ||
+      url.hostname.indexOf('script.google') !== -1 ||
       url.hostname.indexOf('googleusercontent') !== -1) {
     return;
   }
