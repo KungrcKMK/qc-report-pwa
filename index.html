@@ -900,7 +900,7 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v54 · 2026-10-16</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:#eef2ff;color:#4f46e5;border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v55 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -1360,20 +1360,6 @@
       return m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5];
     }
 
-    function currentFormData() {
-      return {
-        reporter: comboValue('reporter'),
-        product: comboValue('product'),
-        categories: getCheckedCategories(),
-        stage: comboValue('stage'),
-        supplier: comboValue('supplier'),
-        quantity: document.getElementById('quantity').value.trim(),
-        unit: comboValue('unit'),
-        note: document.getElementById('note').value.trim(),
-        photo: photoDataUrl ? { dataUrl: photoDataUrl } : null
-      };
-    }
-
     // เรียงเป็นลำดับเรื่องราว: พบอะไร → ในอะไร → จากใคร → จุดไหน → จำนวน → ใครเจอ → หมายเหตุ
     function buildShareTextFromData(d) {
       var lines = ['🚨 รายงานสิ่งแปลกปลอม', '🗓 ' + (d.time || fmtNow()), ''];
@@ -1526,14 +1512,10 @@
       }
     }
 
+    // แชร์ "รายงานที่ส่งล่าสุด" เท่านั้น — ห้ามอ่านจากฟอร์ม เพราะฟอร์มล้างทันทีหลังส่ง ผู้ใช้อาจกำลังกรอกใบถัดไปอยู่
     function shareReport(preRenderedCard, silentOnFail) {
-      var d = currentFormData();
-      var formHasData = d.product || (d.categories && d.categories.length);
-      if (!formHasData && lastReport) d = lastReport;
-      if (!d.reporter && !d.product && (!d.categories || d.categories.length === 0)) {
-        showAlert('error', 'กรอกข้อมูลก่อนแชร์');
-        return;
-      }
+      var d = lastReport;
+      if (!d) { showAlert('error', 'ยังไม่มีรายงานให้แชร์ — กดส่งรายงานก่อน'); return; }
 
       var text = buildShareTextFromData(d);
       var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
@@ -1627,7 +1609,11 @@
     var dashData = null;
     var currentPeriod = 'day';
 
-    function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+    // ต้อง escape " และ ' ด้วย เพราะถูกใส่ในแอตทริบิวต์ (data-val/title/value) — ไม่งั้นชื่อที่มี " ฝังสคริปต์ได้
+    var ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; }); }
+    // ลิงก์จากชีต (PDF/รูป) เปิดได้เฉพาะ https — กันคนแก้ชีตใส่ javascript: แล้วรันบนมือถือพนักงาน
+    function safeUrl(u) { u = String(u || ''); return /^https:\/\//i.test(u) ? u : ''; }
 
     // โชว์สรุปชุดล่าสุด (ในหน่วยความจำ หรือที่จำไว้ในเครื่อง) ทันที แล้วดึงของใหม่มาทับทุกครั้งที่เข้าแท็บ
     // ระหว่างที่ยังเป็นข้อมูลเก่า ปุ่มส่งสรุปผู้บริหาร/พิมพ์/CSV ถูกพักไว้ กันส่งตัวเลขเก่าออกไป
@@ -2295,9 +2281,11 @@
 
     // ===== Edit/Delete modal =====
     var editingRow = null;
+    var editingExpect = null;   // ใบที่ผู้ใช้เห็น — เซิร์ฟเวอร์เทียบก่อนแก้/ลบ กันโดนแถวที่เลื่อนมาแทน
     function openEditModal(rec) {
       if (!rec) return;
       editingRow = rec.rowIndex;
+      editingExpect = { timestamp: rec.timestamp, reporter: rec.reporter, product: rec.product };
       document.getElementById('eReporter').value = rec.reporter || '';
       document.getElementById('mProduct').value = rec.product || '';
       document.getElementById('mCategories').value = rec.categories || '';
@@ -2333,10 +2321,10 @@
         .withSuccessHandler(function (res) {
           btn.disabled = false; btn.textContent = '💾 บันทึก';
           if (res && res.ok) { closeModal(); lcDrop('hist:'); runHistorySearch(false); dropDashCache(); }
-          else alert('แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
+          else { alert('แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด')); if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); } }
         })
         .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '💾 บันทึก'; alert('ผิดพลาด: ' + err); })
-        .updateReport({ rowIndex: editingRow, patch: patch });
+        .updateReport({ rowIndex: editingRow, expect: editingExpect, patch: patch });
     });
     document.getElementById('mDelete').addEventListener('click', function () {
       if (!editingRow) return;
@@ -2346,10 +2334,10 @@
         .withSuccessHandler(function (res) {
           btn.disabled = false; btn.textContent = '🗑 ลบ';
           if (res && res.ok) { closeModal(); lcDrop('hist:'); runHistorySearch(false); dropDashCache(); }
-          else alert('ลบไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
+          else { alert('ลบไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด')); if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); } }
         })
         .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '🗑 ลบ'; alert('ผิดพลาด: ' + err); })
-        .deleteReport({ rowIndex: editingRow });
+        .deleteReport({ rowIndex: editingRow, expect: editingExpect });
     });
 
     // (เดิมมีตัวห่อ onOptionsLoaded ไว้เก็บ options ตรงนี้ — ทำงานไม่ทัน จึงย้ายไปเซ็ตในตัวฟังก์ชันเอง)
@@ -2984,22 +2972,29 @@
       // ดึงข้อมูล 30 วันล่าสุด (หรือทั้งเดือน)
       var today = new Date();
       var fromD = new Date(today.getFullYear(), today.getMonth(), 1);
-      google.script.run
-        .withSuccessHandler(function (res) {
-          btn.disabled = false; btn.textContent = orig;
-          if (!res || !res.ok) { alert('โหลดไม่สำเร็จ: ' + ((res && res.message) || '')); return; }
-          var headers = ['Timestamp', 'Reporter', 'Product', 'Categories', 'Stage', 'Supplier', 'Quantity', 'Unit', 'Note'];
-          var rows = res.rows.map(function (r) {
-            return [r.timestamp, r.reporter, r.product, r.categories, r.stage, r.supplier, r.quantity, r.unit, r.note];
-          });
-          var fname = 'qc-report-' + fmtDateISO(fromD) + '-to-' + fmtDateISO(today) + '.csv';
-          downloadCSV(fname, headers, rows);
-        })
-        .withFailureHandler(function (err) {
-          btn.disabled = false; btn.textContent = orig;
-          alert('ผิดพลาด: ' + err);
-        })
-        .searchReports({ from: fmtDateISO(fromD), to: fmtDateISO(today), limit: 200, offset: 0 });
+      var all = [];
+      // เซิร์ฟเวอร์ส่งได้ครั้งละไม่เกิน 200 แถว → ดึงต่อทีละหน้าจนครบ total (เดือนที่เกิน 200 รายงานต้องไม่หาย)
+      function fetchPage(offset) {
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (!res || !res.ok) { btn.disabled = false; btn.textContent = orig; alert('โหลดไม่สำเร็จ: ' + ((res && res.message) || '')); return; }
+            all = all.concat(res.rows);
+            if (res.rows.length && all.length < res.total) { btn.textContent = '⏳ ' + all.length + '/' + res.total; return fetchPage(all.length); }
+            btn.disabled = false; btn.textContent = orig;
+            var headers = ['Timestamp', 'Reporter', 'Product', 'Categories', 'Stage', 'Supplier', 'Quantity', 'Unit', 'Note'];
+            var rows = all.map(function (r) {
+              return [r.timestamp, r.reporter, r.product, r.categories, r.stage, r.supplier, r.quantity, r.unit, r.note];
+            });
+            var fname = 'qc-report-' + fmtDateISO(fromD) + '-to-' + fmtDateISO(today) + '.csv';
+            downloadCSV(fname, headers, rows);
+          })
+          .withFailureHandler(function (err) {
+            btn.disabled = false; btn.textContent = orig;
+            alert('ผิดพลาด: ' + err);
+          })
+          .searchReports({ from: fmtDateISO(fromD), to: fmtDateISO(today), limit: 200, offset: offset });
+      }
+      fetchPage(0);
     });
 
     // ===== PWA: register service worker (offline shell) =====
@@ -3867,10 +3862,11 @@
       var lock = maintListLive ? '' : ' disabled title="รอโหลดข้อมูลล่าสุดก่อน"';
       box.innerHTML = rows.map(function (r, i) {
         var t = thDT(r.time);
-        var acts = r.pdf
-          ? '<a href="' + esc(r.pdf) + '" target="_blank" rel="noopener">📄 เปิด PDF</a>'
+        var pdf = safeUrl(r.pdf), photo = safeUrl(r.photo);
+        var acts = pdf
+          ? '<a href="' + esc(pdf) + '" target="_blank" rel="noopener">📄 เปิด PDF</a>'
           : '<button type="button" data-regen="' + i + '"' + lock + '>📄 สร้าง PDF</button>';
-        if (r.photo) acts += '<a href="' + esc(r.photo) + '" target="_blank" rel="noopener">📷 รูป</a>';
+        if (photo) acts += '<a href="' + esc(photo) + '" target="_blank" rel="noopener">📷 รูป</a>';
         if (r.cancelled && r.pdf) acts += '<button type="button" data-regen="' + i + '"' + lock + '>🔄 PDF ใหม่</button>';
         if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-edit-btn" data-edit="' + i + '"' + lock + '>✏️ แก้ไข</button>';
         if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-cancel-btn" data-cancel="' + i + '"' + lock + '>✖ ยกเลิก</button>';
