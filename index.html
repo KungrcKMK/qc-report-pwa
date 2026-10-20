@@ -975,6 +975,10 @@
           <label for="mNote">📝 หมายเหตุ</label>
           <textarea id="mNote" style="min-height:60px;"></textarea>
         </div>
+        <div class="field" id="eEditorField">
+          <label for="eEditor">✍️ ผู้แก้ไข <span class="req">*</span></label>
+          <input type="text" id="eEditor" placeholder="ชื่อผู้แก้ไข (จดไว้ในประวัติการแก้)">
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn-delete" id="mDelete"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg> ยกเลิกรายงาน</button>
           <button type="button" class="btn-cancel" id="mCancel">ปิด</button>
@@ -1009,7 +1013,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v64 · 2026-10-20</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v65 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -1116,7 +1120,6 @@
     }
     document.querySelector('#statusBar .sb-close').addEventListener('click', hideStatus);
     function showAlert(type, msg) { showStatus(type, msg); }
-    function statusText() { var b = document.getElementById('statusBar'); return b.hidden ? '' : b.querySelector('.sb-msg').textContent; }
 
     // ช่องที่กรอกไม่ครบ: ขึ้นข้อความใต้ช่องนั้นทุกช่องพร้อมกัน แล้วเลื่อนไปช่องแรก (แทนเตือนทีละข้อบนสุด)
     function fieldOf(id) { var el = document.getElementById(id); return el && el.closest('.field'); }
@@ -1560,12 +1563,6 @@
       } catch (e) { return false; }
     }
 
-    function downloadPhoto() {
-      if (!photoDataUrl) return;
-      var a = document.createElement('a');
-      a.href = photoDataUrl; a.download = 'qc-photo.jpg';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }
 
     // ตัดบรรทัดข้อความไทย (ไม่มีช่องว่าง) ตามความกว้าง canvas
     function wrapText(ctx, text, maxW) {
@@ -2510,6 +2507,9 @@
       document.getElementById('mUnit').value = rec.unit || '';
       document.getElementById('mNote').value = rec.note || '';
       editingSnapshot = editValues();
+      var me = ''; try { me = localStorage.getItem('maintCancelBy') || localStorage.getItem('defaultReporter') || ''; } catch (e) {}
+      document.getElementById('eEditor').value = me;
+      clearFieldErrors(document.getElementById('modalBack'));
       // ใบที่ยกเลิกแล้ว: ดูอย่างเดียว บอกว่าใคร/ทำไม
       var voided = !!rec.voided;
       document.getElementById('modalTitle').textContent = voided ? '📄 รายงานที่ยกเลิกแล้ว' : '✏️ แก้ไขรายงาน';
@@ -2518,6 +2518,7 @@
       vn.textContent = voided ? '✖ ยกเลิกโดย ' + (rec.voidedBy || '-') + (rec.voidReason ? ' · เหตุผล: ' + rec.voidReason : '') + (rec.voidedAt ? ' · ' + dtTH(rec.voidedAt) : '') + '\nไม่นับในหน้าสรุป · แก้ไขไม่ได้' : '';
       EDIT_FIELDS.forEach(function (id) { document.getElementById(id).disabled = voided; });
       document.getElementById('mSave').hidden = voided;
+      document.getElementById('eEditorField').hidden = voided;
       document.getElementById('mDelete').hidden = voided;
       document.getElementById('voidPanel').hidden = true;
       document.getElementById('modalDirty').hidden = true;
@@ -2563,6 +2564,9 @@
     });
     document.getElementById('mSave').addEventListener('click', function () {
       if (!editingRow) return;
+      var by = document.getElementById('eEditor').value.trim();
+      if (!by) { setFieldError('eEditor', 'ระบุชื่อผู้แก้ไข — จดไว้ในประวัติการแก้'); document.getElementById('eEditor').focus(); return; }
+      clearFieldErrors(document.getElementById('modalBack'));
       var btn = this; btn.disabled = true; setBtn(btn, 'loader-circle', '');
       var patch = {
         reporter: document.getElementById('eReporter').value.trim(),
@@ -2577,12 +2581,13 @@
       google.script.run
         .withSuccessHandler(function (res) {
           btn.disabled = false; setBtn(btn, 'save', 'บันทึก');
-          if (res && res.ok) { afterReportChange(); showStatus('success', '✅ แก้ไขรายงานแล้ว'); return; }
+          if (res && res.ok && res.test) { closeModal(); showStatus('info', '🧪 ' + res.message); return; }
+          if (res && res.ok) { try { localStorage.setItem('maintCancelBy', by); } catch (e) {} afterReportChange(); showStatus('success', '✅ แก้ไขรายงานแล้ว'); return; }
           showStatus('error', '❌ แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
           if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); }
         })
         .withFailureHandler(function (err) { btn.disabled = false; setBtn(btn, 'save', 'บันทึก'); showStatus('error', '❌ แก้ไขไม่สำเร็จ: ' + err + '\nลองกดบันทึกอีกครั้ง'); })
-        .updateReport({ rowIndex: editingRow, expect: editingExpect, patch: patch });
+        .updateReport({ rowIndex: editingRow, expect: editingExpect, patch: patch, by: by });
     });
     // ยกเลิกรายงาน (แทนการลบ): เปิดแผงในป๊อปอัพ บอกว่าเป็นใบไหน + ต้องใส่เหตุผลและชื่อ
     document.getElementById('mDelete').addEventListener('click', function () {
@@ -2726,7 +2731,8 @@
         window.__rawRun()
           .withSuccessHandler(function (res) {
             if (res && res.ok) {
-              queueDelete(item.id).then(function () { delete queueInflight[item.id]; updateQueueBadge(); });
+              // ลบออกจากคิวไม่ได้ก็ไม่เป็นไร: ส่งซ้ำรอบหน้า backend เจอ reqId เดิมแล้วไม่บันทึกซ้ำ
+              queueDelete(item.id).then(null, function () {}).then(function () { delete queueInflight[item.id]; updateQueueBadge(); });
               if (done) done(res);
               return;
             }
@@ -2811,6 +2817,8 @@
                 queueAdd(arg, kind).then(function () {
                   updateQueueBadge();
                   if (success) success({ ok: true, queued: true, message: 'ยังไม่มีเน็ต — เก็บไว้ในเครื่องแล้ว จะส่งเข้าระบบเองเมื่อมีเน็ต', rowIndex: 0, added: [], newFields: {} });
+                }, function (qe) {
+                  if (failure) failure('ไม่มีเน็ต และเก็บไว้ในเครื่องไม่ได้ (' + ((qe && qe.message) || qe) + ') — ลองใหม่เมื่อมีเน็ต');
                 });
                 return;
               }
@@ -2824,6 +2832,8 @@
                          queueAdd(arg, kind).then(function () {
                            updateQueueBadge();
                            if (success) success({ ok: true, queued: true, message: 'ส่งเข้าระบบไม่ผ่าน — เก็บไว้ในเครื่องแล้ว จะลองส่งใหม่เอง', rowIndex: 0, added: [], newFields: {} });
+                         }, function (qe) {
+                           if (failure) failure(String(e) + ' (เก็บไว้ในเครื่องก็ไม่ได้: ' + ((qe && qe.message) || qe) + ')');
                          });
                        })[action](arg);
               }
@@ -3090,17 +3100,6 @@
     });
 
     // ===== Executive summary card (canvas) =====
-    function execWrapText(ctx, text, maxW) {
-      var lines = [], line = '';
-      var words = text.split(/(\s+)/);
-      for (var i = 0; i < words.length; i++) {
-        var t = line + words[i];
-        if (ctx.measureText(t).width > maxW && line) { lines.push(line.trim()); line = words[i]; }
-        else line = t;
-      }
-      if (line) lines.push(line.trim());
-      return lines;
-    }
 
     function renderExecCard(cb) {
       if (!dashData) { cb(null); return; }
@@ -3220,10 +3219,10 @@
       // Footer
       ctx.fillStyle = '#6b7280'; ctx.font = '22px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)', W / 2, c.height - 50);
-      var ts = new Date();
+      var ts = new Date(dashDataAt || Date.now());   // ข้อมูลจากแคช → บอกเวลาของข้อมูลจริง ไม่ใช่เวลากดแชร์
       function p2(n) { return n < 10 ? '0' + n : n; }
       var stamp = dtTH(p2(ts.getDate()) + '/' + p2(ts.getMonth() + 1) + '/' + ts.getFullYear() + ' ' + p2(ts.getHours()) + ':' + p2(ts.getMinutes()));
-      ctx.fillText('สร้างเมื่อ ' + stamp, W / 2, c.height - 20);
+      ctx.fillText('ข้อมูลเมื่อ ' + stamp, W / 2, c.height - 20);
       ctx.textAlign = 'left';
 
       try { cb(c.toDataURL('image/jpeg', 0.9)); } catch (e) { cb(null); }
@@ -3303,6 +3302,17 @@
       fetchPage(0);
     });
 
+    // เพดานของช่องวันเวลา = ตอนนี้ (กันเลือกอนาคต) — ตั้งใหม่ทุกครั้งที่แตะช่อง เพราะแอปเปิดค้างได้ทั้งวัน
+    function setMaxNow(el) {
+      var d = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; };
+      el.max = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    ['foundAt', 'mReportedAt'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      setMaxNow(el);
+      ['focus', 'pointerdown'].forEach(function (ev) { el.addEventListener(ev, function () { setMaxNow(el); }); });
+    });
     // ===== PWA: register service worker (offline shell) =====
     // ===== ตรวจเวอร์ชันใหม่ → ขึ้นป๊อปอัพให้กด "อัปเดต" (ไม่ต้องล้าง cache เอง) =====
     var pendingWorker = null;   // ตัวใหม่ที่รอคิวอยู่
@@ -3326,6 +3336,8 @@
     });
 
     if ('serviceWorker' in navigator) {
+      // ยังไม่มีตัวคุมตอนเปิดหน้า = ติดตั้งครั้งแรก → ตัวใหม่ claim หน้าแล้วไม่ต้องรีโหลด (รีโหลดเฉพาะตอนกด "อัปเดต")
+      var hadController = !!navigator.serviceWorker.controller;
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('sw.js').then(function (reg) {
           if (reg.waiting && navigator.serviceWorker.controller) showUpdatePop(reg.waiting);
@@ -3350,7 +3362,7 @@
         });
 
         navigator.serviceWorker.addEventListener('controllerchange', function () {
-          if (reloadingForUpdate) return;
+          if (reloadingForUpdate || !hadController) return;
           reloadingForUpdate = true;
           location.reload();
         });
