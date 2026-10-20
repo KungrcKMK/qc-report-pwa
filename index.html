@@ -1009,7 +1009,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v63 · 2026-10-20</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v64 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -2742,16 +2742,24 @@
     function flushQueue() {
       if (!navigator.onLine) return;
       queueGetAll().then(function (items) {
-        var sent = 0, waiting = 0, mrs = [];
+        var sent = 0, waiting = 0, mrs = [], pdfJobs = [];
         items.forEach(function (item) {
           if (queueInflight[item.id]) return;
           waiting++;
           sendQueuedItem(item, function (res) {
-            if (res) { sent++; if (res.mrNo) mrs.push(res.mrNo); }
+            if (res) {
+              sent++;
+              if (res.mrNo) {
+                mrs.push(res.mrNo);
+                // รูปที่แนบตอนแจ้งยังอยู่ในคิว → ใช้ทำ PDF ได้เลย ไม่ต้องดึงจาก Drive
+                if (item.kind === 'maint') pdfJobs.push({ mrNo: res.mrNo, photo: item.data && item.data.photo && item.data.photo.dataUrl });
+              }
+            }
             if (--waiting === 0 && sent) {
               dashFetchedAt = 0;
               showStatus('success', '✅ ส่งรายการที่ค้างอยู่ในเครื่องเข้าระบบแล้ว ' + sent + ' รายการ' +
-                (mrs.length ? '\n🔧 ใบแจ้งซ่อมได้เลข ' + mrs.join(', ') + ' — กด "สร้าง PDF" ในรายการแจ้งซ่อมเพื่อเก็บใบเข้า Drive' : ''));
+                (mrs.length ? '\n🔧 ใบแจ้งซ่อมได้เลข ' + mrs.join(', ') + (pdfJobs.length ? ' — กำลังสร้าง PDF เก็บเข้า Drive ให้…' : '') : ''));
+              if (pdfJobs.length && typeof buildQueuedMaintPdfs === 'function') buildQueuedMaintPdfs(pdfJobs, '✅ ส่งรายการที่ค้างอยู่ในเครื่องเข้าระบบแล้ว ' + sent + ' รายการ\n🔧 ใบแจ้งซ่อมได้เลข ' + mrs.join(', '));
               if (document.getElementById('maintPage').style.display !== 'none') loadMaintList();
             }
           });
@@ -4284,6 +4292,35 @@
             .attachMaintForm({ mrNo: r.mrNo, pdfDataUrl: pdfUrl });
         });
       });
+    }
+    // ใบที่ส่งตอนเน็ตกลับมา: สร้าง PDF ให้เอง · ไม่สำเร็จ → บอกให้กด "สร้าง PDF" ในรายการ (ปุ่มยังอยู่)
+    function buildQueuedMaintPdfs(jobs, head) {
+      function report(okList, waitList, failList) {
+        var parts = head ? [head] : [];
+        if (okList.length) parts.push('📄 เก็บ PDF ของ ' + okList.join(', ') + ' เข้า Drive แล้ว');
+        if (waitList.length) parts.push('📥 PDF ของ ' + waitList.join(', ') + ' เก็บไว้ในเครื่อง จะส่งเมื่อเน็ตกลับมา');
+        if (failList.length) parts.push('❌ สร้าง PDF ของ ' + failList.join(', ') + ' ไม่สำเร็จ — กด "สร้าง PDF" ในรายการแจ้งซ่อม');
+        showStatus(failList.length ? 'error' : (waitList.length ? 'info' : 'success'), parts.join('\n'));
+        if (document.getElementById('maintPage').style.display !== 'none') loadMaintList();
+      }
+      google.script.run
+        .withSuccessHandler(function (res) {
+          var rows = (res && res.ok && res.rows) || [], okList = [], waitList = [], failList = [], left = jobs.length;
+          function done() { if (--left === 0) report(okList, waitList, failList); }
+          jobs.forEach(function (j) {
+            var r = rows.filter(function (x) { return x.mrNo === j.mrNo; })[0];
+            if (!r) { failList.push(j.mrNo); return done(); }
+            if (j.photo) r._photoDataUrl = j.photo;
+            rebuildMaintPdf(r, function (pr) {
+              if (pr && pr.ok && pr.pdfUrl) okList.push(j.mrNo);
+              else if (pr && pr.ok && pr.queued) waitList.push(j.mrNo);
+              else failList.push(j.mrNo);
+              done();
+            });
+          });
+        })
+        .withFailureHandler(function () { report([], [], jobs.map(function (j) { return j.mrNo; })); })
+        .listMaintRequests();
     }
     // ปุ่ม "สร้าง PDF" / "PDF ใหม่" ในรายการ (เช่น ใบที่ส่งตอนออฟไลน์ หรือประทับตรายกเลิกไม่สำเร็จ)
     function regenMaintPdf(r, btn) {
