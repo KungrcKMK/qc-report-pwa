@@ -18,6 +18,10 @@
        ส่วนประกอบใช้ --accent* ซึ่งสลับเป็นเขียวเองเมื่อเปิดแท็บแจ้งซ่อม (body[data-mod="mt"])
        ทุกคู่สีตัวหนังสือผ่าน WCAG AA (≥4.5:1) — เปลี่ยนค่าที่นี่ที่เดียว */
     :root {
+      /* ขนาดตัวหนังสือ 6 ระดับตามบทบาท (เดิม 12 ขนาด 11–34px)
+         xs เวลา/ป้ายกราฟ/หมายเหตุ · sm ข้อความรอง/ปุ่มเล็ก/รายการ · md เนื้อหา/ช่องกรอก/ปุ่มหลัก/หัวการ์ด
+         lg หัวข้อป๊อปอัพ/รายงาน · xl ชื่อแอป/ตัวเลขรายงานเดือน · display ตัวเลขหลักหน้าสรุป */
+      --fs-xs: 12px; --fs-sm: 14px; --fs-md: 16px; --fs-lg: 18px; --fs-xl: 22px; --fs-display: 34px;
       --qc: #C2410C; --qc-strong: #9A3412; --qc-ink: #7C2D12; --qc-soft: #FFF7ED; --qc-line: #FDBA74; --qc-ring: rgba(194, 65, 12, 0.18);
       --mt: #15803D; --mt-strong: #166534; --mt-ink: #14532D; --mt-soft: #F0FDF4; --mt-line: #86EFAC; --mt-ring: rgba(21, 128, 61, 0.18);
       --danger: #DC2626; --danger-text: #B91C1C; --danger-ink: #991B1B; --danger-soft: #FEF2F2; --danger-line: #FCA5A5;
@@ -38,9 +42,11 @@
       margin: 0; padding: 0;
       background: var(--page);
       color: var(--ink);
-      font-size: 16px;
+      font-size: var(--fs-md);
       line-height: 1.5;
     }
+    /* ปุ่มที่ไม่ได้กำหนดขนาดเอง ไม่ใช้ค่าเบราว์เซอร์ (13.33px) */
+    button { font-size: var(--fs-sm); }
     .container { max-width: 540px; margin: 0 auto; padding: 16px; }
     /* หัวแอปพื้นขาว แถบล่างเป็นสีของงานที่เปิดอยู่ (ส้ม QC / เขียว แจ้งซ่อม) */
     .header {
@@ -54,9 +60,9 @@
     }
     #qrBox { display: flex; justify-content: center; padding: 8px; }
     #qrBox img, #qrBox canvas { width: 220px !important; height: 220px !important; }
-    .qr-steps { margin-top: 14px; text-align: left; font-size: 13px; line-height: 1.9; color: var(--ink-2); }
+    .qr-steps { margin-top: 14px; text-align: left; font-size: var(--fs-sm); line-height: 1.9; color: var(--ink-2); }
     .qr-steps b { color: var(--accent); }
-    .qr-msg { margin-top: 10px; font-size: 13px; color: var(--mt-ink); min-height: 18px; }
+    .qr-msg { margin-top: 10px; font-size: var(--fs-sm); color: var(--mt-ink); min-height: 18px; }
 
     .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
     /* ไอคอนเส้น: สีตามตัวหนังสือ ขนาดตามตัวอักษร */
@@ -67,7 +73,7 @@
     @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
     .tab {
       flex: 1; padding: 9px 2px; border: none; border-radius: 10px;
-      background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 600;
+      background: var(--surface); color: var(--muted); font-size: var(--fs-xs); font-weight: 600;
       font-family: inherit; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       white-space: nowrap;
     }
@@ -77,42 +83,42 @@
       display: none; position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 9999;
       background: #111827; color: #fff; border-radius: 14px; padding: 14px 16px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.28);
-      align-items: center; gap: 12px; font-size: 14px;
+      align-items: center; gap: 12px; font-size: var(--fs-sm);
     }
     .update-pop.show { display: flex; }
     .update-pop .txt { flex: 1; line-height: 1.5; }
-    .update-pop .txt b { display: block; font-size: 15px; margin-bottom: 2px; }
-    .update-pop .sub { font-size: 12px; color: #9ca3af; }
+    .update-pop .txt b { display: block; font-size: var(--fs-md); margin-bottom: 2px; }
+    .update-pop .sub { font-size: var(--fs-xs); color: #9ca3af; }
     .update-pop button {
       border: none; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer;
-      min-height: 44px; padding: 10px 16px; font-size: 14px;
+      min-height: 44px; padding: 10px 16px; font-size: var(--fs-sm);
     }
     .update-pop .go { background: var(--qc); color: #fff; }
     .update-pop .later { background: transparent; color: #9ca3af; padding: 10px 4px; font-weight: 600; }
     @media print { .update-pop { display: none !important; } }
 
     /* รายชื่อที่เลือกไว้จาก dropdown (กด ✕ เพื่อเอาออก) */
-    .install-banner { display: none; background: var(--qc-soft); color: var(--qc-ink); border: 1px solid var(--qc-line); padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 13px; align-items: center; gap: 8px; }
+    .install-banner { display: none; background: var(--qc-soft); color: var(--qc-ink); border: 1px solid var(--qc-line); padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: var(--fs-sm); align-items: center; gap: 8px; }
     .install-banner.show { display: flex; }
     .install-banner b { flex: 1; }
     .install-banner button { min-height: 44px; background: var(--qc); color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-family: inherit; font-weight: 700; cursor: pointer; }
-    .install-banner .close { min-width: 44px; background: transparent; color: var(--qc-ink); padding: 2px 6px; font-size: 18px; }
+    .install-banner .close { min-width: 44px; background: transparent; color: var(--qc-ink); padding: 2px 6px; font-size: var(--fs-lg); }
     /* History page */
     .filter-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin-bottom: 8px; }
     /* ช่วงวันที่: ป้ายสั้นซ้าย ช่องเต็มบรรทัด (ช่องวันที่ 16px กว้าง ~170px วางคู่กันในจอ 360px ไม่พอ) */
     .filter-dates { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; margin-bottom: 8px; }
-    .filter-dates label { margin: 0; font-size: 13px; font-weight: 600; }
-    .filter-row select, .filter-row input, .filter-dates input { padding: 10px; font-size: 16px; min-height: 44px; }   /* 16px: iPhone ไม่ซูมเองตอนแตะช่อง */
+    .filter-dates label { margin: 0; font-size: var(--fs-sm); font-weight: 600; }
+    .filter-row select, .filter-row input, .filter-dates input { padding: 10px; font-size: var(--fs-md); min-height: 44px; }   /* 16px: iPhone ไม่ซูมเองตอนแตะช่อง */
     .filter-row select { padding-right: 30px; background-position: right 6px center; }   /* ชื่อยาวไม่ทับลูกศร */
-    .hist-search { width: 100%; min-height: 44px; padding: 9px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .hist-search { width: 100%; min-height: 44px; padding: 9px; border: 1.5px solid var(--line); border-radius: 8px; font-size: var(--fs-sm); font-family: inherit; }
     .hist-row { padding: 10px 0; border-bottom: 1px solid var(--line-2); cursor: pointer; }
     .hist-row:last-child { border-bottom: none; }
     .hist-row:active { background: var(--accent-soft); }
-    .hist-meta { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
-    .hist-cat { font-size: 14px; font-weight: 700; color: var(--accent); margin-top: 2px; }
-    .hist-sub { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+    .hist-meta { font-size: var(--fs-xs); color: var(--muted); display: flex; justify-content: space-between; }
+    .hist-cat { font-size: var(--fs-sm); font-weight: 700; color: var(--accent); margin-top: 2px; }
+    .hist-sub { font-size: var(--fs-sm); color: var(--ink-2); margin-top: 2px; }
     .hist-empty { text-align: center; color: var(--muted); padding: 30px 0; }
-    .hist-count { font-size: 12px; color: var(--muted); margin: 6px 0 8px; }
+    .hist-count { font-size: var(--fs-xs); color: var(--muted); margin: 6px 0 8px; }
     .pagi { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
     .pagi button { flex: 1; min-height: 44px; padding: 9px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); font-family: inherit; font-weight: 600; cursor: pointer; }
     .pagi button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -122,9 +128,9 @@
     body.modal-open { overflow: hidden; }
     :focus-visible { outline: 3px solid var(--accent-line); outline-offset: 2px; }
     .modal { background: var(--surface); border-radius: 12px; padding: 18px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
-    .modal h2 { margin: 0 0 12px; font-size: 17px; color: var(--accent); }
+    .modal h2 { margin: 0 0 12px; font-size: var(--fs-lg); color: var(--accent); }
     .modal .field { margin-bottom: 10px; }
-    .modal label { font-size: 13px; }
+    .modal label { font-size: var(--fs-sm); }
     .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
     .modal-actions button { flex: 1; min-height: 44px; padding: 11px; border: none; border-radius: 8px; font-family: inherit; font-weight: 700; cursor: pointer; }
     .btn-save { background: var(--accent); color: #fff; }
@@ -132,23 +138,23 @@
     .btn-delete { background: var(--danger-soft); color: var(--danger-ink); }
     /* category trend (multi-series) */
     .cat-series-wrap { margin-top: 8px; }
-    .cat-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; font-size: 12px; }
+    .cat-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; font-size: var(--fs-xs); }
     .cat-legend-item { display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: var(--line-2); }
     .cat-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
     .cat-series-bars { display: flex; align-items: flex-end; gap: 1px; height: 90px; padding: 4px 0 4px; overflow: hidden; }
     .cat-series-bars .cs-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; height: 100%; }
     .cs-seg { width: 100%; }
     /* offline queue */
-    .queue-badge { display: none; background: var(--qc-soft); color: var(--qc-ink); border: 1px solid var(--qc-line); padding: 8px 10px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
+    .queue-badge { display: none; background: var(--qc-soft); color: var(--qc-ink); border: 1px solid var(--qc-line); padding: 8px 10px; border-radius: 8px; font-size: var(--fs-xs); margin-bottom: 10px; }
     .queue-badge.show { display: block; }
     /* ข้อมูลจากแคชในเครื่อง: บอกเวลาของข้อมูล / กำลังอัปเดต */
-    .swr-stamp { font-size: 12px; color: var(--muted); text-align: right; margin: -2px 2px 8px; min-height: 14px; }
+    .swr-stamp { font-size: var(--fs-xs); color: var(--muted); text-align: right; margin: -2px 2px 8px; min-height: 14px; }
     .swr-stamp.warn { color: var(--qc-strong); }
     .exec-btn:disabled { opacity: 0.45; cursor: wait; }
     .ml-act button:disabled { opacity: 0.45; cursor: wait; }
     /* exec actions */
     .exec-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
-    .exec-btn { min-height: 44px; padding: 11px 6px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--ink-2); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .exec-btn { min-height: 44px; padding: 11px 6px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); font-family: inherit; font-size: var(--fs-xs); font-weight: 700; cursor: pointer; color: var(--ink-2); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
     .exec-btn:active { background: var(--page); }
     .exec-btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
     .month-actions .exec-btn { white-space: nowrap; }
@@ -164,49 +170,50 @@
     /* ===== รายงานรายเดือน (จัดหน้าเพื่อพิมพ์) ===== */
     .section-divider {
       display: flex; align-items: center; gap: 8px;
-      margin: 22px 0 12px; font-size: 15px; font-weight: 700; color: var(--ink-2);
+      margin: 22px 0 12px; font-size: var(--fs-md); font-weight: 700; color: var(--ink-2);
     }
     .section-divider::before, .section-divider::after { content: ''; flex: 1; border-top: 2px solid var(--line); }
     .rep-head { text-align: center; border-bottom: 2px solid var(--qc); padding-bottom: 10px; margin-bottom: 12px; }
-    .rep-head h2 { margin: 0 0 4px; font-size: 19px; color: var(--ink); }
-    .rep-head .rep-sub { font-size: 13px; color: var(--muted); }
+    .rep-head h2 { margin: 0 0 4px; font-size: var(--fs-lg); color: var(--ink); }
+    .rep-head .rep-sub { font-size: var(--fs-sm); color: var(--muted); }
     .rep-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 6px; }
     .rep-kpi { border: 1px solid var(--line); border-radius: 8px; padding: 10px; text-align: center; }
-    .rep-kpi .k-val { font-size: 22px; font-weight: 800; color: var(--ink); line-height: 1.2; }
-    .rep-kpi .k-lab { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .rep-kpi .k-val { font-size: var(--fs-xl); font-weight: 800; color: var(--ink); line-height: 1.2; }
+    .rep-kpi .k-lab { font-size: var(--fs-xs); color: var(--muted); margin-top: 2px; }
     .rep-kpi .k-val.up { color: var(--danger-text); }
     .rep-kpi .k-val.down { color: var(--mt); }
-    .rep-empty { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+    .rep-empty { color: var(--muted); font-size: var(--fs-sm); padding: 6px 2px; }
     .rep-days { display: flex; align-items: flex-end; gap: 2px; height: 90px; margin-top: 6px; }
     .rep-days .d-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
     .rep-days .d-bar { background: var(--qc); border-radius: 2px 2px 0 0; min-height: 1px; }
-    .rep-days .d-num { font-size: 11px; min-height: 1.3em; color: var(--muted); text-align: center; margin-top: 2px; }
+    .rep-days .d-num { font-size: var(--fs-xs); min-height: 1.3em; color: var(--muted); text-align: center; margin-top: 2px; }
 
     /* กราฟแนวโน้มรายเดือน (12 เดือนย้อนหลัง) */
     .rep-trend { display: flex; align-items: flex-end; gap: 4px; height: 118px; margin-top: 8px; }
     .rep-trend .t-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
     /* กราฟที่มีแท่งเยอะ (เช่น รายวันทั้งเดือน) — ซ่อนตัวเลขบนแท่ง ไม่งั้นดันจนล้นจอ */
-    .rep-trend .t-val { font-size: 12px; font-weight: 700; color: var(--muted); text-align: center; margin-bottom: 2px; }
+    .rep-trend .t-val { font-size: var(--fs-xs); font-weight: 700; color: var(--muted); text-align: center; margin-bottom: 2px; }
     .rep-trend .t-bar { background: var(--qc-line); border-radius: 3px 3px 0 0; min-height: 2px; }
-    .rep-trend .t-lbl { font-size: 11px; color: var(--muted); text-align: center; margin-top: 3px; line-height: 1.25; }
+    .rep-trend .t-lbl { font-size: var(--fs-xs); color: var(--muted); text-align: center; margin-top: 3px; line-height: 1.25; }
     .rep-trend .t-col.cur .t-bar { background: var(--qc); }
     .rep-trend .t-col.cur .t-val, .rep-trend .t-col.cur .t-lbl { color: var(--qc); font-weight: 700; }
-    .rep-trend-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .rep-trend-note { font-size: var(--fs-xs); color: var(--muted); margin-top: 6px; }
 
     /* แนวโน้มรายเดือนแยกซัพพลายเออร์ (แท่งซ้อน) */
-    .sup-legend { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; font-size: 12px; }
+    .sup-legend { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; font-size: var(--fs-xs); }
     .sup-legend-item { display: flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 999px; background: var(--line-2); }
     .sup-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
     .sup-line { width: 100%; height: auto; display: block; margin-top: 8px; overflow: visible; }
     .tl-off { display: none; }
     .tl-hit { cursor: pointer; }
     .sup-line .grid { stroke: var(--line); stroke-width: 1; }
+    /* กราฟ SVG: 13 หน่วย viewBox ≈ 11–12px บนจอ 360–375 (ไม่ใช่ token) */
     .sup-line .axis-lbl { font-size: 13px; fill: var(--muted); }
     .sup-line .x-lbl { font-size: 13px; fill: var(--muted); text-anchor: middle; }
     .sup-line .x-lbl.cur { fill: var(--qc); font-weight: 700; }
     .sup-line .cur-line { stroke: var(--qc-line); stroke-width: 1; stroke-dasharray: 2 2; }
     .rep-sign { display: flex; gap: 24px; margin-top: 26px; }
-    .rep-sign div { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+    .rep-sign div { flex: 1; text-align: center; font-size: var(--fs-xs); color: var(--muted); }
     .rep-sign .line { border-top: 1px dotted var(--muted); margin-bottom: 5px; height: 30px; }
 
     /* print */
@@ -234,38 +241,38 @@
       @page { margin: 12mm; }
     }
     .period-sel { display: flex; gap: 6px; margin-bottom: 14px; }
-    .period-sel button { flex: 1; min-height: 44px; padding: 9px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+    .period-sel button { flex: 1; min-height: 44px; padding: 9px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; color: var(--muted); cursor: pointer; }
     .period-sel button.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
-    .dash-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--ink-2); }
+    .dash-title { font-size: var(--fs-md); font-weight: 700; margin-bottom: 10px; color: var(--ink-2); }
     /* กราฟอันดับ + สัดส่วน — แถบรวมด้านบน แล้วไล่อันดับด้านล่าง */
     .rank-share { display: flex; height: 14px; border-radius: 4px; overflow: hidden; gap: 2px; margin-bottom: 12px; }
     .rank-share > span { display: block; height: 100%; }
     .rank-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line-2); }
     .rank-row:last-child { border-bottom: none; }
-    .rank-no { width: 20px; height: 20px; border-radius: 4px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-    .rank-name { flex: 1; font-size: 14px; color: var(--ink-2); min-width: 0; overflow-wrap: anywhere; }
-    .rank-cnt { font-size: 14px; font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-    .rank-pct { font-size: 12px; color: var(--muted); width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+    .rank-no { width: 20px; height: 20px; border-radius: 4px; font-size: var(--fs-xs); font-weight: 700; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+    .rank-name { flex: 1; font-size: var(--fs-sm); color: var(--ink-2); min-width: 0; overflow-wrap: anywhere; }
+    .rank-cnt { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+    .rank-pct { font-size: var(--fs-xs); color: var(--muted); width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
     .score-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line-2); }
     .score-row:last-child { border-bottom: none; }
     .score-rank { width: 30px; display: flex; justify-content: center; }
-    .score-name { flex: 1; font-weight: 600; font-size: 14px; color: var(--ink-2); }
-    .score-count { font-weight: 700; color: var(--accent); font-size: 14px; }
-    .recent-row { font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--line-2); color: var(--ink-2); }
+    .score-name { flex: 1; font-weight: 600; font-size: var(--fs-sm); color: var(--ink-2); }
+    .score-count { font-weight: 700; color: var(--accent); font-size: var(--fs-sm); }
+    .recent-row { font-size: var(--fs-sm); padding: 7px 0; border-bottom: 1px solid var(--line-2); color: var(--ink-2); }
     .recent-row:last-child { border-bottom: none; }
-    .recent-row .rt { color: var(--muted); font-size: 12px; }
-    .dash-empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: 14px; }
+    .recent-row .rt { color: var(--muted); font-size: var(--fs-xs); }
+    .dash-empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: var(--fs-sm); }
     /* ตัวเลขหลักตัวเดียว + บรรทัดเทียบช่วงก่อนหน้า (เดิม 3 กล่องเท่ากัน ซ้ำกันเมื่อดู "วันนี้") */
     .kpi-main { background: var(--surface); border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px; }
-    .kpi-main .v { font-size: 34px; font-weight: 800; color: var(--ink); line-height: 1.1; }
-    .kpi-main .l { font-size: 15px; font-weight: 600; color: var(--ink-2); }
-    .kpi-cmp { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+    .kpi-main .v { font-size: var(--fs-display); font-weight: 800; color: var(--ink); line-height: 1.1; }
+    .kpi-main .l { font-size: var(--fs-md); font-weight: 600; color: var(--ink-2); }
+    .kpi-cmp { font-size: var(--fs-sm); color: var(--muted); margin-top: 6px; line-height: 1.5; }
     .kpi-cmp b { color: var(--ink-2); }
     .kpi-cmp .delta { font-weight: 700; }
     .kpi-cmp .delta:not(:empty)::before { content: '· '; color: var(--muted); font-weight: 400; }
     .dash-top { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
     .dash-top .swr-stamp { margin: 0; }
-    .dash-refresh { flex: 0 0 auto; min-height: 44px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .dash-refresh { flex: 0 0 auto; min-height: 44px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; }
     /* ส่วนพับ: แตะหัวข้อเพื่อเปิด/ปิด */
     .dash-more { margin-bottom: 12px; }
     .dash-more > summary { display: flex; align-items: center; min-height: 48px; padding: 0 16px; background: var(--surface); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-weight: 700; color: var(--ink); cursor: pointer; list-style: none; }
@@ -278,29 +285,29 @@
     .delta.flat { color: var(--muted); }
     /* กราฟเส้นแนวโน้ม — ปุ่ม ◀ ▶ สลับ รายสัปดาห์ / รายเดือน / รายปี */
     .trend-nav { display: flex; align-items: center; gap: 8px; margin: -4px 0 6px; }
-    .trend-arrow { flex: 0 0 auto; width: 44px; height: 44px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--accent); font-size: 14px; font-family: inherit; cursor: pointer; padding: 0; }
+    .trend-arrow { flex: 0 0 auto; width: 44px; height: 44px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--accent); font-size: var(--fs-sm); font-family: inherit; cursor: pointer; padding: 0; }
     .trend-arrow:active { background: var(--accent-soft); border-color: var(--accent-line); }
     .trend-nav-mid { flex: 1; text-align: center; min-width: 0; }
-    .trend-mode { font-size: 15px; font-weight: 700; color: var(--ink-2); }
-    .trend-period { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .trend-mode { font-size: var(--fs-md); font-weight: 700; color: var(--ink-2); }
+    .trend-period { font-size: var(--fs-xs); color: var(--muted); margin-top: 1px; }
     .trend-wrap { width: 100%; }
     .trend-wrap svg { width: 100%; height: auto; display: block; }
     .supcat-row { padding: 10px 0; border-bottom: 1px solid var(--line-2); }
     .supcat-row:last-child { border-bottom: none; }
-    .supcat-head { display: flex; justify-content: space-between; font-weight: 700; color: var(--ink-2); font-size: 14px; margin-bottom: 4px; }
+    .supcat-head { display: flex; justify-content: space-between; font-weight: 700; color: var(--ink-2); font-size: var(--fs-sm); margin-bottom: 4px; }
     .supcat-head .tot { color: var(--accent); }
     .supcat-cats { display: flex; flex-wrap: wrap; gap: 4px; }
-    .supcat-chip { background: var(--qc-soft); color: var(--qc-ink); padding: 2px 8px; border-radius: 999px; font-size: 12px; }
-    .combo-row { padding: 8px 0; border-bottom: 1px solid var(--line-2); display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); }
+    .supcat-chip { background: var(--qc-soft); color: var(--qc-ink); padding: 2px 8px; border-radius: 999px; font-size: var(--fs-xs); }
+    .combo-row { padding: 8px 0; border-bottom: 1px solid var(--line-2); display: flex; justify-content: space-between; font-size: var(--fs-sm); color: var(--ink-2); }
     .combo-row:last-child { border-bottom: none; }
     .combo-row .c { color: var(--accent); font-weight: 700; }
-    .unknown-note { background: var(--qc-soft); border: 1px solid var(--qc-line); color: var(--qc-ink); font-size: 13px; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; }
+    .unknown-note { background: var(--qc-soft); border: 1px solid var(--qc-line); color: var(--qc-ink); font-size: var(--fs-sm); padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; }
     .unknown-note b { color: var(--qc-strong); }
-    .header h1 { margin: 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .header h1 { margin: 0; font-size: var(--fs-xl); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; }
     /* โลโก้ตามงานที่เปิดอยู่: QC ส้ม / MT เขียว (สลับด้วย body[data-mod]) */
-    .logo-mark { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 32px; padding: 0 6px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 15px; font-weight: 800; letter-spacing: 0.04em; }
+    .logo-mark { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 32px; padding: 0 6px; border-radius: 8px; background: var(--accent); color: #fff; font-size: var(--fs-md); font-weight: 800; letter-spacing: 0.04em; }
     body[data-mod="qc"] .for-mt, body[data-mod="mt"] .for-qc { display: none; }
-    .header .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .header .sub { font-size: var(--fs-sm); color: var(--muted); margin-top: 4px; }
     .card {
       background: var(--surface);
       border-radius: 12px;
@@ -312,7 +319,7 @@
     .field:last-child { margin-bottom: 0; }
     label {
       display: block;
-      font-size: 14px;
+      font-size: var(--fs-sm);
       font-weight: 600;
       margin-bottom: 6px;
       color: var(--ink-2);
@@ -323,7 +330,7 @@
       padding: 12px;
       border: 1.5px solid var(--line);
       border-radius: 8px;
-      font-size: 16px;
+      font-size: var(--fs-md);
       font-family: inherit;
       background: var(--surface);
       color: var(--ink);
@@ -365,14 +372,14 @@
       border-radius: 8px;
       background: var(--page);
       color: var(--ink-2);
-      font-size: 14px;
+      font-size: var(--fs-sm);
       font-weight: 600;
       display: flex;
       align-items: center;
       gap: 6px;
     }
     .cat-more > summary::-webkit-details-marker { display: none; }
-    .cat-more > summary::before { content: '▸'; font-size: 13px; }
+    .cat-more > summary::before { content: '▸'; font-size: var(--fs-sm); }
     .cat-more[open] > summary::before { content: '▾'; }
     .cat-more > summary:active { background: var(--line-2); }
     .cat-more[open] > summary { margin-bottom: 10px; }
@@ -388,45 +395,45 @@
       cursor: pointer;
       user-select: none;
       transition: border-color 0.15s, background-color 0.15s, color 0.15s;
-      font-size: 14px;
+      font-size: var(--fs-sm);
     }
     .chk input { margin-right: 8px; accent-color: var(--accent); transform: scale(1.2); }
     .chk.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
     /* แท็บ 🔧 แจ้งซ่อม ใช้สีเขียวผ่าน --accent (body[data-mod="mt"]) — ไม่ต้องมีกฎแยก */
-    .chip-btn.sm { min-height: 44px; padding: 7px 12px; font-size: 13px; }
+    .chip-btn.sm { min-height: 44px; padding: 7px 12px; font-size: var(--fs-sm); }
     .mt-head { margin-bottom: 12px; }
-    .mt-title { font-size: 16px; font-weight: 800; color: var(--accent-ink); }
-    .mt-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .mt-hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+    .mt-title { font-size: var(--fs-md); font-weight: 800; color: var(--accent-ink); }
+    .mt-sub { font-size: var(--fs-xs); color: var(--muted); margin-top: 2px; }
+    .mt-hint { font-weight: 400; color: var(--muted); font-size: var(--fs-xs); }
     .radio-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .radio-row .chk > span { display: flex; flex-direction: column; line-height: 1.25; }
     .impact-more { margin-top: 8px; padding: 10px; border: 1px dashed var(--accent-line); border-radius: 8px; background: var(--accent-soft); }
     .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip-btn { min-height: 44px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); font-size: 14px; font-family: inherit; cursor: pointer; }
+    .chip-btn { min-height: 44px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink-2); font-size: var(--fs-sm); font-family: inherit; cursor: pointer; }
     .chip-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
-    .ml-row { padding: 10px 0; border-bottom: 1px solid var(--line-2); font-size: 13px; color: var(--ink-2); }
+    .ml-row { padding: 10px 0; border-bottom: 1px solid var(--line-2); font-size: var(--fs-sm); color: var(--ink-2); }
     .ml-row:last-child { border-bottom: none; }
     .ml-top { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; color: var(--accent-ink); }
-    .ml-top .t { font-weight: 500; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .ml-top .t { font-weight: 500; color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; }
     .ml-sub { margin-top: 2px; }
-    .ml-sym { color: var(--muted); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ml-sym { color: var(--muted); font-size: var(--fs-xs); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ml-act { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-    .ml-act a, .ml-act button { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1.5px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-ink); text-decoration: none; font-family: inherit; cursor: pointer; }
+    .ml-act a, .ml-act button { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-sm); padding: 8px 12px; border-radius: 8px; border: 1.5px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-ink); text-decoration: none; font-family: inherit; cursor: pointer; }
     .ml-act button:disabled { opacity: .6; }
     .ml-act .ml-cancel-btn { border-color: var(--danger-line); background: var(--surface); color: var(--danger-text); }
     .ml-act .ml-edit-btn { border-color: #D1D5DB; background: var(--surface); color: var(--ink-2); }
-    .ml-enote { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .edit-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; padding: 10px 12px; border: 1.5px solid var(--accent-line); border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink); font-size: 14px; }
-    .edit-photo-note { margin-bottom: 8px; padding: 8px 10px; border: 1px dashed var(--accent-line); border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; }
+    .ml-enote { font-size: var(--fs-xs); color: var(--muted); margin-top: 4px; }
+    .edit-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; padding: 10px 12px; border: 1.5px solid var(--accent-line); border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink); font-size: var(--fs-sm); }
+    .edit-photo-note { margin-bottom: 8px; padding: 8px 10px; border: 1px dashed var(--accent-line); border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink); font-size: var(--fs-xs); }
     .edit-photo-note img { display: block; max-width: 140px; max-height: 110px; margin-top: 6px; border-radius: 6px; border: 1px solid var(--accent-line); }
-    .edit-bar button { flex: 0 0 auto; min-height: 44px; padding: 7px 10px; border: 1.5px solid var(--accent-line); border-radius: 8px; background: var(--surface); color: var(--accent-ink); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .edit-bar button { flex: 0 0 auto; min-height: 44px; padding: 7px 10px; border: 1.5px solid var(--accent-line); border-radius: 8px; background: var(--surface); color: var(--accent-ink); font-family: inherit; font-size: var(--fs-xs); font-weight: 600; cursor: pointer; }
     .ml-row.cancelled .ml-top span:first-child { text-decoration: line-through; color: var(--muted); }
     .ml-row.cancelled .ml-sub, .ml-row.cancelled .ml-sym { color: var(--muted); }
-    .ml-badge { display: inline-block; font-size: 12px; font-weight: 700; color: var(--danger-text); background: var(--danger-soft); border: 1px solid var(--danger-line); border-radius: 6px; padding: 1px 6px; margin-left: 6px; text-decoration: none; }
-    .ml-cnote { font-size: 12px; color: var(--danger-text); margin-top: 4px; }
+    .ml-badge { display: inline-block; font-size: var(--fs-xs); font-weight: 700; color: var(--danger-text); background: var(--danger-soft); border: 1px solid var(--danger-line); border-radius: 6px; padding: 1px 6px; margin-left: 6px; text-decoration: none; }
+    .ml-cnote { font-size: var(--fs-xs); color: var(--danger-text); margin-top: 4px; }
     .ml-cancel { margin-top: 8px; padding: 10px; border: 1.5px solid var(--danger-line); border-radius: 8px; background: var(--danger-soft); display: flex; flex-direction: column; gap: 8px; }
     .ml-cancel .row { display: flex; gap: 8px; }
-    .ml-cancel .row button { flex: 1; min-height: 44px; padding: 9px; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2); }
+    .ml-cancel .row button { flex: 1; min-height: 44px; padding: 9px; border-radius: 8px; font-family: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2); }
     .ml-cancel .row button.ok { border-color: var(--danger); background: var(--danger); color: #fff; }
     .ml-cancel .row button:disabled { opacity: .6; }
 
@@ -439,7 +446,7 @@
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 18px;
+      font-size: var(--fs-lg);
       font-weight: 700;
       cursor: pointer;
     }
@@ -449,7 +456,7 @@
       width: 100%; padding: 14px;
       background: var(--surface); color: var(--accent);
       border: 1.5px dashed var(--accent); border-radius: 8px;
-      font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+      font-size: var(--fs-md); font-weight: 600; font-family: inherit; cursor: pointer;
     }
     .btn-photo:active { background: var(--accent-soft); }
     #photoPreview { width: 100%; border-radius: 8px; border: 1.5px solid var(--line); display: block; }
@@ -458,7 +465,7 @@
     .btn-remove {
       margin-top: 8px; width: 100%; min-height: 44px; padding: 9px;
       background: var(--danger-soft); color: var(--danger-ink);
-      border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer;
+      border: none; border-radius: 8px; font-size: var(--fs-sm); font-weight: 600; font-family: inherit; cursor: pointer;
     }
     .btn-remove:active { opacity: 0.8; }
 
@@ -469,7 +476,7 @@
       color: white;
       border: none;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: var(--fs-md);
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
@@ -482,7 +489,7 @@
       width: 100%; margin-top: 10px; padding: 13px;
       background: var(--surface); color: var(--accent);
       border: 1.5px solid var(--accent); border-radius: 10px;
-      font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+      font-size: var(--fs-md); font-weight: 700; font-family: inherit; cursor: pointer;
     }
     .btn-share:active { background: var(--accent-soft); }
     .btn-share.hot {
@@ -498,7 +505,7 @@
       padding: 12px 14px;
       border-radius: 8px;
       margin-bottom: 12px;
-      font-size: 14px;
+      font-size: var(--fs-sm);
       display: none;
       white-space: pre-line;
     }
@@ -513,38 +520,38 @@
       width: min(540px, calc(100% - 24px)); z-index: 9000;
       display: flex; align-items: flex-start; gap: 4px; padding: 12px 4px 12px 14px;
       border: 1px solid #D1D5DB; border-radius: 12px; background: var(--surface); color: var(--ink-2);
-      font-size: 14px; line-height: 1.5; white-space: pre-line; box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      font-size: var(--fs-sm); line-height: 1.5; white-space: pre-line; box-shadow: 0 6px 20px rgba(0,0,0,0.12);
     }
     .status-bar[hidden] { display: none; }
     .status-bar.success { background: var(--mt-soft); color: var(--mt-ink); border-color: var(--mt-line); }
     .status-bar.error { background: var(--danger-soft); color: var(--danger-ink); border-color: var(--danger-line); }
     .status-bar .sb-msg { flex: 1; min-width: 0; overflow-wrap: anywhere; padding-top: 1px; }
-    .status-bar .sb-close { flex: 0 0 auto; width: 44px; height: 44px; margin: -10px 0 -10px 0; border: none; background: transparent; color: inherit; font-size: 18px; font-family: inherit; cursor: pointer; }
+    .status-bar .sb-close { flex: 0 0 auto; width: 44px; height: 44px; margin: -10px 0 -10px 0; border: none; background: transparent; color: inherit; font-size: var(--fs-lg); font-family: inherit; cursor: pointer; }
     body.has-status .container { padding-bottom: 140px; }
     @media print { .status-bar { display: none !important; } }
     /* ช่องที่กรอกไม่ครบ: กรอบแดง + ข้อความใต้ช่อง */
     .field.invalid select, .field.invalid input[type="text"], .field.invalid input[type="number"], .field.invalid textarea { border-color: var(--danger); }
     .field.invalid .checkbox-grid, .field.invalid .chip-wrap { outline: 2px solid var(--danger-line); outline-offset: 4px; border-radius: 8px; }
-    .field-err { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--danger-text); }
+    .field-err { margin-top: 6px; font-size: var(--fs-sm); font-weight: 600; color: var(--danger-text); }
     /* ป๊อปอัพแก้ไข: ช่องจำนวน/หน่วยคู่กัน · แผงยกเลิกรายงาน · ใบที่ยกเลิกแล้ว */
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .void-panel { margin-top: 12px; padding: 12px; border: 1.5px solid var(--danger-line); border-radius: 10px; background: var(--danger-soft); display: flex; flex-direction: column; gap: 8px; }
     .void-panel[hidden], .voided-note[hidden], .modal-dirty[hidden] { display: none; }
-    .void-panel .vp-title { font-size: 15px; font-weight: 700; color: var(--danger-ink); }
-    .void-panel .vp-sum { font-size: 13px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
-    .void-panel .vp-note { font-size: 12px; color: var(--ink-2); }
-    .void-panel .vp-err { font-size: 13px; font-weight: 600; color: var(--danger-text); min-height: 0; }
+    .void-panel .vp-title { font-size: var(--fs-md); font-weight: 700; color: var(--danger-ink); }
+    .void-panel .vp-sum { font-size: var(--fs-sm); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+    .void-panel .vp-note { font-size: var(--fs-xs); color: var(--ink-2); }
+    .void-panel .vp-err { font-size: var(--fs-sm); font-weight: 600; color: var(--danger-text); min-height: 0; }
     .void-panel .vp-row { display: flex; gap: 8px; }
-    .void-panel .vp-row button { flex: 1; min-height: 44px; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2); }
+    .void-panel .vp-row button { flex: 1; min-height: 44px; border-radius: 8px; font-family: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2); }
     .void-panel .vp-row button.vp-ok { border-color: var(--danger); background: var(--danger); color: #fff; }
     .void-panel .vp-row button:disabled { opacity: .6; cursor: wait; }
-    .voided-note, .modal-dirty { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px; }
+    .voided-note, .modal-dirty { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; font-size: var(--fs-sm); }
     .voided-note { background: var(--danger-soft); color: var(--danger-ink); border: 1px solid var(--danger-line); }
     .modal-dirty { background: var(--qc-soft); color: var(--qc-ink); border: 1px solid var(--qc-line); }
     .hist-row.voided .hist-cat, .hist-row.voided .hist-sub { color: var(--muted); text-decoration: line-through; }
-    .hist-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--danger-text); background: var(--danger-soft); border: 1px solid var(--danger-line); text-decoration: none; }
-    .hist-vnote { font-size: 12px; color: var(--danger-text); margin-top: 2px; }
-    .ml-cancel-err { font-size: 13px; font-weight: 600; color: var(--danger-text); }
+    .hist-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px; font-size: var(--fs-xs); font-weight: 700; color: var(--danger-text); background: var(--danger-soft); border: 1px solid var(--danger-line); text-decoration: none; }
+    .hist-vnote { font-size: var(--fs-xs); color: var(--danger-text); margin-top: 2px; }
+    .ml-cancel-err { font-size: var(--fs-sm); font-weight: 600; color: var(--danger-text); }
     .loading { display: none; text-align: center; padding: 20px; color: var(--muted); }
     .loading.show { display: block; }
     .spinner {
@@ -555,7 +562,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 20px; padding-bottom: 20px; }
+    .footer { text-align: center; font-size: var(--fs-xs); color: var(--muted); margin-top: 20px; padding-bottom: 20px; }
   </style>
 </head>
 <body data-mod="qc">
@@ -601,20 +608,6 @@
     <form id="form" style="display:none" novalidate>
       <div class="card">
         <div class="field">
-          <label>📷 รูปถ่ายสิ่งที่พบ</label>
-          <input type="file" id="photoCam" accept="image/*" capture="environment" style="display:none">
-          <input type="file" id="photoGal" accept="image/*" style="display:none">
-          <div id="photoControls" style="display:flex; gap:8px;">
-            <button type="button" class="btn-photo" id="photoCamBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-camera"/></svg> ถ่ายรูป</button>
-            <button type="button" class="btn-photo" id="photoGalBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg> จากเครื่อง</button>
-          </div>
-          <div id="photoPreviewWrap" style="display:none; margin-top:10px;">
-            <img id="photoPreview" alt="รูปที่แนบ">
-            <button type="button" class="btn-remove" id="photoRemoveBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash-2"/></svg> ลบรูป</button>
-          </div>
-        </div>
-
-        <div class="field">
           <label for="reporter">👤 ผู้พบ <span class="req">*</span></label>
           <select id="reporter" required><option value="">-- เลือก --</option></select>
           <input type="text" id="reporterNew" aria-label="ชื่อผู้พบใหม่" class="combo-new" placeholder="พิมพ์ชื่อผู้พบใหม่" style="display:none">
@@ -638,6 +631,20 @@
           <div class="add-row">
             <input type="text" id="categoryNew" aria-label="เพิ่มสิ่งแปลกปลอมใหม่" placeholder="เพิ่มสิ่งแปลกปลอมใหม่">
             <button type="button" class="btn-add" id="categoryAddBtn" aria-label="เพิ่มสิ่งแปลกปลอม">+</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>📷 รูปถ่ายสิ่งที่พบ (ถ้ามี)</label>
+          <input type="file" id="photoCam" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="photoGal" accept="image/*" style="display:none">
+          <div id="photoControls" style="display:flex; gap:8px;">
+            <button type="button" class="btn-photo" id="photoCamBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-camera"/></svg> ถ่ายรูป</button>
+            <button type="button" class="btn-photo" id="photoGalBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg> จากเครื่อง</button>
+          </div>
+          <div id="photoPreviewWrap" style="display:none; margin-top:10px;">
+            <img id="photoPreview" alt="รูปที่แนบ">
+            <button type="button" class="btn-remove" id="photoRemoveBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash-2"/></svg> ลบรูป</button>
           </div>
         </div>
 
@@ -670,7 +677,7 @@
         <div class="field">
           <label for="foundAt">🗓 วันเวลาที่พบ (รายงานย้อนหลัง)</label>
           <input type="datetime-local" id="foundAt">
-          <div style="font-size:12px; color:var(--muted); margin-top:4px;">เว้นว่าง = ใช้เวลาปัจจุบัน · ตั้งย้อนหลังได้ถ้าถ่ายรูปเก็บไว้ก่อนแล้วมากรอกทีหลัง</div>
+          <div style="font-size: var(--fs-xs); color:var(--muted); margin-top:4px;">เว้นว่าง = ใช้เวลาปัจจุบัน · ตั้งย้อนหลังได้ถ้าถ่ายรูปเก็บไว้ก่อนแล้วมากรอกทีหลัง</div>
         </div>
       </div>
 
@@ -762,13 +769,13 @@
           <div class="field">
             <label for="mReportedAt">🗓 วันเวลาที่แจ้ง (แจ้งย้อนหลัง)</label>
             <input type="datetime-local" id="mReportedAt">
-            <div style="font-size:12px; color:var(--muted); margin-top:4px;">เว้นว่าง = ใช้เวลาปัจจุบัน</div>
+            <div style="font-size: var(--fs-xs); color:var(--muted); margin-top:4px;">เว้นว่าง = ใช้เวลาปัจจุบัน</div>
           </div>
 
           <div class="field" id="mEditorField" style="display:none">
             <label for="mEditor">✍️ ผู้แก้ไข <span class="req">*</span></label>
             <input type="text" id="mEditor" placeholder="ชื่อผู้แก้ไข">
-            <div style="font-size:12px; color:var(--muted); margin-top:4px;">เลขที่และเวลาที่แจ้งไม่เปลี่ยน · เลือกรูปใหม่ = เพิ่ม/แทนที่รูป (รูปเดิมยังเก็บใน Drive) · ทุกช่องที่แก้ถูกบันทึกไว้ตรวจย้อนหลัง</div>
+            <div style="font-size: var(--fs-xs); color:var(--muted); margin-top:4px;">เลขที่และเวลาที่แจ้งไม่เปลี่ยน · เลือกรูปใหม่ = เพิ่ม/แทนที่รูป (รูปเดิมยังเก็บใน Drive) · ทุกช่องที่แก้ถูกบันทึกไว้ตรวจย้อนหลัง</div>
           </div>
         </div>
 
@@ -792,7 +799,7 @@
 
       <div class="section-divider">📄 ใบแจ้งซ่อมล่าสุด</div>
       <div class="card">
-        <div style="font-size:12px; color:#6b7280; margin-bottom:8px;">เปิด/ดาวน์โหลด PDF ย้อนหลังได้ทุกเมื่อ (เก็บใน Drive ไม่หมดอายุ) · ใบที่ยังไม่มี PDF กด "สร้าง PDF" ได้</div>
+        <div style="font-size: var(--fs-xs); color:#6b7280; margin-bottom:8px;">เปิด/ดาวน์โหลด PDF ย้อนหลังได้ทุกเมื่อ (เก็บใน Drive ไม่หมดอายุ) · ใบที่ยังไม่มี PDF กด "สร้าง PDF" ได้</div>
         <div id="mListLoading" class="loading"><div class="spinner"></div>กำลังโหลด...</div>
         <div id="mList"></div>
       </div>
@@ -913,7 +920,7 @@
           <label for="hFrom">ตั้งแต่</label><input type="date" id="hFrom">
           <label for="hTo">ถึง</label><input type="date" id="hTo">
         </div>
-        <label style="display:flex; align-items:center; gap:6px; min-height:44px; font-size:13px; color:var(--ink-2); margin-top:6px; cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:6px; min-height:44px; font-size: var(--fs-sm); color:var(--ink-2); margin-top:6px; cursor:pointer;">
           <input type="checkbox" id="hMineOnly" style="width:auto; transform:scale(1.2);">
           <span>👤 เฉพาะของฉัน (<span id="hMineName" style="color:var(--accent); font-weight:600;">-</span>)</span>
         </label>
@@ -987,8 +994,8 @@
 
     <div id="qrPage" style="display:none">
       <div class="card" style="text-align:center;">
-        <h2 style="margin:4px 0 2px; font-size:18px; color:var(--accent);">📲 แชร์แอปให้ทีม</h2>
-        <div style="font-size:13px; color:#6b7280; margin-bottom:16px;">ให้เพื่อนสแกน QR นี้เพื่อเปิดแอป</div>
+        <h2 style="margin:4px 0 2px; font-size: var(--fs-lg); color:var(--accent);">📲 แชร์แอปให้ทีม</h2>
+        <div style="font-size: var(--fs-sm); color:#6b7280; margin-bottom:16px;">ให้เพื่อนสแกน QR นี้เพื่อเปิดแอป</div>
         <div id="qrBox"></div>
         <div class="qr-steps">
           1. เปิดกล้องมือถือ → สแกน QR<br>
@@ -1002,7 +1009,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v61 · 2026-10-20</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v62 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -1716,7 +1723,7 @@
       if (qrRendered) return;
       var box = document.getElementById('qrBox');
       if (!window.QRCode && document.readyState !== 'complete') { window.addEventListener('load', renderQr, { once: true }); return; }   // สคริปต์ QR (defer) ยังโหลดไม่เสร็จ
-      if (!window.QRCode) { box.innerHTML = '<div style="color:#991b1b; font-size:13px;">โหลด QR ไม่ได้ (ต้องมีเน็ต)</div>'; return; }
+      if (!window.QRCode) { box.innerHTML = '<div style="color:#991b1b; font-size: var(--fs-sm);">โหลด QR ไม่ได้ (ต้องมีเน็ต)</div>'; return; }
       new QRCode(box, { text: SHARE_URL, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
       qrRendered = true;
     }
@@ -2059,7 +2066,7 @@
         var chips = (s.topCats || []).map(function (c) {
           return '<span class="supcat-chip">' + esc(c.name) + ' ×' + c.count + '</span>';
         }).join('');
-        if (!chips) chips = '<span style="color:var(--muted); font-size:12px;">ไม่มีหมวด</span>';
+        if (!chips) chips = '<span style="color:var(--muted); font-size: var(--fs-xs);">ไม่มีหมวด</span>';
         return '<div class="supcat-row"><div class="supcat-head"><span>🏭 ' + esc(s.name) + '</span><span class="tot">' + s.total + ' ครั้ง</span></div><div class="supcat-cats">' + chips + '</div></div>';
       }).join('');
     }
@@ -2942,7 +2949,7 @@
               '<div class="rep-kpi"><div class="k-val">' + d.activeDays + '</div><div class="k-lab">จำนวนวันที่พบ (จาก ' + (d.prevUntilDay || d.daysInMonth) + ' วัน)</div></div>' +
               '</div>';
       if (d.busiestDay) {
-        html += '<div class="rep-sub" style="font-size:12px; color:#6b7280;">📌 วันที่พบมากที่สุด: วันที่ ' +
+        html += '<div class="rep-sub" style="font-size: var(--fs-xs); color:#6b7280;">📌 วันที่พบมากที่สุด: วันที่ ' +
                 d.busiestDay + ' (' + d.busiestCount + ' ครั้ง)' +
                 (d.unknownSuppliers ? ' · ไม่ระบุซัพพลายเออร์ ' + d.unknownSuppliers + ' ครั้ง' : '') + '</div>';
       }
@@ -3458,7 +3465,7 @@
         });
         box.appendChild(b);
       });
-      if (!n) box.innerHTML = '<div style="font-size:12px; color:var(--muted);">ยังไม่มีรายชื่อโรงงาน — เพิ่มชื่อในแท็บ Sites ของ Google Sheet แล้วรีเฟรช</div>';
+      if (!n) box.innerHTML = '<div style="font-size: var(--fs-xs); color:var(--muted);">ยังไม่มีรายชื่อโรงงาน — เพิ่มชื่อในแท็บ Sites ของ Google Sheet แล้วรีเฟรช</div>';
     }
     function initMaintForm(opts) {
       maintMachines = (opts.machines || []).filter(function (m) { return m && m.name; });
@@ -4157,7 +4164,7 @@
         var panel = '';
         if (!r.cancelled && maintCancelOpen === i) {
           panel = '<div class="ml-cancel">' +
-            '<div style="font-size:13px; font-weight:700; color:#b91c1c;">ยกเลิกใบ ' + esc(r.mrNo) + '? (เลขที่ยังคงอยู่ในระบบ)</div>' +
+            '<div style="font-size: var(--fs-sm); font-weight:700; color:#b91c1c;">ยกเลิกใบ ' + esc(r.mrNo) + '? (เลขที่ยังคงอยู่ในระบบ)</div>' +
             '<input type="text" id="mCancelReason" aria-label="เหตุผลที่ยกเลิก" placeholder="เหตุผลที่ยกเลิก เช่น แจ้งซ้ำ / ซ่อมเองแล้ว / แจ้งผิดเครื่อง">' +
             '<input type="text" id="mCancelBy" aria-label="ชื่อผู้ยกเลิก" placeholder="ชื่อผู้ยกเลิก" value="' + esc(maintCancelByDefault()) + '">' +
             '<div class="ml-cancel-err" id="mCancelErr" role="alert"></div>' +
