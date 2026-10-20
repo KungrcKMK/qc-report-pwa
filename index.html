@@ -470,6 +470,44 @@
     .alert.error { background: var(--danger-soft); color: var(--danger-ink); border: 1px solid var(--danger-line); }
     .alert.info { background: var(--line-2); color: var(--ink-2); border: 1px solid #D1D5DB; }
 
+    /* แถบสถานะติดล่างจอ: ผลของทุกการกระทำเห็นได้เลยไม่ว่าเลื่อนจออยู่ตรงไหน (แทนกล่องบนสุดที่อยู่นอกจอ) */
+    .status-bar {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      width: min(540px, calc(100% - 24px)); z-index: 9000;
+      display: flex; align-items: flex-start; gap: 4px; padding: 12px 4px 12px 14px;
+      border: 1px solid #D1D5DB; border-radius: 12px; background: var(--surface); color: var(--ink-2);
+      font-size: 14px; line-height: 1.5; white-space: pre-line; box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .status-bar[hidden] { display: none; }
+    .status-bar.success { background: var(--mt-soft); color: var(--mt-ink); border-color: var(--mt-line); }
+    .status-bar.error { background: var(--danger-soft); color: var(--danger-ink); border-color: var(--danger-line); }
+    .status-bar .sb-msg { flex: 1; min-width: 0; overflow-wrap: anywhere; padding-top: 1px; }
+    .status-bar .sb-close { flex: 0 0 auto; width: 44px; height: 44px; margin: -10px 0 -10px 0; border: none; background: transparent; color: inherit; font-size: 18px; font-family: inherit; cursor: pointer; }
+    body.has-status .container { padding-bottom: 140px; }
+    @media print { .status-bar { display: none !important; } }
+    /* ช่องที่กรอกไม่ครบ: กรอบแดง + ข้อความใต้ช่อง */
+    .field.invalid select, .field.invalid input[type="text"], .field.invalid input[type="number"], .field.invalid textarea { border-color: var(--danger); }
+    .field.invalid .checkbox-grid, .field.invalid .chip-wrap { outline: 2px solid var(--danger-line); outline-offset: 4px; border-radius: 8px; }
+    .field-err { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--danger-text); }
+    /* ป๊อปอัพแก้ไข: ช่องจำนวน/หน่วยคู่กัน · แผงยกเลิกรายงาน · ใบที่ยกเลิกแล้ว */
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .void-panel { margin-top: 12px; padding: 12px; border: 1.5px solid var(--danger-line); border-radius: 10px; background: var(--danger-soft); display: flex; flex-direction: column; gap: 8px; }
+    .void-panel[hidden], .voided-note[hidden], .modal-dirty[hidden] { display: none; }
+    .void-panel .vp-title { font-size: 15px; font-weight: 700; color: var(--danger-ink); }
+    .void-panel .vp-sum { font-size: 13px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+    .void-panel .vp-note { font-size: 12px; color: var(--ink-2); }
+    .void-panel .vp-err { font-size: 13px; font-weight: 600; color: var(--danger-text); min-height: 0; }
+    .void-panel .vp-row { display: flex; gap: 8px; }
+    .void-panel .vp-row button { flex: 1; min-height: 44px; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2); }
+    .void-panel .vp-row button.vp-ok { border-color: var(--danger); background: var(--danger); color: #fff; }
+    .void-panel .vp-row button:disabled { opacity: .6; cursor: wait; }
+    .voided-note, .modal-dirty { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px; }
+    .voided-note { background: var(--danger-soft); color: var(--danger-ink); border: 1px solid var(--danger-line); }
+    .modal-dirty { background: var(--qc-soft); color: var(--qc-ink); border: 1px solid var(--qc-line); }
+    .hist-row.voided .hist-cat, .hist-row.voided .hist-sub { color: var(--muted); text-decoration: line-through; }
+    .hist-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--danger-text); background: var(--danger-soft); border: 1px solid var(--danger-line); text-decoration: none; }
+    .hist-vnote { font-size: 12px; color: var(--danger-text); margin-top: 2px; }
+    .ml-cancel-err { font-size: 13px; font-weight: 600; color: var(--danger-text); }
     .loading { display: none; text-align: center; padding: 20px; color: var(--muted); }
     .loading.show { display: block; }
     .spinner {
@@ -516,13 +554,12 @@
     </div>
 
     <div id="formPage">
-    <div id="alert" class="alert"></div>
 
     <div id="loadingOptions" class="loading show">
       <div class="spinner"></div>กำลังโหลด...
     </div>
 
-    <form id="form" style="display:none">
+    <form id="form" style="display:none" novalidate>
       <div class="card">
         <div class="field">
           <label>📷 รูปถ่ายสิ่งที่พบ</label>
@@ -604,8 +641,7 @@
     </div>
 
     <div id="maintPage" style="display:none">
-      <div id="mAlert" class="alert"></div>
-      <form id="maintForm">
+      <form id="maintForm" novalidate>
         <div class="card">
           <div class="mt-head">
             <div class="mt-title">🔧 ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์</div>
@@ -851,6 +887,8 @@
     <div id="modalBack" class="modal-back">
       <div class="modal">
         <h3 id="modalTitle">✏️ แก้ไขรายงาน</h3>
+        <div id="voidedNote" class="voided-note" hidden></div>
+        <div id="modalDirty" class="modal-dirty" hidden>ยังไม่ได้บันทึกที่แก้ไว้ — กด 💾 บันทึก หรือกด ปิด เพื่อทิ้งที่แก้</div>
         <div class="field">
           <label>👤 ผู้พบ</label>
           <input type="text" id="eReporter">
@@ -886,9 +924,18 @@
           <textarea id="mNote" style="min-height:60px;"></textarea>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-delete" id="mDelete">🗑 ลบ</button>
-          <button type="button" class="btn-cancel" id="mCancel">ยกเลิก</button>
+          <button type="button" class="btn-delete" id="mDelete">✖ ยกเลิกรายงาน</button>
+          <button type="button" class="btn-cancel" id="mCancel">ปิด</button>
           <button type="button" class="btn-save" id="mSave">💾 บันทึก</button>
+        </div>
+        <div id="voidPanel" class="void-panel" hidden>
+          <div class="vp-title">ยกเลิกรายงานนี้?</div>
+          <div class="vp-sum" id="voidSummary"></div>
+          <div class="vp-note">ไม่ได้ลบทิ้ง — ยังเก็บไว้เป็นหลักฐาน (ขีดฆ่าในประวัติ) แต่จะไม่นับในหน้าสรุปและรายงานเดือน</div>
+          <input type="text" id="voidReason" placeholder="เหตุผล เช่น ส่งซ้ำ / กรอกผิดใบ / ทดสอบระบบ" aria-label="เหตุผลที่ยกเลิก">
+          <input type="text" id="voidBy" placeholder="ชื่อผู้ยกเลิก" aria-label="ชื่อผู้ยกเลิก">
+          <div class="vp-err" id="voidErr" role="alert"></div>
+          <div class="vp-row"><button type="button" id="voidNo">ไม่ยกเลิก</button><button type="button" class="vp-ok" id="voidOk">ยืนยันยกเลิก</button></div>
         </div>
       </div>
     </div>
@@ -909,7 +956,8 @@
       </div>
     </div>
 
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v56 · 2026-10-20</span></div>
+    <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ">✕</button></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v57 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -919,9 +967,9 @@
     (function () {
       var GET_ACTIONS = { getOptions: 1, getDashboard: 1, ping: 1 };
       // แหล่งเดียวของรายชื่อ action — ต้องครบทุกตัวที่แอปเรียก ไม่งั้น wrapper ข้างล่างจะ throw
-      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'deleteReport', 'getMonthlyReport', 'saveMaintRequest', 'attachMaintForm', 'listMaintRequests', 'cancelMaintRequest', 'getMaintPhoto', 'updateMaintRequest', 'ping'];
+      var ACTIONS = ['getOptions', 'getDashboard', 'saveReport', 'searchReports', 'updateReport', 'voidReport', 'getMonthlyReport', 'saveMaintRequest', 'attachMaintForm', 'listMaintRequests', 'cancelMaintRequest', 'getMaintPhoto', 'updateMaintRequest', 'ping'];
       window.__API_ACTIONS = ACTIONS;
-      var WRITE_ACTIONS = { saveReport: 1, updateReport: 1, deleteReport: 1, saveMaintRequest: 1, attachMaintForm: 1 };
+      var WRITE_ACTIONS = { saveReport: 1, updateReport: 1, voidReport: 1, saveMaintRequest: 1, attachMaintForm: 1 };
       // Apps Script ตอบเป็นหน้า HTML แทน JSON เป็นครั้งคราว → แปลงเองและลองใหม่ได้ (r.json() เดิมพังทันที)
       function fetchJson(url, opts, tries) {
         return fetch(url, opts).then(function (r) { return r.text(); }).then(function (txt) {
@@ -990,7 +1038,6 @@
       return d.toDateString() === now.toDateString() ? hm : p(d.getDate()) + '/' + p(d.getMonth() + 1) + ' ' + hm;
     }
 
-    var alertEl = document.getElementById('alert');
     var form = document.getElementById('form');
     var loadingEl = document.getElementById('loadingOptions');
     var submitBtn = document.getElementById('submitBtn');
@@ -998,12 +1045,62 @@
     var COMBO_FIELDS = ['reporter', 'product', 'stage', 'supplier', 'unit'];
     var NEW_VALUE = '__new__';
 
-    function showAlert(type, msg) {
-      alertEl.className = 'alert show ' + type;
-      alertEl.textContent = msg;
-      window.scrollTo(0, 0);
-      if (type === 'success') setTimeout(function () { alertEl.classList.remove('show'); }, 5000);
+    // ข้อความผลลัพธ์ทุกชนิดขึ้นที่แถบล่างจอ (ไม่เลื่อนจอ) · error ค้างจนกดปิด/มีข้อความใหม่ · โปรแกรมอ่านหน้าจออ่านออกเสียง
+    var statusTimer = null;
+    function showStatus(type, msg) {
+      var bar = document.getElementById('statusBar');
+      bar.className = 'status-bar ' + (type || 'info');
+      bar.setAttribute('role', type === 'error' ? 'alert' : 'status');
+      bar.querySelector('.sb-msg').textContent = msg;
+      bar.hidden = false;
+      document.body.classList.add('has-status');
+      clearTimeout(statusTimer);
+      if (type !== 'error') statusTimer = setTimeout(hideStatus, type === 'success' ? 6000 : 12000);
     }
+    function hideStatus() {
+      clearTimeout(statusTimer);
+      document.getElementById('statusBar').hidden = true;
+      document.body.classList.remove('has-status');
+    }
+    document.querySelector('#statusBar .sb-close').addEventListener('click', hideStatus);
+    function showAlert(type, msg) { showStatus(type, msg); }
+    function statusText() { var b = document.getElementById('statusBar'); return b.hidden ? '' : b.querySelector('.sb-msg').textContent; }
+
+    // ช่องที่กรอกไม่ครบ: ขึ้นข้อความใต้ช่องนั้นทุกช่องพร้อมกัน แล้วเลื่อนไปช่องแรก (แทนเตือนทีละข้อบนสุด)
+    function fieldOf(id) { var el = document.getElementById(id); return el && el.closest('.field'); }
+    function setFieldError(id, msg) {
+      var f = fieldOf(id); if (!f) return;
+      f.classList.add('invalid');
+      var e = f.querySelector('.field-err');
+      if (!e) { e = document.createElement('div'); e.className = 'field-err'; f.appendChild(e); }
+      e.textContent = msg;
+      var c = document.getElementById(id); if (c) c.setAttribute('aria-invalid', 'true');
+    }
+    function clearFieldError(f) {
+      if (!f || !f.classList.contains('invalid')) return;
+      f.classList.remove('invalid');
+      var e = f.querySelector('.field-err'); if (e) e.remove();
+      Array.prototype.forEach.call(f.querySelectorAll('[aria-invalid]'), function (c) { c.removeAttribute('aria-invalid'); });
+    }
+    function clearFieldErrors(root) { Array.prototype.forEach.call(root.querySelectorAll('.field.invalid'), clearFieldError); }
+    // errs = [{ id, label, msg }] → false ถ้ามีช่องผิด
+    function reportFieldErrors(root, errs) {
+      clearFieldErrors(root);
+      if (!errs.length) return true;
+      errs.forEach(function (x) { setFieldError(x.id, x.msg); });
+      showStatus('error', 'กรอกให้ครบก่อนส่ง: ' + errs.map(function (x) { return x.label; }).join(', '));
+      var first = fieldOf(errs[0].id);
+      if (first) {
+        scrollIntoViewSafe(first);
+        var c = document.getElementById(errs[0].id);
+        if (c && c.offsetParent && c.focus) { try { c.focus({ preventScroll: true }); } catch (e) {} }
+      }
+      return false;
+    }
+    // แก้ช่องไหนแล้ว ข้อความเตือนของช่องนั้นหายเอง
+    ['input', 'change', 'click'].forEach(function (ev) {
+      document.addEventListener(ev, function (e) { if (e.target && e.target.closest) clearFieldError(e.target.closest('.field.invalid')); }, true);
+    });
 
     // เลื่อนให้เห็น element — บางเบราว์เซอร์ (และ WebView ในแอป) เพิกเฉยกับ behavior:'smooth'
     // เงียบๆ ถ้าไม่ขยับจริงต้องถอยไปเลื่อนแบบทันที ไม่งั้นผู้ใช้จะไม่เห็นข้อความเลย
@@ -1021,17 +1118,6 @@
       }
       try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { hardScroll(); return; }
       setTimeout(function () { if (Math.abs(window.scrollY - before) < 2) hardScroll(); }, 250);
-    }
-
-    // ข้อความแจ้งเตือนอยู่บนสุดของหน้า แต่ปุ่มส่งอยู่ล่างสุด — ถ้าไม่เลื่อนไปหา
-    // ผู้ใช้จะกดส่งแล้วเหมือนไม่มีอะไรเกิดขึ้น (ข้อความเตือนอยู่นอกจอ)
-    function scrollAlertIntoView(el) {
-      try {
-        var r = el.getBoundingClientRect();
-        if (r.top < 0 || r.bottom > window.innerHeight) scrollIntoViewSafe(el);
-      } catch (e) {
-        try { window.scrollTo(0, 0); } catch (e2) {}
-      }
     }
 
     function fillSelect(id, items, top) {
@@ -1942,15 +2028,11 @@
         time: foundAtVal ? fmtFoundAt(foundAtVal) : fmtNow()
       };
 
-      if (!data.reporter) {
-        showAlert('error', document.getElementById('reporter').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผู้พบ' : 'กรุณาเลือกผู้พบ');
-        return;
-      }
-      if (!data.product) {
-        showAlert('error', document.getElementById('product').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผลิตภัณฑ์/วัตถุดิบ' : 'กรุณาเลือกผลิตภัณฑ์/วัตถุดิบ');
-        return;
-      }
-      if (data.categories.length === 0) { showAlert('error', 'กรุณาเลือกสิ่งแปลกปลอมอย่างน้อย 1 อย่าง'); return; }
+      var errs = [];
+      if (!data.reporter) errs.push({ id: 'reporter', label: 'ผู้พบ', msg: document.getElementById('reporter').value === NEW_VALUE ? 'พิมพ์ชื่อผู้พบ' : 'เลือกผู้พบ' });
+      if (!data.product) errs.push({ id: 'product', label: 'ผลิตภัณฑ์/วัตถุดิบ', msg: document.getElementById('product').value === NEW_VALUE ? 'พิมพ์ชื่อผลิตภัณฑ์/วัตถุดิบ' : 'เลือกผลิตภัณฑ์/วัตถุดิบ' });
+      if (data.categories.length === 0) errs.push({ id: 'categoriesTop', label: 'สิ่งแปลกปลอม', msg: 'กรุณาเลือกสิ่งแปลกปลอมอย่างน้อย 1 อย่าง' });
+      if (!reportFieldErrors(form, errs)) return;
 
       submitBtn.disabled = true;
       submitBtn.textContent = '⏳ กำลังส่ง...';
@@ -2065,11 +2147,7 @@
       showAlertQuiet('error', '⚠️ ยังบันทึกเข้าระบบไม่สำเร็จ' + what + (err ? ' (' + err + ')' : '') +
         '\n📥 รายงานเก็บไว้ในเครื่องแล้ว ไม่ต้องกรอกใหม่ — จะส่งให้อัตโนมัติเมื่อเน็ตดี/เปิดแอปครั้งถัดไป');
     }
-    function showAlertQuiet(type, msg) {
-      alertEl.className = 'alert show ' + type;
-      alertEl.textContent = msg;
-      if (type === 'success') setTimeout(function () { if (alertEl.textContent === msg) alertEl.classList.remove('show'); }, 8000);
-    }
+    function showAlertQuiet(type, msg) { showStatus(type, msg); }
   </script>
 
   <script>
@@ -2244,11 +2322,12 @@
       if (!res.rows.length) { listEl.innerHTML = '<div class="hist-empty">ไม่พบรายการ</div>'; return; }
       listEl.innerHTML = res.rows.map(function (r) {
         var sup = r.supplier ? ' · 🏭 ' + esc(r.supplier) : '';
-        return '<div class="hist-row" data-row="' + r.rowIndex + '"' + (live ? '' : ' style="opacity:.65; cursor:default"') + '>' +
-          '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + '</span><span>row ' + r.rowIndex + '</span></div>' +
+        return '<div class="hist-row' + (r.voided ? ' voided' : '') + '" data-row="' + r.rowIndex + '"' + (live ? '' : ' style="opacity:.65; cursor:default"') + '>' +
+          '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + (r.voided ? '<span class="hist-badge">ยกเลิกแล้ว</span>' : '') + '</span><span>row ' + r.rowIndex + '</span></div>' +
+          (r.voided ? '<div class="hist-vnote">✖ ยกเลิกโดย ' + esc(r.voidedBy || '-') + (r.voidReason ? ' · ' + esc(r.voidReason) : '') + '</div>' : '') +
           '<div class="hist-cat">🔍 ' + esc(r.categories || '-') + '</div>' +
           '<div class="hist-sub">🍯 ' + esc(r.product || '-') + sup + ' · 👤 ' + esc(r.reporter || '-') + '</div>' +
-          (r.note ? '<div class="hist-sub" style="color:#6b7280">📝 ' + esc(r.note) + '</div>' : '') +
+          (r.note ? '<div class="hist-sub" style="color:var(--muted)">📝 ' + esc(r.note) + '</div>' : '') +
           '</div>';
       }).join('');
       if (!live) return;   // ชุดเก่า: ไม่มีปุ่มเปลี่ยนหน้า/กดแก้ไข จนกว่าของสดจะมา
@@ -2291,11 +2370,16 @@
       if (e.key === 'Enter') { e.preventDefault(); runHistorySearch(true); }
     });
 
-    // ===== Edit/Delete modal =====
+    // ===== ป๊อปอัพแก้ไข / ยกเลิกรายงาน =====
     var editingRow = null;
-    var editingExpect = null;   // ใบที่ผู้ใช้เห็น — เซิร์ฟเวอร์เทียบก่อนแก้/ลบ กันโดนแถวที่เลื่อนมาแทน
+    var editingExpect = null;   // ใบที่ผู้ใช้เห็น — เซิร์ฟเวอร์เทียบก่อนแก้/ยกเลิก กันโดนแถวที่เลื่อนมาแทน
+    var editingRec = null;
+    var EDIT_FIELDS = ['eReporter', 'mProduct', 'mCategories', 'mStage', 'mSupplier', 'mQuantity', 'mUnit', 'mNote'];
+    var editingSnapshot = '';
+    function editValues() { return EDIT_FIELDS.map(function (id) { return document.getElementById(id).value; }).join('\u0001'); }
     function openEditModal(rec) {
       if (!rec) return;
+      editingRec = rec;
       editingRow = rec.rowIndex;
       editingExpect = { timestamp: rec.timestamp, reporter: rec.reporter, product: rec.product };
       document.getElementById('eReporter').value = rec.reporter || '';
@@ -2306,15 +2390,32 @@
       document.getElementById('mQuantity').value = rec.quantity || '';
       document.getElementById('mUnit').value = rec.unit || '';
       document.getElementById('mNote').value = rec.note || '';
+      editingSnapshot = editValues();
+      // ใบที่ยกเลิกแล้ว: ดูอย่างเดียว บอกว่าใคร/ทำไม
+      var voided = !!rec.voided;
+      document.getElementById('modalTitle').textContent = voided ? '📄 รายงานที่ยกเลิกแล้ว' : '✏️ แก้ไขรายงาน';
+      var vn = document.getElementById('voidedNote');
+      vn.hidden = !voided;
+      vn.textContent = voided ? '✖ ยกเลิกโดย ' + (rec.voidedBy || '-') + (rec.voidReason ? ' · เหตุผล: ' + rec.voidReason : '') + (rec.voidedAt ? ' · ' + rec.voidedAt : '') + '\nไม่นับในหน้าสรุป · แก้ไขไม่ได้' : '';
+      EDIT_FIELDS.forEach(function (id) { document.getElementById(id).disabled = voided; });
+      document.getElementById('mSave').hidden = voided;
+      document.getElementById('mDelete').hidden = voided;
+      document.getElementById('voidPanel').hidden = true;
+      document.getElementById('modalDirty').hidden = true;
       document.getElementById('modalBack').classList.add('show');
     }
     function closeModal() {
       document.getElementById('modalBack').classList.remove('show');
-      editingRow = null;
+      document.getElementById('voidPanel').hidden = true;
+      editingRow = null; editingRec = null;
     }
+    function afterReportChange() { closeModal(); lcDrop('hist:'); runHistorySearch(false); dropDashCache(); }
     document.getElementById('mCancel').addEventListener('click', closeModal);
+    // แตะพื้นหลัง: ถ้ามีที่แก้ค้างอยู่ ไม่ปิดทิ้งเงียบๆ — บอกให้เลือกบันทึกหรือกดปิดเอง
     document.getElementById('modalBack').addEventListener('click', function (e) {
-      if (e.target.id === 'modalBack') closeModal();
+      if (e.target.id !== 'modalBack') return;
+      if (editingRow && editValues() !== editingSnapshot) { document.getElementById('modalDirty').hidden = false; return; }
+      closeModal();
     });
     document.getElementById('mSave').addEventListener('click', function () {
       if (!editingRow) return;
@@ -2332,24 +2433,48 @@
       google.script.run
         .withSuccessHandler(function (res) {
           btn.disabled = false; btn.textContent = '💾 บันทึก';
-          if (res && res.ok) { closeModal(); lcDrop('hist:'); runHistorySearch(false); dropDashCache(); }
-          else { alert('แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด')); if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); } }
+          if (res && res.ok) { afterReportChange(); showStatus('success', '✅ แก้ไขรายงานแล้ว'); return; }
+          showStatus('error', '❌ แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
+          if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); }
         })
-        .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '💾 บันทึก'; alert('ผิดพลาด: ' + err); })
+        .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '💾 บันทึก'; showStatus('error', '❌ แก้ไขไม่สำเร็จ: ' + err + '\nลองกดบันทึกอีกครั้ง'); })
         .updateReport({ rowIndex: editingRow, expect: editingExpect, patch: patch });
     });
+    // ยกเลิกรายงาน (แทนการลบ): เปิดแผงในป๊อปอัพ บอกว่าเป็นใบไหน + ต้องใส่เหตุผลและชื่อ
     document.getElementById('mDelete').addEventListener('click', function () {
+      if (!editingRow || !editingRec) return;
+      var r = editingRec;
+      document.getElementById('voidSummary').textContent = '🗓 ' + r.timestamp + ' · 🍯 ' + (r.product || '-') + ' · 🔍 ' + (r.categories || '-') + ' · 👤 ' + (r.reporter || '-');
+      document.getElementById('voidReason').value = '';
+      var by = ''; try { by = localStorage.getItem('maintCancelBy') || localStorage.getItem('defaultReporter') || ''; } catch (e) {}
+      document.getElementById('voidBy').value = by;
+      document.getElementById('voidErr').textContent = '';
+      document.getElementById('voidPanel').hidden = false;
+      document.getElementById('voidReason').focus();
+    });
+    document.getElementById('voidNo').addEventListener('click', function () { document.getElementById('voidPanel').hidden = true; });
+    document.getElementById('voidOk').addEventListener('click', function () {
       if (!editingRow) return;
-      if (!confirm('ยืนยันลบรายงาน row ' + editingRow + '?')) return;
-      var btn = this; btn.disabled = true; btn.textContent = '⏳';
+      var reason = document.getElementById('voidReason').value.trim(), by = document.getElementById('voidBy').value.trim();
+      var errEl = document.getElementById('voidErr');
+      if (!reason) { errEl.textContent = 'ระบุเหตุผลที่ยกเลิก'; document.getElementById('voidReason').focus(); return; }
+      if (!by) { errEl.textContent = 'ระบุชื่อผู้ยกเลิก'; document.getElementById('voidBy').focus(); return; }
+      errEl.textContent = '';
+      var btn = this; btn.disabled = true; btn.textContent = '⏳ กำลังยกเลิก...';
       google.script.run
         .withSuccessHandler(function (res) {
-          btn.disabled = false; btn.textContent = '🗑 ลบ';
-          if (res && res.ok) { closeModal(); lcDrop('hist:'); runHistorySearch(false); dropDashCache(); }
-          else { alert('ลบไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด')); if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); } }
+          btn.disabled = false; btn.textContent = 'ยืนยันยกเลิก';
+          if (res && res.ok) {
+            if (!res.test) { try { localStorage.setItem('maintCancelBy', by); } catch (e) {} }
+            afterReportChange();
+            showStatus(res.test ? 'info' : 'success', res.test ? '🧪 ' + res.message : (res.already ? 'ℹ️ ' : '✖ ') + res.message);
+            return;
+          }
+          errEl.textContent = (res && res.message) || 'ยกเลิกไม่สำเร็จ';
+          if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); showStatus('error', '❌ ' + res.message); }
         })
-        .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '🗑 ลบ'; alert('ผิดพลาด: ' + err); })
-        .deleteReport({ rowIndex: editingRow, expect: editingExpect });
+        .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = 'ยืนยันยกเลิก'; errEl.textContent = 'ยกเลิกไม่สำเร็จ: ' + err + ' — กดยืนยันอีกครั้งได้ (ไม่ยกเลิกซ้ำ)'; })
+        .voidReport({ rowIndex: editingRow, expect: editingExpect, by: by, reason: reason });
     });
 
     // (เดิมมีตัวห่อ onOptionsLoaded ไว้เก็บ options ตรงนี้ — ทำงานไม่ทัน จึงย้ายไปเซ็ตในตัวฟังก์ชันเอง)
@@ -2473,7 +2598,19 @@
     function flushQueue() {
       if (!navigator.onLine) return;
       queueGetAll().then(function (items) {
-        items.forEach(function (item) { sendQueuedItem(item); });
+        var sent = 0, waiting = 0;
+        items.forEach(function (item) {
+          if (queueInflight[item.id]) return;
+          waiting++;
+          sendQueuedItem(item, function (res) {
+            if (res) sent++;
+            if (--waiting === 0 && sent) {
+              dashFetchedAt = 0;
+              showStatus('success', '✅ ส่งรายการที่ค้างอยู่ในเครื่องเข้าระบบแล้ว ' + sent + ' รายการ');
+              if (document.getElementById('maintPage').style.display !== 'none') loadMaintList();
+            }
+          });
+        });
       }).catch(function () {});
     }
     window.addEventListener('online', flushQueue);
@@ -2766,11 +2903,11 @@
     }
 
     document.getElementById('monthPrintBtn').addEventListener('click', function () {
-      if (!monthData) { alert('กรุณาเลือกเดือนและกด "ดูรายงาน" ก่อน'); return; }
+      if (!monthData) { showStatus('error', 'เลือกเดือนแล้วกด "ดูรายงาน" ก่อน'); return; }
       printScoped('print-month');
     });
     document.getElementById('monthCsvBtn').addEventListener('click', function () {
-      if (!monthData) { alert('กรุณาเลือกเดือนและกด "ดูรายงาน" ก่อน'); return; }
+      if (!monthData) { showStatus('error', 'เลือกเดือนแล้วกด "ดูรายงาน" ก่อน'); return; }
       var d = monthData;
       var headers = ['ประเภท', 'รายการ', 'จำนวน(ครั้ง)', 'ร้อยละ'];
       var rows = [
@@ -2937,7 +3074,7 @@
 
     function shareExecCard() {
       renderExecCard(function (dataUrl) {
-        if (!dataUrl) { alert('สร้างการ์ดไม่สำเร็จ'); return; }
+        if (!dataUrl) { showStatus('error', '❌ สร้างการ์ดสรุปไม่สำเร็จ ลองกดอีกครั้ง'); return; }
         if (navigator.canShare) {
           try {
             var file = new File([dataURLtoBlob(dataUrl)], 'qc-exec-summary.jpg', { type: 'image/jpeg' });
@@ -2989,20 +3126,20 @@
       function fetchPage(offset) {
         google.script.run
           .withSuccessHandler(function (res) {
-            if (!res || !res.ok) { btn.disabled = false; btn.textContent = orig; alert('โหลดไม่สำเร็จ: ' + ((res && res.message) || '')); return; }
+            if (!res || !res.ok) { btn.disabled = false; btn.textContent = orig; showStatus('error', '❌ ดาวน์โหลด CSV ไม่สำเร็จ: ' + ((res && res.message) || '')); return; }
             all = all.concat(res.rows);
             if (res.rows.length && all.length < res.total) { btn.textContent = '⏳ ' + all.length + '/' + res.total; return fetchPage(all.length); }
             btn.disabled = false; btn.textContent = orig;
-            var headers = ['Timestamp', 'Reporter', 'Product', 'Categories', 'Stage', 'Supplier', 'Quantity', 'Unit', 'Note'];
+            var headers = ['Timestamp', 'Reporter', 'Product', 'Categories', 'Stage', 'Supplier', 'Quantity', 'Unit', 'Note', 'Status'];
             var rows = all.map(function (r) {
-              return [r.timestamp, r.reporter, r.product, r.categories, r.stage, r.supplier, r.quantity, r.unit, r.note];
+              return [r.timestamp, r.reporter, r.product, r.categories, r.stage, r.supplier, r.quantity, r.unit, r.note, r.voided ? 'ยกเลิก' : ''];
             });
             var fname = 'qc-report-' + fmtDateISO(fromD) + '-to-' + fmtDateISO(today) + '.csv';
             downloadCSV(fname, headers, rows);
           })
           .withFailureHandler(function (err) {
             btn.disabled = false; btn.textContent = orig;
-            alert('ผิดพลาด: ' + err);
+            showStatus('error', '❌ ดาวน์โหลด CSV ไม่สำเร็จ: ' + err);
           })
           .searchReports({ from: fmtDateISO(fromD), to: fmtDateISO(today), limit: 200, offset: offset });
       }
@@ -3071,22 +3208,14 @@
     var MAINT_TITLE = 'ใบแจ้งซ่อมเครื่องจักร/อุปกรณ์';
     // ฉบับของแบบฟอร์ม (หัวใบมุมขวา) — Rev 03 บังคับใช้ 24/09/2569
     var MAINT_FORM_REV = { code: 'FM-MT-02', rev: '03', effective: '24/09/69' };
-    var mAlertEl = document.getElementById('mAlert');
     var maintForm = document.getElementById('maintForm');
     var mSubmitBtn = document.getElementById('mSubmitBtn');
     var mPhotoDataUrl = null;
     var lastMaint = null;
-    var mAlertTimer = null;
     var maintMachines = [];   // [{name, code}] จากทะเบียน
     var maintRoles = {};      // {ชื่อพนักงาน: ตำแหน่ง}
 
-    function showMAlert(type, msg) {
-      mAlertEl.className = 'alert show ' + type;
-      mAlertEl.textContent = msg;
-      if (mAlertTimer) clearTimeout(mAlertTimer);
-      if (type !== 'error') mAlertTimer = setTimeout(function () { mAlertEl.className = 'alert'; }, 12000);
-      scrollAlertIntoView(mAlertEl);
-    }
+    function showMAlert(type, msg) { showStatus(type, msg); }
 
     // ----- รูปถ่าย -----
     var mPhotoCam = document.getElementById('mPhotoCam');
@@ -3573,10 +3702,12 @@
     maintForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var data = maintCurrentData();
-      if (!data.site) { showMAlert('error', 'กรุณาเลือกโรงงานที่แจ้งซ่อม'); return; }
-      if (!data.reporter) { showMAlert('error', document.getElementById('mReporter').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อผู้แจ้ง' : 'กรุณาเลือกผู้แจ้งซ่อม'); return; }
-      if (!data.machine) { showMAlert('error', document.getElementById('mMachine').value === NEW_VALUE ? 'กรุณาพิมพ์ชื่อเครื่องจักร/อุปกรณ์' : 'กรุณาเลือกเครื่องจักร/อุปกรณ์'); return; }
-      if (!data.symptom) { showMAlert('error', 'กรุณาระบุอาการเบื้องต้น'); return; }
+      var errs = [];
+      if (!data.site) errs.push({ id: 'mSiteChips', label: 'โรงงาน', msg: 'เลือกโรงงานที่แจ้งซ่อม' });
+      if (!data.reporter) errs.push({ id: 'mReporter', label: 'ผู้แจ้งซ่อม', msg: document.getElementById('mReporter').value === NEW_VALUE ? 'พิมพ์ชื่อผู้แจ้ง' : 'เลือกผู้แจ้งซ่อม' });
+      if (!data.machine) errs.push({ id: 'mMachine', label: 'เครื่องจักร/อุปกรณ์', msg: document.getElementById('mMachine').value === NEW_VALUE ? 'พิมพ์ชื่อเครื่องจักร/อุปกรณ์' : 'เลือกเครื่องจักร/อุปกรณ์' });
+      if (!data.symptom) errs.push({ id: 'mSymptom', label: 'อาการเบื้องต้น', msg: 'กรุณาระบุอาการเบื้องต้น' });
+      if (!reportFieldErrors(maintForm, errs)) return;
       if (maintEditing) { submitMaintEdit(data); return; }
 
       mSubmitBtn.disabled = true;
@@ -3888,6 +4019,7 @@
             '<div style="font-size:13px; font-weight:700; color:#b91c1c;">ยกเลิกใบ ' + esc(r.mrNo) + '? (เลขที่ยังคงอยู่ในระบบ)</div>' +
             '<input type="text" id="mCancelReason" placeholder="เหตุผลที่ยกเลิก เช่น แจ้งซ้ำ / ซ่อมเองแล้ว / แจ้งผิดเครื่อง">' +
             '<input type="text" id="mCancelBy" placeholder="ชื่อผู้ยกเลิก" value="' + esc(maintCancelByDefault()) + '">' +
+            '<div class="ml-cancel-err" id="mCancelErr" role="alert"></div>' +
             '<div class="row"><button type="button" data-cancel-no="' + i + '">ไม่ยกเลิก</button>' +
             '<button type="button" class="ok" data-cancel-ok="' + i + '">ยืนยันยกเลิก</button></div></div>';
         }
@@ -3917,8 +4049,10 @@
       if (!r) return;
       var reason = document.getElementById('mCancelReason').value.trim();
       var by = document.getElementById('mCancelBy').value.trim();
-      if (!reason) { showMAlert('error', 'กรุณาระบุเหตุผลที่ยกเลิก'); document.getElementById('mCancelReason').focus(); return; }
-      if (!by) { showMAlert('error', 'กรุณาระบุชื่อผู้ยกเลิก'); document.getElementById('mCancelBy').focus(); return; }
+      var errEl = document.getElementById('mCancelErr');
+      if (!reason) { errEl.textContent = 'ระบุเหตุผลที่ยกเลิก'; document.getElementById('mCancelReason').focus(); return; }
+      if (!by) { errEl.textContent = 'ระบุชื่อผู้ยกเลิก'; document.getElementById('mCancelBy').focus(); return; }
+      errEl.textContent = '';
       btn.disabled = true; btn.textContent = '⏳ กำลังยกเลิก...';
       google.script.run
         .withSuccessHandler(function (res) {
