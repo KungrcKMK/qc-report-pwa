@@ -78,24 +78,6 @@
       white-space: nowrap;
     }
     .tab.active { background: var(--accent); color: #fff; }
-    /* ป๊อปอัพแจ้งเวอร์ชันใหม่ */
-    .update-pop {
-      display: none; position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 9999;
-      background: #111827; color: #fff; border-radius: 14px; padding: 14px 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
-      align-items: center; gap: 12px; font-size: var(--fs-sm);
-    }
-    .update-pop.show { display: flex; }
-    .update-pop .txt { flex: 1; line-height: 1.5; }
-    .update-pop .txt b { display: block; font-size: var(--fs-md); margin-bottom: 2px; }
-    .update-pop .sub { font-size: var(--fs-xs); color: #9ca3af; }
-    .update-pop button {
-      border: none; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer;
-      min-height: 44px; padding: 10px 16px; font-size: var(--fs-sm);
-    }
-    .update-pop .go { background: var(--qc); color: #fff; }
-    .update-pop .later { background: transparent; color: #9ca3af; padding: 10px 4px; font-weight: 600; }
-    @media print { .update-pop { display: none !important; } }
 
     /* รายชื่อที่เลือกไว้จาก dropdown (กด ✕ เพื่อเอาออก) */
     .install-banner { display: none; background: var(--qc-soft); color: var(--qc-ink); border: 1px solid var(--qc-line); padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: var(--fs-sm); align-items: center; gap: 8px; }
@@ -591,14 +573,6 @@
 
     <div id="queueBadge" class="queue-badge"></div>
 
-    <div id="updatePop" class="update-pop">
-      <div class="txt">
-        <b>🎉 มีเวอร์ชันใหม่</b>
-        <span class="sub">กดอัปเดตเพื่อใช้ตัวล่าสุด (ข้อมูลที่กรอกค้างไว้จะหาย)</span>
-      </div>
-      <button type="button" class="later" id="updateLater">ไว้ก่อน</button>
-      <button type="button" class="go" id="updateNow">อัปเดต</button>
-    </div>
 
     <div id="formPage">
 
@@ -1014,7 +988,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v67 · 2026-10-21</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v68 · 2026-10-21</span></div>
   </div>
 
   <script>
@@ -3317,58 +3291,78 @@
       setMaxNow(el);
       ['focus', 'pointerdown'].forEach(function (ev) { el.addEventListener(ev, function () { setMaxNow(el); }); });
     });
-    // ===== PWA: register service worker (offline shell) =====
-    // ===== ตรวจเวอร์ชันใหม่ → ขึ้นป๊อปอัพให้กด "อัปเดต" (ไม่ต้องล้าง cache เอง) =====
-    var pendingWorker = null;   // ตัวใหม่ที่รอคิวอยู่
-    var reloadingForUpdate = false;
-
-    function showUpdatePop(worker) {
-      if (!worker) return;
-      pendingWorker = worker;
-      document.getElementById('updatePop').classList.add('show');
-    }
-    function hideUpdatePop() {
-      document.getElementById('updatePop').classList.remove('show');
-    }
-
-    document.getElementById('updateLater').addEventListener('click', hideUpdatePop);
-    document.getElementById('updateNow').addEventListener('click', function () {
-      hideUpdatePop();
-      if (pendingWorker) pendingWorker.postMessage({ type: 'SKIP_WAITING' });
-      // เผื่อบางเบราว์เซอร์ไม่ยิง controllerchange — โหลดใหม่เองภายใน 2 วิ
-      setTimeout(function () { if (!reloadingForUpdate) location.reload(); }, 2000);
+    // ===== PWA: service worker (offline shell) + อัปเดตเองอัตโนมัติ =====
+    // service worker ตัวใหม่ขึ้นทำงานเองทันทีที่ติดตั้งเสร็จ แล้วบอกเวอร์ชันมา → หน้านี้เก่ากว่า = โหลดหน้าใหม่เอง
+    // แต่รอจนไม่มีงานค้าง (กรอก/ถ่ายรูปค้าง เปิดแก้ไข กำลังส่ง) และไม่มีใครแตะจอสักพัก — งานที่กรอกจะไม่หาย
+    var APP_VER = (document.getElementById('verBadge').textContent.match(/v(\d+)/) || [])[1] || '0';
+    var UPDATE_IDLE_MS = 60000;
+    var updatePending = false, reloadingForUpdate = false, lastUserActivity = Date.now();
+    var reloadForUpdate = function () { location.reload(); };   // เทสต์แทนที่ได้
+    ['pointerdown', 'keydown', 'input'].forEach(function (ev) {
+      document.addEventListener(ev, function () { lastUserActivity = Date.now(); }, true);
     });
 
-    if ('serviceWorker' in navigator) {
-      // ยังไม่มีตัวคุมตอนเปิดหน้า = ติดตั้งครั้งแรก → ตัวใหม่ claim หน้าแล้วไม่ต้องรีโหลด (รีโหลดเฉพาะตอนกด "อัปเดต")
-      var hadController = !!navigator.serviceWorker.controller;
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js').then(function (reg) {
-          if (reg.waiting && navigator.serviceWorker.controller) showUpdatePop(reg.waiting);
+    // มีงานที่ยังไม่ได้ส่งค้างในหน้าไหม (ชื่อผู้พบ/ผู้แจ้ง/โรงงาน/ตำแหน่งที่แอปจำไว้ให้ไม่นับ)
+    var DRAFT_FIELDS = ['product', 'productNew', 'reporterNew', 'categoryNew', 'stage', 'stageNew', 'supplier', 'supplierNew',
+      'quantity', 'unit', 'unitNew', 'note', 'foundAt',
+      'mReporterNew', 'mMachine', 'mMachineNew', 'mMachineCode', 'mSymptom', 'mImpactDetail', 'mNcrNo', 'mNeedBy', 'mReportedAt', 'mCancelReason'];
+    function hasUnsavedWork() {
+      if (photoDataUrl || (typeof mPhotoDataUrl !== 'undefined' && mPhotoDataUrl)) return true;
+      if (DRAFT_FIELDS.some(function (id) { var el = document.getElementById(id); return el && String(el.value || '').trim() !== ''; })) return true;
+      if (document.querySelector('#categoriesTop input:checked, #categories input:checked')) return true;
+      if (typeof maintEditing !== 'undefined' && maintEditing) return true;
+      if (document.getElementById('modalBack').classList.contains('show')) return true;
+      if (document.getElementById('submitBtn').disabled || document.getElementById('mSubmitBtn').disabled) return true;
+      return Object.keys(queueInflight).length > 0;
+    }
+    function applyUpdateIfIdle() {
+      if (!updatePending || reloadingForUpdate || hasUnsavedWork()) return false;
+      if (Date.now() - lastUserActivity < UPDATE_IDLE_MS) return false;
+      reloadingForUpdate = true;
+      var tab = document.querySelector('.tab.active');
+      try { sessionStorage.setItem('qcUpdatedFrom', JSON.stringify({ from: APP_VER, page: tab ? tab.getAttribute('data-page') : '' })); } catch (e) {}
+      reloadForUpdate();
+      return true;
+    }
+    // service worker บอกเวอร์ชัน (qc-shell-vN) — ใหม่กว่าหน้านี้เท่านั้นจึงรออัปเดต (หน้าใหม่กว่า = ตัวใหม่กำลังติดตั้ง ไม่ต้องทำอะไร)
+    function onSwVersion(cache) {
+      var v = Number((String(cache || '').match(/v(\d+)$/) || [])[1] || 0);
+      if (v > Number(APP_VER)) { updatePending = true; applyUpdateIfIdle(); }
+    }
+    setInterval(applyUpdateIfIdle, 5000);
+    // หลังอัปเดต: กลับไปแท็บเดิม + บอกว่าเป็นเวอร์ชันใหม่แล้ว
+    function restoreAfterUpdate() {
+      var info = null;
+      try { info = JSON.parse(sessionStorage.getItem('qcUpdatedFrom') || 'null'); sessionStorage.removeItem('qcUpdatedFrom'); } catch (e) {}
+      if (!info) return;
+      if (info.page && info.page !== 'form') switchPage(info.page);
+      showStatus('success', '✅ อัปเดตเป็นเวอร์ชัน v' + APP_VER + ' แล้ว');
+    }
 
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'VERSION') onSwVersion(e.data.cache);
+      });
+      window.addEventListener('load', function () {
+        restoreAfterUpdate();
+        navigator.serviceWorker.register('sw.js').then(function (reg) {
+          function askVersion() { if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }); }
+          // ตัวใหม่ที่ค้างรอคิว (sw.js ก่อน v68 ไม่ข้ามคิวเอง) → สั่งข้าม
+          function promote(w) { if (w && navigator.serviceWorker.controller) w.postMessage({ type: 'SKIP_WAITING' }); }
+          promote(reg.waiting);
           reg.addEventListener('updatefound', function () {
             var nw = reg.installing;
-            if (!nw) return;
-            nw.addEventListener('statechange', function () {
-              // มีตัวคุมอยู่แล้ว = นี่คือ "อัปเดต" ไม่ใช่ติดตั้งครั้งแรก
-              if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdatePop(nw);
-            });
+            if (nw) nw.addEventListener('statechange', function () { if (nw.state === 'installed') promote(nw); });
           });
-
-          // เช็คเวอร์ชันใหม่ตอนกลับมาที่แอป และทุก 30 นาที (PWA ที่เปิดค้างไว้จะได้รู้)
+          navigator.serviceWorker.addEventListener('controllerchange', askVersion);
+          askVersion();   // เปิดหน้าจาก cache (เน็ตช้า/ออฟไลน์) ขณะที่ตัวใหม่คุมอยู่แล้ว
+          // เช็คเวอร์ชันใหม่: กลับมาที่แอป · เน็ตกลับมา · ทุก 10 นาที (แอปที่เปิดค้างไว้)
           function checkUpdate() { try { reg.update(); } catch (e) {} }
-          document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'visible') checkUpdate();
-          });
-          setInterval(checkUpdate, 30 * 60 * 1000);
+          document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') checkUpdate(); });
+          window.addEventListener('online', checkUpdate);
+          setInterval(checkUpdate, 10 * 60 * 1000);
         }).catch(function (e) {
           console.warn('SW register failed:', e);
-        });
-
-        navigator.serviceWorker.addEventListener('controllerchange', function () {
-          if (reloadingForUpdate || !hadController) return;
-          reloadingForUpdate = true;
-          location.reload();
         });
       });
     }

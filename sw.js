@@ -1,7 +1,7 @@
 /* Service Worker - QCControl
    navigation/HTML = network-first (อัปเดตทันทีเมื่อมีเน็ต, ใช้ cache เมื่อ offline)
    static อื่นๆ = cache-first */
-var CACHE = 'qc-shell-v67';
+var CACHE = 'qc-shell-v68';
 var NAV_TIMEOUT_MS = 4000;
 var SHELL = [
   './',
@@ -12,8 +12,8 @@ var SHELL = [
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ];
 
-/* ตัวใหม่จะ "รอคิว" ไว้ ไม่แย่งทำงานเอง — หน้าเว็บจะขึ้นป๊อปอัพให้ผู้ใช้กด "อัปเดต"
-   แล้วส่ง SKIP_WAITING มาบอกให้สลับตัว (ครั้งแรกสุดที่ยังไม่มีตัวคุมอยู่ จะ activate ทันทีอยู่แล้ว) */
+/* อัปเดตเอง: ติดตั้งเสร็จแล้วขึ้นทำงานทันที (ไม่รอให้ใครกด) แล้วบอกเวอร์ชันให้ทุกหน้าที่เปิดอยู่
+   หน้าเว็บ v68+ จะโหลดตัวเองใหม่ตอนไม่มีงานค้าง · หน้าเก่า (v65–v67) โหลดใหม่ทันทีเมื่อมีตัวคุมใหม่ */
 self.addEventListener('install', function (e) {
   // ไฟล์ของแอปเองต้องครบ · สคริปต์ QR จาก CDN โหลดไม่ได้ก็ยังติดตั้งได้ (ใช้แค่แท็บแชร์)
   e.waitUntil(
@@ -23,12 +23,14 @@ self.addEventListener('install', function (e) {
       return c.addAll(own).then(function () {
         return Promise.all(cdn.map(function (u) { return c.add(u).catch(function () {}); }));
       });
-    })
+    }).then(function () { return self.skipWaiting(); })
   );
 });
 
 self.addEventListener('message', function (e) {
-  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (!e.data) return;
+  if (e.data.type === 'SKIP_WAITING') self.skipWaiting();   // หน้าเก่าที่ยังส่งมา
+  if (e.data.type === 'GET_VERSION' && e.source) e.source.postMessage({ type: 'VERSION', cache: CACHE });
 });
 
 self.addEventListener('activate', function (e) {
@@ -37,6 +39,8 @@ self.addEventListener('activate', function (e) {
       return Promise.all(keys.filter(function (k) { return k !== CACHE; })
         .map(function (k) { return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
+      .then(function () { return self.clients.matchAll({ type: 'window' }); })
+      .then(function (cs) { cs.forEach(function (c) { c.postMessage({ type: 'VERSION', cache: CACHE }); }); })
   );
 });
 
