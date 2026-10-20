@@ -1009,7 +1009,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v62 · 2026-10-20</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v63 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -2239,12 +2239,13 @@
     // ผลการบันทึกเบื้องหลัง — แจ้งบนแถบด้านบนแบบไม่เลื่อนจอ (ผู้ใช้อาจกำลังกดแชร์หรือกรอกรายงานถัดไปอยู่)
     function reportSaved(res, err, originalData) {
       var what = originalData.product ? ': ' + originalData.product : '';
+      if (res && res.ok && res.queued) { showAlertQuiet('info', '📥 ' + res.message + what); updateQueueBadge(); return; }
       if (res && res.ok) {
         var msg;
         if (res.test) {
           msg = '🧪 ' + res.message; // ผู้พบ = Admin → โหมดทดสอบ ไม่บันทึกลงระบบ
         } else {
-          msg = '✅ บันทึกเข้าระบบแล้ว' + what + (res.rowIndex ? ' (row ' + res.rowIndex + ')' : '');
+          msg = '✅ บันทึกเข้าระบบแล้ว' + what + (res.rowIndex ? ' (แถว ' + res.rowIndex + ')' : '');
           if (res.added && res.added.length) msg += '\n➕ บันทึกค่าใหม่: ' + res.added.join(', ');
           dashFetchedAt = 0;   // มีรายงานใหม่ → เข้าหน้าสรุปครั้งหน้าต้องดึงใหม่
         }
@@ -2741,15 +2742,16 @@
     function flushQueue() {
       if (!navigator.onLine) return;
       queueGetAll().then(function (items) {
-        var sent = 0, waiting = 0;
+        var sent = 0, waiting = 0, mrs = [];
         items.forEach(function (item) {
           if (queueInflight[item.id]) return;
           waiting++;
           sendQueuedItem(item, function (res) {
-            if (res) sent++;
+            if (res) { sent++; if (res.mrNo) mrs.push(res.mrNo); }
             if (--waiting === 0 && sent) {
               dashFetchedAt = 0;
-              showStatus('success', '✅ ส่งรายการที่ค้างอยู่ในเครื่องเข้าระบบแล้ว ' + sent + ' รายการ');
+              showStatus('success', '✅ ส่งรายการที่ค้างอยู่ในเครื่องเข้าระบบแล้ว ' + sent + ' รายการ' +
+                (mrs.length ? '\n🔧 ใบแจ้งซ่อมได้เลข ' + mrs.join(', ') + ' — กด "สร้าง PDF" ในรายการแจ้งซ่อมเพื่อเก็บใบเข้า Drive' : ''));
               if (document.getElementById('maintPage').style.display !== 'none') loadMaintList();
             }
           });
@@ -2800,7 +2802,7 @@
               if (!navigator.onLine) {
                 queueAdd(arg, kind).then(function () {
                   updateQueueBadge();
-                  if (success) success({ ok: true, message: 'เก็บไว้ในคิว (offline)', rowIndex: 0, added: [], newFields: {} });
+                  if (success) success({ ok: true, queued: true, message: 'ยังไม่มีเน็ต — เก็บไว้ในเครื่องแล้ว จะส่งเข้าระบบเองเมื่อมีเน็ต', rowIndex: 0, added: [], newFields: {} });
                 });
                 return;
               }
@@ -2813,7 +2815,7 @@
                          // ยังส่งไม่ได้ → เก็บใส่คิว ส่งใหม่เมื่อเน็ตกลับมา
                          queueAdd(arg, kind).then(function () {
                            updateQueueBadge();
-                           if (success) success({ ok: true, message: 'ส่งไม่ได้ - เก็บไว้ในคิวแทน', rowIndex: 0, added: [], newFields: {} });
+                           if (success) success({ ok: true, queued: true, message: 'ส่งเข้าระบบไม่ผ่าน — เก็บไว้ในเครื่องแล้ว จะลองส่งใหม่เอง', rowIndex: 0, added: [], newFields: {} });
                          });
                        })[action](arg);
               }
@@ -3942,11 +3944,17 @@
       var r = maintEditing;
       var by = document.getElementById('mEditor').value.trim();
       if (!by) { showMAlert('error', 'กรุณาระบุชื่อผู้แก้ไข'); document.getElementById('mEditor').focus(); return; }
-      mSubmitBtn.disabled = true; mSubmitBtn.textContent = data.photo ? '⏳ กำลังบันทึก + อัปโหลดรูป...' : '⏳ กำลังบันทึก...';
+      mSubmitBtn.disabled = true; setBtn(mSubmitBtn, 'loader-circle', data.photo ? 'กำลังบันทึก + อัปโหลดรูป...' : 'กำลังบันทึก...');
       // รหัสคำขอ: ลองซ้ำ/เน็ตสะดุดแล้วส่งอีกรอบ backend จะไม่อัปโหลดรูปซ้ำ
       var reqId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
       google.script.run
         .withSuccessHandler(function (res) {
+          if (res && res.moved) {
+            var siteKeep = data.site;
+            endMaintEdit(); resetMaintForm('', siteKeep); loadMaintList();
+            showMAlert('error', '⚠️ ' + res.message);
+            return;
+          }
           if (!(res && res.ok)) { mSubmitBtn.disabled = false; setBtn(mSubmitBtn, 'save', 'บันทึกการแก้ไข'); showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
           try { localStorage.setItem('maintCancelBy', by); } catch (e) {}
           endMaintEdit();
@@ -3969,7 +3977,7 @@
         .updateMaintRequest({ mrNo: r.mrNo, by: by, site: data.site, reporter: data.reporter, position: data.position,
           machine: data.machine, machineCode: data.machineCode, symptom: data.symptom, productImpact: data.productImpact,
           impactDetail: data.impactDetail, quarantined: data.quarantined, ncrNo: data.ncrNo, needBy: data.needBy,
-          photo: data.photo || null, reqId: reqId });
+          photo: data.photo || null, reqId: reqId, expectEditedTs: r.editedTs || 0 });
     }
 
     function resetMaintForm(keepReporter, keepSite) {
@@ -3997,14 +4005,16 @@
           var d = {};
           Object.keys(originalData).forEach(function (k) { d[k] = originalData[k]; });
           d.mrNo = res.test ? '' : (res.mrNo || '');
-          var msg = res.test ? '🧪 ' + res.message
+          var msg = res.queued
+            ? '📥 ' + res.message + '\n• ยังไม่มีเลข MR — ได้เลขเมื่อส่งเข้าระบบแล้ว (แจ้งที่แถบนี้) · รูปใบที่แชร์ตอนนี้จึงยังไม่มีเลข'
+            : res.test ? '🧪 ' + res.message
                              : '✅ ' + res.message + (res.mrNo ? ' — เลขที่ ' + res.mrNo : '');
-          if (!res.test && res.added && res.added.length) msg += '\n➕ จำค่าใหม่: ' + res.added.join(', ');
-          msg += '\n📄 ใบ FM-MT-02 กรอกส่วนที่ 1 ให้แล้ว — PDF เก็บไว้ใน Drive ให้ช่างโหลดใบงานเองจากรายการด้านล่าง';
+          if (!res.test && !res.queued && res.added && res.added.length) msg += '\n➕ จำค่าใหม่: ' + res.added.join(', ');
+          if (!res.queued) msg += '\n📄 ใบ FM-MT-02 กรอกส่วนที่ 1 ให้แล้ว — PDF เก็บไว้ใน Drive ให้ช่างโหลดใบงานเองจากรายการด้านล่าง';
           msg += '\n📤 กดปุ่มแชร์ด้านล่าง 👇 (ถ้าหน้าต่างแชร์ไม่เด้งเอง)';
-          showMAlert(res.test ? 'info' : 'success', msg);
+          showMAlert(res.test || res.queued ? 'info' : 'success', msg);
 
-          if (!res.test) {
+          if (!res.test && !res.queued) {
             var nf = res.newFields || {};
             if (nf.site) { comboEnsureOption('mSite', originalData.site); document.getElementById('mSite').value = originalData.site; }
             try { localStorage.setItem('maintSite', originalData.site || ''); } catch (e) {}
@@ -4278,11 +4288,11 @@
     // ปุ่ม "สร้าง PDF" / "PDF ใหม่" ในรายการ (เช่น ใบที่ส่งตอนออฟไลน์ หรือประทับตรายกเลิกไม่สำเร็จ)
     function regenMaintPdf(r, btn) {
       if (!r) return;
-      var label = btn.textContent;
+      var label = btn.innerHTML;
       btn.disabled = true; setBtn(btn, 'loader-circle', 'กำลังสร้าง...');
       rebuildMaintPdf(r, function (res) {
-        if (!(res && res.ok)) { btn.disabled = false; btn.textContent = label; showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
-        if (!res.pdfUrl) { btn.disabled = false; btn.textContent = label; showMAlert('info', '📥 ' + res.message); return; }
+        if (!(res && res.ok)) { btn.disabled = false; btn.innerHTML = label; showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
+        if (!res.pdfUrl) { btn.disabled = false; btn.innerHTML = label; showMAlert('info', '📥 ' + res.message); return; }
         renderMaintList(maintListRows);
         showMAlert('success', '📄 เก็บ PDF ของ ' + r.mrNo + ' ไว้ใน Drive แล้ว' + (r.cancelled ? ' (ประทับตรา "ยกเลิก")' : ''));
       });
