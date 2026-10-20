@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="QCControl">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     /* ===== ธีม ส้ม เขียว ขาว · สีมีความหมาย ไม่ใช่ของตกแต่ง =====
        ส้ม = งาน QC (ทุกแท็บยกเว้นแจ้งซ่อม) · เขียว = งานแจ้งซ่อม + "สำเร็จ/ดีขึ้น" · แดง = error, ลบ/ยกเลิก, "แย่ลง" เท่านั้น
@@ -59,6 +59,12 @@
     .qr-msg { margin-top: 10px; font-size: 13px; color: var(--mt-ink); min-height: 18px; }
 
     .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+    /* ไอคอนเส้น: สีตามตัวหนังสือ ขนาดตามตัวอักษร */
+    .ico { width: 1.15em; height: 1.15em; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+    .tab .ico { display: block; width: 22px; height: 22px; margin: 0 auto 3px; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
     .tab {
       flex: 1; padding: 9px 2px; border: none; border-radius: 10px;
       background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 600;
@@ -553,6 +559,8 @@
   </style>
 </head>
 <body data-mod="qc">
+  <!-- ไอคอนเส้น Lucide v1.52.0 (ISC) — ใช้ผ่าน <use href="#i-ชื่อ"> -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol><symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M4.929 4.929 19.07 19.071"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></symbol><symbol id="i-chart-column" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol><symbol id="i-clipboard-list" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol><symbol id="i-file-plus" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M9 15h6"/><path d="M12 18v-6"/></symbol><symbol id="i-file-text" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol><symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol><symbol id="i-loader-circle" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></symbol><symbol id="i-qr-code" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></symbol><symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></symbol><symbol id="i-scan-search" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/><path d="m16 16-1.9-1.9"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol><symbol id="i-send" viewBox="0 0 24 24"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></symbol><symbol id="i-share-2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></symbol><symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol></svg>
   <div class="container">
     <div class="header">
       <h1><span class="logo-mark" aria-hidden="true"><span class="for-qc">QC</span><span class="for-mt">MT</span></span><span class="for-qc">QCControl</span><span class="for-mt">MTControl</span></h1>
@@ -560,17 +568,17 @@
     </div>
 
     <div class="tabs" role="tablist" aria-label="เมนูหลัก">
-      <button type="button" class="tab active" data-page="form" role="tab" aria-controls="formPage" aria-selected="true">🔍<br>แปลกปลอม</button>
-      <button type="button" class="tab" data-page="maint" role="tab" aria-controls="maintPage" aria-selected="false">🔧<br>แจ้งซ่อม</button>
-      <button type="button" class="tab" data-page="dash" role="tab" aria-controls="dashPage" aria-selected="false">📊<br>สรุป</button>
-      <button type="button" class="tab" data-page="history" role="tab" aria-controls="historyPage" aria-selected="false">📜<br>ประวัติ</button>
-      <button type="button" class="tab" data-page="qr" role="tab" aria-controls="qrPage" aria-selected="false">📲<br>แชร์</button>
+      <button type="button" class="tab active" data-page="form" role="tab" aria-controls="formPage" aria-selected="true"><svg class="ico" aria-hidden="true"><use href="#i-scan-search"/></svg>แปลกปลอม</button>
+      <button type="button" class="tab" data-page="maint" role="tab" aria-controls="maintPage" aria-selected="false"><svg class="ico" aria-hidden="true"><use href="#i-wrench"/></svg>แจ้งซ่อม</button>
+      <button type="button" class="tab" data-page="dash" role="tab" aria-controls="dashPage" aria-selected="false"><svg class="ico" aria-hidden="true"><use href="#i-chart-column"/></svg>สรุป</button>
+      <button type="button" class="tab" data-page="history" role="tab" aria-controls="historyPage" aria-selected="false"><svg class="ico" aria-hidden="true"><use href="#i-history"/></svg>ประวัติ</button>
+      <button type="button" class="tab" data-page="qr" role="tab" aria-controls="qrPage" aria-selected="false"><svg class="ico" aria-hidden="true"><use href="#i-qr-code"/></svg>แชร์</button>
     </div>
 
     <div id="installBanner" class="install-banner">
       <b>📲 ติดตั้ง QCControl เป็นแอป</b>
       <button id="installBtn">ติดตั้ง</button>
-      <button id="installClose" class="close" aria-label="ปิด">✕</button>
+      <button id="installClose" class="close" aria-label="ปิด"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button>
     </div>
 
     <div id="queueBadge" class="queue-badge"></div>
@@ -597,12 +605,12 @@
           <input type="file" id="photoCam" accept="image/*" capture="environment" style="display:none">
           <input type="file" id="photoGal" accept="image/*" style="display:none">
           <div id="photoControls" style="display:flex; gap:8px;">
-            <button type="button" class="btn-photo" id="photoCamBtn" style="flex:1;">📷 ถ่ายรูป</button>
-            <button type="button" class="btn-photo" id="photoGalBtn" style="flex:1;">🖼️ จากเครื่อง</button>
+            <button type="button" class="btn-photo" id="photoCamBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-camera"/></svg> ถ่ายรูป</button>
+            <button type="button" class="btn-photo" id="photoGalBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg> จากเครื่อง</button>
           </div>
           <div id="photoPreviewWrap" style="display:none; margin-top:10px;">
-            <img id="photoPreview" alt="preview">
-            <button type="button" class="btn-remove" id="photoRemoveBtn">🗑 ลบรูป</button>
+            <img id="photoPreview" alt="รูปที่แนบ">
+            <button type="button" class="btn-remove" id="photoRemoveBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash-2"/></svg> ลบรูป</button>
           </div>
         </div>
 
@@ -640,9 +648,9 @@
         </div>
 
         <div class="field">
-          <label for="supplier">🏭 ซัพพรายเออร์ (ถ้ารู้)</label>
+          <label for="supplier">🏭 ซัพพลายเออร์ (ถ้ารู้)</label>
           <select id="supplier"><option value="">-- ไม่ระบุ --</option></select>
-          <input type="text" id="supplierNew" aria-label="ชื่อซัพพลายเออร์ใหม่" class="combo-new" placeholder="พิมพ์ชื่อซัพพรายเออร์ใหม่" style="display:none">
+          <input type="text" id="supplierNew" aria-label="ชื่อซัพพลายเออร์ใหม่" class="combo-new" placeholder="พิมพ์ชื่อซัพพลายเออร์ใหม่" style="display:none">
         </div>
 
         <div class="field">
@@ -666,8 +674,8 @@
         </div>
       </div>
 
-      <button type="submit" class="btn" id="submitBtn">📨 ส่งรายงาน</button>
-      <button type="button" class="btn-share" id="shareBtn" style="display:none">📤 แชร์รายงานล่าสุดอีกครั้ง</button>
+      <button type="submit" class="btn" id="submitBtn"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg> ส่งรายงาน</button>
+      <button type="button" class="btn-share" id="shareBtn" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-share-2"/></svg> แชร์รายงานล่าสุดอีกครั้ง</button>
     </form>
     </div>
 
@@ -696,12 +704,12 @@
             <input type="file" id="mPhotoGal" accept="image/*" style="display:none">
             <div id="mEditPhotoNote" class="edit-photo-note" style="display:none"></div>
             <div id="mPhotoControls" style="display:flex; gap:8px;">
-              <button type="button" class="btn-photo" id="mPhotoCamBtn" style="flex:1;">📷 ถ่ายรูป</button>
-              <button type="button" class="btn-photo" id="mPhotoGalBtn" style="flex:1;">🖼️ จากเครื่อง</button>
+              <button type="button" class="btn-photo" id="mPhotoCamBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-camera"/></svg> ถ่ายรูป</button>
+              <button type="button" class="btn-photo" id="mPhotoGalBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg> จากเครื่อง</button>
             </div>
             <div id="mPhotoPreviewWrap" style="display:none; margin-top:10px;">
-              <img id="mPhotoPreview" alt="preview">
-              <button type="button" class="btn-remove" id="mPhotoRemoveBtn">🗑 ลบรูป</button>
+              <img id="mPhotoPreview" alt="รูปที่แนบ">
+              <button type="button" class="btn-remove" id="mPhotoRemoveBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash-2"/></svg> ลบรูป</button>
             </div>
           </div>
 
@@ -764,20 +772,20 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-maint" id="mSubmitBtn">🔧 ส่งใบแจ้งซ่อม</button>
-        <button type="button" class="btn-share" id="mShareBtn" style="display:none">📤 แชร์ใบแจ้งซ่อมล่าสุดอีกครั้ง</button>
+        <button type="submit" class="btn btn-maint" id="mSubmitBtn"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg> ส่งใบแจ้งซ่อม</button>
+        <button type="button" class="btn-share" id="mShareBtn" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-share-2"/></svg> แชร์ใบแจ้งซ่อมล่าสุดอีกครั้ง</button>
       </form>
 
       <div class="section-divider">📈 แนวโน้มใบแจ้งซ่อม</div>
       <div class="card">
         <div id="mTrendSites" class="chip-wrap" style="margin-bottom:10px;"></div>
         <div class="trend-nav">
-          <button type="button" class="trend-arrow" id="mTrendPrev" aria-label="สลับช่วงก่อนหน้า">◀</button>
+          <button type="button" class="trend-arrow" id="mTrendPrev" aria-label="สลับช่วงก่อนหน้า"><svg class="ico" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
           <div class="trend-nav-mid">
             <div class="trend-mode" id="mTrendMode">รายเดือน</div>
             <div class="trend-period" id="mTrendPeriod"></div>
           </div>
-          <button type="button" class="trend-arrow" id="mTrendNext" aria-label="สลับช่วงถัดไป">▶</button>
+          <button type="button" class="trend-arrow" id="mTrendNext" aria-label="สลับช่วงถัดไป"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
         </div>
         <div id="mTrendChart" class="trend-wrap"><div class="dash-empty">กำลังโหลด...</div></div>
       </div>
@@ -795,7 +803,7 @@
       <div id="dashContent" style="display:none">
         <div class="dash-top">
           <div id="dashStamp" class="swr-stamp"></div>
-          <button type="button" class="dash-refresh" id="dashRefreshBtn">🔄 รีเฟรช</button>
+          <button type="button" class="dash-refresh" id="dashRefreshBtn"><svg class="ico" aria-hidden="true"><use href="#i-refresh-cw"/></svg> รีเฟรช</button>
         </div>
         <div class="period-sel">
           <button type="button" data-period="day" class="active">วันนี้</button>
@@ -809,12 +817,12 @@
         <div class="card">
           <div class="dash-title">📈 แนวโน้ม</div>
           <div class="trend-nav">
-            <button type="button" class="trend-arrow" id="trendPrev" aria-label="สลับช่วงก่อนหน้า">◀</button>
+            <button type="button" class="trend-arrow" id="trendPrev" aria-label="สลับช่วงก่อนหน้า"><svg class="ico" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
             <div class="trend-nav-mid">
               <div class="trend-mode" id="trendMode">รายเดือน</div>
               <div class="trend-period" id="trendPeriod"></div>
             </div>
-            <button type="button" class="trend-arrow" id="trendNext" aria-label="สลับช่วงถัดไป">▶</button>
+            <button type="button" class="trend-arrow" id="trendNext" aria-label="สลับช่วงถัดไป"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
           </div>
           <div id="trendChart" class="trend-wrap"></div>
         </div>
@@ -823,7 +831,7 @@
           <div id="catBars"></div>
         </div>
         <div class="card">
-          <div class="dash-title">🏭 ซัพพรายเออร์ที่ต้องเฝ้าระวัง</div>
+          <div class="dash-title">🏭 ซัพพลายเออร์ที่ต้องเฝ้าระวัง</div>
           <div id="unknownSupNote" class="unknown-note" style="display:none"></div>
           <div id="scoreboard"></div>
         </div>
@@ -837,7 +845,7 @@
             </div>
           </div>
           <div class="card">
-            <div class="dash-title">🔥 ซัพพรายเออร์ × สิ่งแปลกปลอม</div>
+            <div class="dash-title">🔥 ซัพพลายเออร์ × สิ่งแปลกปลอม</div>
             <div id="supCatList"></div>
           </div>
           <div class="card">
@@ -864,9 +872,9 @@
           </div>
         </details>
         <div class="exec-actions">
-          <button type="button" class="exec-btn primary" id="execShareBtn"><span aria-hidden="true">📋</span> สรุปผู้บริหาร</button>
-          <button type="button" class="exec-btn" id="execPrintBtn"><span aria-hidden="true">🖨</span> พิมพ์</button>
-          <button type="button" class="exec-btn" id="execCsvBtn"><span aria-hidden="true">📊</span> ดาวน์โหลด CSV</button>
+          <button type="button" class="exec-btn primary" id="execShareBtn"><svg class="ico" aria-hidden="true"><use href="#i-clipboard-list"/></svg> สรุปผู้บริหาร</button>
+          <button type="button" class="exec-btn" id="execPrintBtn"><svg class="ico" aria-hidden="true"><use href="#i-printer"/></svg> พิมพ์</button>
+          <button type="button" class="exec-btn" id="execCsvBtn"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg> ดาวน์โหลด CSV</button>
         </div>
       </div>
 
@@ -878,8 +886,8 @@
             <button type="button" class="exec-btn primary" id="monthLoadBtn">ดูรายงาน</button>
           </div>
           <div style="display:flex; gap:8px; margin-top:8px;">
-            <button type="button" class="exec-btn" id="monthPrintBtn" style="flex:1;">🖨 พิมพ์ / บันทึก PDF</button>
-            <button type="button" class="exec-btn" id="monthCsvBtn" style="flex:1;">📊 ดาวน์โหลด CSV</button>
+            <button type="button" class="exec-btn" id="monthPrintBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-printer"/></svg> พิมพ์ / บันทึก PDF</button>
+            <button type="button" class="exec-btn" id="monthCsvBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-download"/></svg> ดาวน์โหลด CSV</button>
           </div>
         </div>
         <div id="monthLoading" class="loading"><div class="spinner"></div>กำลังสร้างรายงาน...</div>
@@ -894,7 +902,7 @@
           <input type="text" id="hQ" aria-label="ค้นหาคำ" class="hist-search" placeholder="🔎 ค้นหาคำใดก็ได้ (ผลิตภัณฑ์/หมวด/หมายเหตุ)">
         </div>
         <div class="filter-row" id="hQcRow1">
-          <select id="hSup" aria-label="กรองซัพพลายเออร์"><option value="">ซัพพรายเออร์ทุกราย</option></select>
+          <select id="hSup" aria-label="กรองซัพพลายเออร์"><option value="">ซัพพลายเออร์ทุกราย</option></select>
           <select id="hProd" aria-label="กรองผลิตภัณฑ์"><option value="">ผลิตภัณฑ์ทั้งหมด</option></select>
         </div>
         <div class="filter-row" id="hQcRow2">
@@ -911,7 +919,7 @@
         </label>
         <div style="display:flex; gap:8px; margin-top:6px;">
           <button type="button" class="btn-cancel" id="hReset" style="flex:0 0 auto; white-space:nowrap; min-height:44px; padding:9px 14px; border:none; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; background:var(--line-2); color:var(--ink-2);">ล้างตัวกรอง</button>
-          <button type="button" class="btn-save" id="hSearch" style="flex:1; white-space:nowrap; min-height:44px; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:700; cursor:pointer; background:var(--accent); color:#fff;">🔍 ค้นหา</button>
+          <button type="button" class="btn-save" id="hSearch" style="flex:1; white-space:nowrap; min-height:44px; padding:9px; border:none; border-radius:8px; font-family:inherit; font-weight:700; cursor:pointer; background:var(--accent); color:#fff;"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg> ค้นหา</button>
         </div>
       </div>
       <div class="card">
@@ -943,7 +951,7 @@
           <input type="text" id="mStage">
         </div>
         <div class="field">
-          <label for="mSupplier">🏭 ซัพพรายเออร์</label>
+          <label for="mSupplier">🏭 ซัพพลายเออร์</label>
           <input type="text" id="mSupplier">
         </div>
         <div class="row-2">
@@ -961,9 +969,9 @@
           <textarea id="mNote" style="min-height:60px;"></textarea>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-delete" id="mDelete">✖ ยกเลิกรายงาน</button>
+          <button type="button" class="btn-delete" id="mDelete"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg> ยกเลิกรายงาน</button>
           <button type="button" class="btn-cancel" id="mCancel">ปิด</button>
-          <button type="button" class="btn-save" id="mSave">💾 บันทึก</button>
+          <button type="button" class="btn-save" id="mSave"><svg class="ico" aria-hidden="true"><use href="#i-save"/></svg> บันทึก</button>
         </div>
         <div id="voidPanel" class="void-panel" hidden>
           <div class="vp-title">ยกเลิกรายงานนี้?</div>
@@ -988,13 +996,13 @@
           3. เมนู → <b>"เพิ่มในหน้าจอหลัก"</b> → ได้ไอคอนแอป
         </div>
         <div class="qr-msg" id="qrMsg"></div>
-        <button type="button" class="btn-share" id="qrShareBtn">📤 แชร์ลิงก์แอป</button>
-        <button type="button" class="btn" id="qrBackBtn" style="margin-top:10px;">⬅️ กลับไปกรอกฟอร์ม</button>
+        <button type="button" class="btn-share" id="qrShareBtn"><svg class="ico" aria-hidden="true"><use href="#i-share-2"/></svg> แชร์ลิงก์แอป</button>
+        <button type="button" class="btn" id="qrBackBtn" style="margin-top:10px;"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg> กลับไปกรอกฟอร์ม</button>
       </div>
     </div>
 
-    <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ">✕</button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v60 · 2026-10-20</span></div>
+    <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size:12px;">เวอร์ชัน v61 · 2026-10-20</span></div>
   </div>
 
   <script>
@@ -1339,7 +1347,7 @@
     function onOptionsError(err) {
       showAlert('error', 'โหลดข้อมูลไม่ได้: ' + err);
       loadingEl.classList.add('show');
-      loadingEl.innerHTML = '<button type="button" id="optsRetryBtn" style="padding:10px 18px; border:1.5px solid var(--accent); border-radius:8px; background:var(--surface); color:#dc2626; font-family:inherit; font-weight:600; cursor:pointer;">🔄 ลองโหลดใหม่</button>';
+      loadingEl.innerHTML = '<button type="button" id="optsRetryBtn" style="padding:10px 18px; border:1.5px solid var(--accent); border-radius:8px; background:var(--surface); color:#dc2626; font-family:inherit; font-weight:600; cursor:pointer;">' + ico('refresh-cw') + ' ลองโหลดใหม่</button>';
       document.getElementById('optsRetryBtn').addEventListener('click', loadOptions);
     }
     // ตัวเลือกชุดใหม่มาถึงตอนผู้ใช้กรอกฟอร์มไปแล้ว → เติมใหม่แต่คืนค่าที่เลือก/ติ๊กไว้ทั้งหมด
@@ -1427,12 +1435,13 @@
     photoGalBtn.addEventListener('click', function () { photoGal.click(); });
     document.getElementById('photoRemoveBtn').addEventListener('click', clearPhoto);
 
-    function handlePick(input, btn, origLabel) {
+    function handlePick(input, btn) {
       var file = input.files && input.files[0];
       if (!file) return;
-      btn.textContent = '⏳ กำลังย่อรูป...';
+      var orig = btn.innerHTML;
+      setBtn(btn, 'loader-circle', 'กำลังย่อรูป...');
       resizeImage(file, 1280, 0.7, function (dataUrl) {
-        btn.textContent = origLabel;
+        btn.innerHTML = orig;
         if (!dataUrl) { showAlert('error', 'อ่านรูปไม่ได้ ลองใหม่'); return; }
         photoDataUrl = dataUrl;
         photoPreview.src = dataUrl;
@@ -1440,8 +1449,8 @@
         photoControls.style.display = 'none';
       });
     }
-    photoCam.addEventListener('change', function () { handlePick(photoCam, photoCamBtn, '📷 ถ่ายรูป'); });
-    photoGal.addEventListener('change', function () { handlePick(photoGal, photoGalBtn, '🖼️ จากเครื่อง'); });
+    photoCam.addEventListener('change', function () { handlePick(photoCam, photoCamBtn); });
+    photoGal.addEventListener('change', function () { handlePick(photoGal, photoGalBtn); });
 
     function clearPhoto() {
       photoDataUrl = null;
@@ -1485,6 +1494,15 @@
       return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
     }
 
+    // วันเวลาที่แสดงบนจอ/การ์ด/ข้อความ LINE: "20/10/69 14:30" (พ.ศ. 2 หลัก ตรงกับใบ FM-MT-02)
+    // รับ "dd/MM/yyyy HH:mm" (fmtNow) หรือ "yyyy-MM-dd HH:mm" (timestamp จากชีต) · รูปแบบอื่นคืนเดิม
+    function dtTH(str) {
+      var v = String(str || ''), m = v.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?$/);
+      if (m) v = m[3] + '/' + m[2] + '/' + m[1] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
+      m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}))?$/);
+      return m ? m[1] + '/' + m[2] + '/' + String(+m[3] + 543).slice(-2) + (m[4] ? ' ' + m[4] + ':' + m[5] : '') : v;
+    }
+
     // แปลงค่า datetime-local ("2026-06-30T14:30") → รูปแบบเดียวกับ fmtNow ("30/06/2026 14:30")
     function fmtFoundAt(v) {
       var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
@@ -1494,10 +1512,10 @@
 
     // เรียงเป็นลำดับเรื่องราว: พบอะไร → ในอะไร → จากใคร → จุดไหน → จำนวน → ใครเจอ → หมายเหตุ
     function buildShareTextFromData(d) {
-      var lines = ['🚨 รายงานสิ่งแปลกปลอม', '🗓 ' + (d.time || fmtNow()), ''];
+      var lines = ['🚨 รายงานสิ่งแปลกปลอม', '🗓 ' + dtTH(d.time || fmtNow()), ''];
       if (d.categories && d.categories.length) lines.push('🔍 พบ: ' + d.categories.join(', '));
       if (d.product) lines.push('🍯 ใน: ' + d.product);
-      if (d.supplier) lines.push('🏭 ซัพพรายเออร์: ' + d.supplier);
+      if (d.supplier) lines.push('🏭 ซัพพลายเออร์: ' + d.supplier);
       if (d.stage) lines.push('⚙️ จุดที่พบ: ' + d.stage);
       var qty = [d.quantity, d.unit].filter(Boolean).join(' ');
       if (qty) lines.push('📏 จำนวน: ' + qty);
@@ -1559,7 +1577,7 @@
       var W = 1000, PAD = 48, LH = 52, FS = 32, headerH = 210;
       var entries = ['🔍 พบ: ' + (d.categories && d.categories.length ? d.categories.join(', ') : '-')];
       if (d.product) entries.push('🍯 ใน: ' + d.product);
-      if (d.supplier) entries.push('🏭 ซัพพรายเออร์: ' + d.supplier);
+      if (d.supplier) entries.push('🏭 ซัพพลายเออร์: ' + d.supplier);
       if (d.stage) entries.push('⚙️ จุดที่พบ: ' + d.stage);
       var qty = [d.quantity, d.unit].filter(Boolean).join(' ');
       if (qty) entries.push('📏 จำนวน: ' + qty);
@@ -1586,7 +1604,7 @@
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, headerH);
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 46px sans-serif'; ctx.fillText('🚨 รายงานสิ่งแปลกปลอม', PAD, 70);
-        ctx.font = '28px sans-serif'; ctx.fillText('🗓 ' + (d.time || fmtNow()), PAD, 115);
+        ctx.font = '28px sans-serif'; ctx.fillText('🗓 ' + dtTH(d.time || fmtNow()), PAD, 115);
 
         // ผู้พบเด่นใต้ header — กล่องสีขาวซ้อนบน gradient
         if (d.reporter) {
@@ -1697,6 +1715,7 @@
     function renderQr() {
       if (qrRendered) return;
       var box = document.getElementById('qrBox');
+      if (!window.QRCode && document.readyState !== 'complete') { window.addEventListener('load', renderQr, { once: true }); return; }   // สคริปต์ QR (defer) ยังโหลดไม่เสร็จ
       if (!window.QRCode) { box.innerHTML = '<div style="color:#991b1b; font-size:13px;">โหลด QR ไม่ได้ (ต้องมีเน็ต)</div>'; return; }
       new QRCode(box, { text: SHARE_URL, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
       qrRendered = true;
@@ -1746,6 +1765,9 @@
 
     // ต้อง escape " และ ' ด้วย เพราะถูกใส่ในแอตทริบิวต์ (data-val/title/value) — ไม่งั้นชื่อที่มี " ฝังสคริปต์ได้
     var ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    // ไอคอนเส้นจาก sprite ต้น body · ปุ่มที่เปลี่ยนข้อความระหว่างทำงานใช้ setBtn (textContent จะลบไอคอนทิ้ง)
+    function ico(name, cls) { return '<svg class="ico' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
+    function setBtn(b, name, text) { b.innerHTML = ico(name, name === 'loader-circle' ? 'spin' : '') + (text ? ' ' + esc(text) : ''); }
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; }); }
     // ลิงก์จากชีต (PDF/รูป) เปิดได้เฉพาะ https — กันคนแก้ชีตใส่ javascript: แล้วรันบนมือถือพนักงาน
     function safeUrl(u) { u = String(u || ''); return /^https:\/\//i.test(u) ? u : ''; }
@@ -1818,10 +1840,13 @@
     var RANK_FG = ['#fff', '#fff', '#fff', '#431407', '#431407', '#431407', '#fff', '#1F2937', '#1F2937', '#1F2937'];
     function rankColor(i) { return { bg: RANK_BG[i % RANK_BG.length], fg: RANK_FG[i % RANK_FG.length] }; }
     // กล่องเลขลำดับสี (แทนเหรียญ 🥇🥈🥉) — ใช้ร่วมกันทุกการ์ดจัดอันดับ ให้ดูเป็นทางการเหมือนกันทั้งหน้า
-    function rankBadge(i) {
+    function rankBadge(i, no) {
       var c = rankColor(i);
-      return '<span class="rank-no" style="background:' + c.bg + ';color:' + c.fg + '">' + (i + 1) + '</span>';
+      return '<span class="rank-no" style="background:' + c.bg + ';color:' + c.fg + '">' + (no || i + 1) + '</span>';
     }
+    // อันดับร่วม: จำนวนเท่ากันได้เลขเดียวกัน (5,3,3,1 → 1,2,2,4) — เดิมได้ 1,2,3 ทั้งที่เท่ากัน · สียังตามตำแหน่ง (ตรงกับแถบสัดส่วน)
+    function tieRanks(counts) { return counts.map(function (c) { return 1 + counts.filter(function (x) { return x > c; }).length; }); }
+    function countsOf(items) { return items.map(function (it) { return it.count || 0; }); }
 
     // กราฟอันดับ + สัดส่วน ใช้ร่วมกันทั้งหน้าสรุปและรายงานรายเดือน
     // % คิดจากผลรวมของรายการที่แสดง แถบด้านบนจึงตรงกับตัวเลขเสมอ
@@ -1835,12 +1860,13 @@
         return '<span style="width:' + w.toFixed(2) + '%;background:' + rankColor(i).bg + '"></span>';
       }).join('');
 
+      var rk = tieRanks(countsOf(items));
       var rows = items.map(function (it, i) {
         var c = rankColor(i);
         var pct = Math.round((it.count || 0) * 1000 / sum) / 10;
         var attrs = drillKind ? ' data-drill="' + drillKind + '" data-val="' + esc(it.name) + '" style="cursor:pointer"' : '';
         return '<div class="rank-row"' + attrs + '>' +
-               '<span class="rank-no" style="background:' + c.bg + ';color:' + c.fg + '">' + (i + 1) + '</span>' +
+               '<span class="rank-no" style="background:' + c.bg + ';color:' + c.fg + '">' + rk[i] + '</span>' +
                '<span class="rank-name">' + esc(it.name) + '</span>' +
                '<span class="rank-cnt">' + it.count + '</span>' +
                '<span class="rank-pct">' + pct + '%</span>' +
@@ -1858,9 +1884,10 @@
 
     function renderScoreboard(items) {
       var el = document.getElementById('scoreboard');
-      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มีข้อมูลซัพพรายเออร์ในช่วงนี้</div>'; return; }
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มีข้อมูลซัพพลายเออร์ในช่วงนี้</div>'; return; }
+      var rk = tieRanks(countsOf(items));
       el.innerHTML = items.map(function (it, i) {
-        return '<div class="score-row" style="cursor:pointer" data-drill="supplier" data-val="' + esc(it.name) + '"><div class="score-rank">' + rankBadge(i) + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' ครั้ง ›</div></div>';
+        return '<div class="score-row" style="cursor:pointer" data-drill="supplier" data-val="' + esc(it.name) + '"><div class="score-rank">' + rankBadge(i, rk[i]) + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' ครั้ง ›</div></div>';
       }).join('');
     }
 
@@ -2027,7 +2054,7 @@
 
     function renderSupCat(items) {
       var el = document.getElementById('supCatList');
-      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูลซัพพรายเออร์ในช่วงนี้</div>'; return; }
+      if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ไม่มีข้อมูลซัพพลายเออร์ในช่วงนี้</div>'; return; }
       el.innerHTML = items.map(function (s) {
         var chips = (s.topCats || []).map(function (c) {
           return '<span class="supcat-chip">' + esc(c.name) + ' ×' + c.count + '</span>';
@@ -2048,8 +2075,9 @@
     function renderReporters(items) {
       var el = document.getElementById('reporterList');
       if (!items || !items.length) { el.innerHTML = '<div class="dash-empty">ยังไม่มี</div>'; return; }
+      var rk = tieRanks(countsOf(items));
       el.innerHTML = items.map(function (it, i) {
-        return '<div class="score-row"><div class="score-rank">' + rankBadge(i) + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' รายงาน</div></div>';
+        return '<div class="score-row"><div class="score-rank">' + rankBadge(i, rk[i]) + '</div><div class="score-name">' + esc(it.name) + '</div><div class="score-count">' + it.count + ' รายงาน</div></div>';
       }).join('');
     }
 
@@ -2062,7 +2090,7 @@
       if (unk) {
         if (p.unknownSuppliers && p.unknownSuppliers > 0) {
           unk.style.display = '';
-          unk.innerHTML = 'ℹ️ มี <b>' + p.unknownSuppliers + ' รายงาน</b> จากวัตถุดิบที่รวมจากหลายแหล่ง (ระบุซัพพรายเออร์ไม่ได้)';
+          unk.innerHTML = 'ℹ️ มี <b>' + p.unknownSuppliers + ' รายงาน</b> จากวัตถุดิบที่รวมจากหลายแหล่ง (ระบุซัพพลายเออร์ไม่ได้)';
         } else {
           unk.style.display = 'none';
         }
@@ -2114,7 +2142,7 @@
       if (!reportFieldErrors(form, errs)) return;
 
       submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ กำลังส่ง...';
+      setBtn(submitBtn, 'loader-circle', 'กำลังส่ง...');
       showAlert('info', 'กำลังสร้างการ์ด...');
 
       // render การ์ดก่อน (รวมข้อความ+รูป) แล้วส่งการ์ดให้ backend (ไม่ส่งรูปต้นฉบับ → ประหยัด Drive)
@@ -2147,12 +2175,12 @@
           .withSuccessHandler(function (res) {
             if (res && res.ok) { reportAccepted(originalData, cardUrl, !!res.test, ''); reportSaved(res, null, originalData); return; }
             submitBtn.disabled = false;
-            submitBtn.textContent = '📨 ส่งรายงาน';
+            setBtn(submitBtn, 'send', 'ส่งรายงาน');
             showAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด'));
           })
           .withFailureHandler(function (err) {
             submitBtn.disabled = false;
-            submitBtn.textContent = '📨 ส่งรายงาน';
+            setBtn(submitBtn, 'send', 'ส่งรายงาน');
             showAlert('error', '❌ ' + err);
           })
           .saveReport(payload);
@@ -2162,7 +2190,7 @@
     // รายงานถูกรับไว้แล้ว (อยู่ในคิวในเครื่อง หรือเซิร์ฟเวอร์ตอบแล้ว) → แชร์ + ล้างฟอร์มรอรายงานถัดไป
     function reportAccepted(originalData, cardUrl, isTest, msg) {
       submitBtn.disabled = false;
-      submitBtn.textContent = '📨 ส่งรายงาน';
+      setBtn(submitBtn, 'send', 'ส่งรายงาน');
       if (msg) showAlert('info', msg);
 
       // จำชื่อผู้พบไว้ใช้ self-filter ในหน้าประวัติ (ยกเว้นโหมดทดสอบ Admin — ไม่จำ)
@@ -2180,7 +2208,7 @@
       // โชว์ปุ่มแชร์แบบเด่น + กะพริบ + เลื่อนจอไปหา เพื่อให้กดง่ายถ้าจอแชร์ไม่เด้งเอง (แตะเอง = ชัวร์สุด)
       var sBtn = document.getElementById('shareBtn');
       sBtn.style.display = '';
-      sBtn.textContent = '📤 แชร์การ์ดเข้า LINE / แชท';
+      setBtn(sBtn, 'share-2', 'แชร์การ์ดเข้า LINE / แชท');
       sBtn.classList.add('hot');
       setTimeout(function () { scrollIntoViewSafe(sBtn); }, 120);
       setTimeout(function () { sBtn.classList.remove('hot'); }, 6000);
@@ -2402,7 +2430,7 @@
       listEl.innerHTML = res.rows.map(function (r) {
         var sup = r.supplier ? ' · 🏭 ' + esc(r.supplier) : '';
         return '<div class="hist-row' + (r.voided ? ' voided' : '') + '" data-row="' + r.rowIndex + '"' + (live ? ' tabindex="0" role="button"' : ' style="opacity:.65; cursor:default"') + '>' +
-          '<div class="hist-meta"><span>🗓 ' + esc(r.timestamp) + (r.voided ? '<span class="hist-badge">ยกเลิกแล้ว</span>' : '') + '</span><span>row ' + r.rowIndex + '</span></div>' +
+          '<div class="hist-meta"><span>🗓 ' + esc(dtTH(r.timestamp)) + (r.voided ? '<span class="hist-badge">ยกเลิกแล้ว</span>' : '') + '</span><span>แถว ' + r.rowIndex + '</span></div>' +
           (r.voided ? '<div class="hist-vnote">✖ ยกเลิกโดย ' + esc(r.voidedBy || '-') + (r.voidReason ? ' · ' + esc(r.voidReason) : '') + '</div>' : '') +
           '<div class="hist-cat">🔍 ' + esc(r.categories || '-') + '</div>' +
           '<div class="hist-sub">🍯 ' + esc(r.product || '-') + sup + ' · 👤 ' + esc(r.reporter || '-') + '</div>' +
@@ -2479,7 +2507,7 @@
       document.getElementById('modalTitle').textContent = voided ? '📄 รายงานที่ยกเลิกแล้ว' : '✏️ แก้ไขรายงาน';
       var vn = document.getElementById('voidedNote');
       vn.hidden = !voided;
-      vn.textContent = voided ? '✖ ยกเลิกโดย ' + (rec.voidedBy || '-') + (rec.voidReason ? ' · เหตุผล: ' + rec.voidReason : '') + (rec.voidedAt ? ' · ' + rec.voidedAt : '') + '\nไม่นับในหน้าสรุป · แก้ไขไม่ได้' : '';
+      vn.textContent = voided ? '✖ ยกเลิกโดย ' + (rec.voidedBy || '-') + (rec.voidReason ? ' · เหตุผล: ' + rec.voidReason : '') + (rec.voidedAt ? ' · ' + dtTH(rec.voidedAt) : '') + '\nไม่นับในหน้าสรุป · แก้ไขไม่ได้' : '';
       EDIT_FIELDS.forEach(function (id) { document.getElementById(id).disabled = voided; });
       document.getElementById('mSave').hidden = voided;
       document.getElementById('mDelete').hidden = voided;
@@ -2527,7 +2555,7 @@
     });
     document.getElementById('mSave').addEventListener('click', function () {
       if (!editingRow) return;
-      var btn = this; btn.disabled = true; btn.textContent = '⏳';
+      var btn = this; btn.disabled = true; setBtn(btn, 'loader-circle', '');
       var patch = {
         reporter: document.getElementById('eReporter').value.trim(),
         product: document.getElementById('mProduct').value.trim(),
@@ -2540,19 +2568,19 @@
       };
       google.script.run
         .withSuccessHandler(function (res) {
-          btn.disabled = false; btn.textContent = '💾 บันทึก';
+          btn.disabled = false; setBtn(btn, 'save', 'บันทึก');
           if (res && res.ok) { afterReportChange(); showStatus('success', '✅ แก้ไขรายงานแล้ว'); return; }
           showStatus('error', '❌ แก้ไขไม่สำเร็จ: ' + ((res && res.message) || 'ผิดพลาด'));
           if (res && res.moved) { closeModal(); lcDrop('hist:'); runHistorySearch(false); }
         })
-        .withFailureHandler(function (err) { btn.disabled = false; btn.textContent = '💾 บันทึก'; showStatus('error', '❌ แก้ไขไม่สำเร็จ: ' + err + '\nลองกดบันทึกอีกครั้ง'); })
+        .withFailureHandler(function (err) { btn.disabled = false; setBtn(btn, 'save', 'บันทึก'); showStatus('error', '❌ แก้ไขไม่สำเร็จ: ' + err + '\nลองกดบันทึกอีกครั้ง'); })
         .updateReport({ rowIndex: editingRow, expect: editingExpect, patch: patch });
     });
     // ยกเลิกรายงาน (แทนการลบ): เปิดแผงในป๊อปอัพ บอกว่าเป็นใบไหน + ต้องใส่เหตุผลและชื่อ
     document.getElementById('mDelete').addEventListener('click', function () {
       if (!editingRow || !editingRec) return;
       var r = editingRec;
-      document.getElementById('voidSummary').textContent = '🗓 ' + r.timestamp + ' · 🍯 ' + (r.product || '-') + ' · 🔍 ' + (r.categories || '-') + ' · 👤 ' + (r.reporter || '-');
+      document.getElementById('voidSummary').textContent = '🗓 ' + dtTH(r.timestamp) + ' · 🍯 ' + (r.product || '-') + ' · 🔍 ' + (r.categories || '-') + ' · 👤 ' + (r.reporter || '-');
       document.getElementById('voidReason').value = '';
       var by = ''; try { by = localStorage.getItem('maintCancelBy') || localStorage.getItem('defaultReporter') || ''; } catch (e) {}
       document.getElementById('voidBy').value = by;
@@ -2568,7 +2596,7 @@
       if (!reason) { errEl.textContent = 'ระบุเหตุผลที่ยกเลิก'; document.getElementById('voidReason').focus(); return; }
       if (!by) { errEl.textContent = 'ระบุชื่อผู้ยกเลิก'; document.getElementById('voidBy').focus(); return; }
       errEl.textContent = '';
-      var btn = this; btn.disabled = true; btn.textContent = '⏳ กำลังยกเลิก...';
+      var btn = this; btn.disabled = true; setBtn(btn, 'loader-circle', 'กำลังยกเลิก...');
       google.script.run
         .withSuccessHandler(function (res) {
           btn.disabled = false; btn.textContent = 'ยืนยันยกเลิก';
@@ -2898,7 +2926,7 @@
       // หัวรายงาน
       html += '<div class="card"><div class="rep-head">' +
               '<h2>รายงานสรุปสิ่งแปลกปลอมประจำเดือน</h2>' +
-              '<div class="rep-sub"><b>' + esc(d.label) + '</b> · จัดทำเมื่อ ' + esc(d.generatedAt) + '</div>' +
+              '<div class="rep-sub"><b>' + esc(d.label) + '</b> · จัดทำเมื่อ ' + esc(dtTH(d.generatedAt)) + '</div>' +
               '</div>';
 
       // KPI
@@ -3115,14 +3143,15 @@
 
       // Suppliers
       ctx.fillStyle = '#1f2937'; ctx.font = 'bold 36px sans-serif';
-      ctx.fillText('🏭 ซัพพรายเออร์ที่ต้องเฝ้าระวัง', PAD, y + 30);
+      ctx.fillText('🏭 ซัพพลายเออร์ที่ต้องเฝ้าระวัง', PAD, y + 30);
       var ry = y + 80;
+      var supRk = tieRanks(countsOf(topSup));
       topSup.forEach(function (s, i) {
         // กล่องเลขลำดับสีเดียวกับบนจอ (แทนเหรียญ)
         var rc = rankColor(i);
         ctx.fillStyle = rc.bg; ctx.fillRect(PAD + 20, ry + 4, 44, 44);
         ctx.fillStyle = rc.fg; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(String(i + 1), PAD + 42, ry + 36);
+        ctx.fillText(String(supRk[i]), PAD + 42, ry + 36);
         ctx.textAlign = 'left';
         ctx.font = 'bold 40px sans-serif'; ctx.fillStyle = '#1f2937';
         ctx.fillText(s.name, PAD + 82, ry + 35);
@@ -3167,7 +3196,7 @@
         ctx.fillStyle = '#7C2D12'; ctx.font = 'bold 30px sans-serif';
         ctx.fillText('ℹ️ ข้อสังเกต', PAD + 20, y + 38);
         ctx.font = '26px sans-serif';
-        ctx.fillText('มี ' + p.unknownSuppliers + ' รายงาน จากวัตถุดิบที่รวมจากหลายแหล่ง (ระบุซัพพรายเออร์ไม่ได้)', PAD + 20, y + 75);
+        ctx.fillText('มี ' + p.unknownSuppliers + ' รายงาน จากวัตถุดิบที่รวมจากหลายแหล่ง (ระบุซัพพลายเออร์ไม่ได้)', PAD + 20, y + 75);
         y += noteH + 30;
       }
 
@@ -3176,7 +3205,7 @@
       ctx.fillText('QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)', W / 2, c.height - 50);
       var ts = new Date();
       function p2(n) { return n < 10 ? '0' + n : n; }
-      var stamp = p2(ts.getDate()) + '/' + p2(ts.getMonth() + 1) + '/' + ts.getFullYear() + ' ' + p2(ts.getHours()) + ':' + p2(ts.getMinutes());
+      var stamp = dtTH(p2(ts.getDate()) + '/' + p2(ts.getMonth() + 1) + '/' + ts.getFullYear() + ' ' + p2(ts.getHours()) + ':' + p2(ts.getMinutes()));
       ctx.fillText('สร้างเมื่อ ' + stamp, W / 2, c.height - 20);
       ctx.textAlign = 'left';
 
@@ -3227,8 +3256,8 @@
       setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     }
     document.getElementById('execCsvBtn').addEventListener('click', function () {
-      var btn = this; btn.disabled = true; var orig = btn.textContent;
-      btn.textContent = '⏳ กำลังโหลด...';
+      var btn = this; btn.disabled = true; var orig = btn.innerHTML;
+      setBtn(btn, 'loader-circle', 'กำลังโหลด...');
       // ดึงข้อมูล 30 วันล่าสุด (หรือทั้งเดือน)
       var today = new Date();
       var fromD = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -3237,10 +3266,10 @@
       function fetchPage(offset) {
         google.script.run
           .withSuccessHandler(function (res) {
-            if (!res || !res.ok) { btn.disabled = false; btn.textContent = orig; showStatus('error', '❌ ดาวน์โหลด CSV ไม่สำเร็จ: ' + ((res && res.message) || '')); return; }
+            if (!res || !res.ok) { btn.disabled = false; btn.innerHTML = orig; showStatus('error', '❌ ดาวน์โหลด CSV ไม่สำเร็จ: ' + ((res && res.message) || '')); return; }
             all = all.concat(res.rows);
-            if (res.rows.length && all.length < res.total) { btn.textContent = '⏳ ' + all.length + '/' + res.total; return fetchPage(all.length); }
-            btn.disabled = false; btn.textContent = orig;
+            if (res.rows.length && all.length < res.total) { setBtn(btn, 'loader-circle', all.length + '/' + res.total); return fetchPage(all.length); }
+            btn.disabled = false; btn.innerHTML = orig;
             var headers = ['Timestamp', 'Reporter', 'Product', 'Categories', 'Stage', 'Supplier', 'Quantity', 'Unit', 'Note', 'Status'];
             var rows = all.map(function (r) {
               return [r.timestamp, r.reporter, r.product, r.categories, r.stage, r.supplier, r.quantity, r.unit, r.note, r.voided ? 'ยกเลิก' : ''];
@@ -3249,7 +3278,7 @@
             downloadCSV(fname, headers, rows);
           })
           .withFailureHandler(function (err) {
-            btn.disabled = false; btn.textContent = orig;
+            btn.disabled = false; btn.innerHTML = orig;
             showStatus('error', '❌ ดาวน์โหลด CSV ไม่สำเร็จ: ' + err);
           })
           .searchReports({ from: fmtDateISO(fromD), to: fmtDateISO(today), limit: 200, offset: offset });
@@ -3339,12 +3368,13 @@
     mPhotoCamBtn.addEventListener('click', function () { mPhotoCam.click(); });
     mPhotoGalBtn.addEventListener('click', function () { mPhotoGal.click(); });
     document.getElementById('mPhotoRemoveBtn').addEventListener('click', clearMPhoto);
-    function mHandlePick(input, btn, origLabel) {
+    function mHandlePick(input, btn) {
       var file = input.files && input.files[0];
       if (!file) return;
-      btn.textContent = '⏳ กำลังย่อรูป...';
+      var orig = btn.innerHTML;
+      setBtn(btn, 'loader-circle', 'กำลังย่อรูป...');
       resizeImage(file, 1280, 0.7, function (dataUrl) {
-        btn.textContent = origLabel;
+        btn.innerHTML = orig;
         if (!dataUrl) { showMAlert('error', 'อ่านรูปไม่ได้ ลองใหม่'); return; }
         mPhotoDataUrl = dataUrl;
         mPhotoPreview.src = dataUrl;
@@ -3352,8 +3382,8 @@
         mPhotoControls.style.display = 'none';
       });
     }
-    mPhotoCam.addEventListener('change', function () { mHandlePick(mPhotoCam, mPhotoCamBtn, '📷 ถ่ายรูป'); });
-    mPhotoGal.addEventListener('change', function () { mHandlePick(mPhotoGal, mPhotoGalBtn, '🖼️ จากเครื่อง'); });
+    mPhotoCam.addEventListener('change', function () { mHandlePick(mPhotoCam, mPhotoCamBtn); });
+    mPhotoGal.addEventListener('change', function () { mHandlePick(mPhotoGal, mPhotoGalBtn); });
     function clearMPhoto() {
       mPhotoDataUrl = null;
       mPhotoCam.value = ''; mPhotoGal.value = '';
@@ -3498,12 +3528,12 @@
     function buildMaintShareText(d) {
       var lines = ['🔧 ' + MAINT_TITLE + ' (FM-MT-02)'];
       if (d.mrNo) lines.push('เลขที่ ' + d.mrNo);
-      lines.push('🗓 ' + (d.time || fmtNow()), '');
+      lines.push('🗓 ' + dtTH(d.time || fmtNow()), '');
       if (d.site) lines.push('🏭 โรงงาน: ' + d.site);
       lines.push('🛠 เครื่อง: ' + (d.machine || '-') + (d.machineCode ? ' [' + d.machineCode + ']' : ''));
       lines.push('🩺 อาการ: ' + (d.symptom || '-'));
       lines.push('🍯 ผลกระทบต่อผลิตภัณฑ์: ' + impactText(d));
-      if (d.needBy) lines.push('⏰ ต้องการเสร็จ: ' + fmtFoundAt(d.needBy));
+      if (d.needBy) lines.push('⏰ ต้องการเสร็จ: ' + dtTH(fmtFoundAt(d.needBy)));
       lines.push('', '👤 ผู้แจ้ง: ' + (d.reporter || '-') + (d.position ? ' (' + d.position + ')' : ''));
       return lines.join('\n');
     }
@@ -3823,7 +3853,7 @@
       if (maintEditing) { submitMaintEdit(data); return; }
 
       mSubmitBtn.disabled = true;
-      mSubmitBtn.textContent = '⏳ กำลังส่ง...';
+      setBtn(mSubmitBtn, 'loader-circle', 'กำลังส่ง...');
       showMAlert('info', data.photo ? 'กำลังส่งใบแจ้งซ่อม + อัปโหลดรูป...' : 'กำลังส่งใบแจ้งซ่อม...');
       var payload = {};
       Object.keys(data).forEach(function (k) { if (k !== 'time') payload[k] = data[k]; });
@@ -3865,7 +3895,7 @@
       document.getElementById('mEditNo').textContent = r.mrNo;
       document.getElementById('mEditBar').style.display = '';
       document.getElementById('mShareBtn').style.display = 'none';
-      mSubmitBtn.textContent = '💾 บันทึกการแก้ไข';
+      setBtn(mSubmitBtn, 'save', 'บันทึกการแก้ไข');
       showMAlert('info', '✏️ กำลังแก้ไข ' + r.mrNo + ' — แก้แล้วกด "บันทึกการแก้ไข" ด้านล่าง');
       scrollIntoViewSafe(document.getElementById('maintForm'));
     }
@@ -3893,7 +3923,7 @@
       document.getElementById('mEditorField').style.display = 'none';
       document.getElementById('mEditBar').style.display = 'none';
       mSubmitBtn.disabled = false;
-      mSubmitBtn.textContent = '🔧 ส่งใบแจ้งซ่อม';
+      setBtn(mSubmitBtn, 'send', 'ส่งใบแจ้งซ่อม');
     }
     document.getElementById('mEditCancelBtn').addEventListener('click', function () {
       var siteKeep = ''; try { siteKeep = localStorage.getItem('maintSite') || ''; } catch (e) {}
@@ -3910,7 +3940,7 @@
       var reqId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
       google.script.run
         .withSuccessHandler(function (res) {
-          if (!(res && res.ok)) { mSubmitBtn.disabled = false; mSubmitBtn.textContent = '💾 บันทึกการแก้ไข'; showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
+          if (!(res && res.ok)) { mSubmitBtn.disabled = false; setBtn(mSubmitBtn, 'save', 'บันทึกการแก้ไข'); showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
           try { localStorage.setItem('maintCancelBy', by); } catch (e) {}
           endMaintEdit();
           resetMaintForm(data.reporter, data.site);
@@ -3928,7 +3958,7 @@
             loadMaintList();
           });
         })
-        .withFailureHandler(function (err) { mSubmitBtn.disabled = false; mSubmitBtn.textContent = '💾 บันทึกการแก้ไข'; showMAlert('error', '❌ ' + err); })
+        .withFailureHandler(function (err) { mSubmitBtn.disabled = false; setBtn(mSubmitBtn, 'save', 'บันทึกการแก้ไข'); showMAlert('error', '❌ ' + err); })
         .updateMaintRequest({ mrNo: r.mrNo, by: by, site: data.site, reporter: data.reporter, position: data.position,
           machine: data.machine, machineCode: data.machineCode, symptom: data.symptom, productImpact: data.productImpact,
           impactDetail: data.impactDetail, quarantined: data.quarantined, ncrNo: data.ncrNo, needBy: data.needBy,
@@ -3954,7 +3984,7 @@
       google.script.run
         .withSuccessHandler(function (res) {
           mSubmitBtn.disabled = false;
-          mSubmitBtn.textContent = '🔧 ส่งใบแจ้งซ่อม';
+          setBtn(mSubmitBtn, 'send', 'ส่งใบแจ้งซ่อม');
           if (!(res && res.ok)) { showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
 
           var d = {};
@@ -3986,7 +4016,7 @@
             shareMaint(pngUrl, true);
             var sb = document.getElementById('mShareBtn');
             sb.style.display = '';
-            sb.textContent = '📤 แชร์ใบ FM-MT-02 เข้า LINE / แชท';
+            setBtn(sb, 'share-2', 'แชร์ใบ FM-MT-02 เข้า LINE / แชท');
             sb.classList.add('hot');
             setTimeout(function () { scrollIntoViewSafe(sb); }, 120);
             setTimeout(function () { sb.classList.remove('hot'); }, 6000);
@@ -4002,7 +4032,7 @@
         })
         .withFailureHandler(function (err) {
           mSubmitBtn.disabled = false;
-          mSubmitBtn.textContent = '🔧 ส่งใบแจ้งซ่อม';
+          setBtn(mSubmitBtn, 'send', 'ส่งใบแจ้งซ่อม');
           showMAlert('error', '❌ ' + err);
         })
         .saveMaintRequest(payload);
@@ -4116,15 +4146,14 @@
       if (!rows.length) { box.innerHTML = '<div class="dash-empty">ยังไม่มีใบแจ้งซ่อม</div>'; return; }
       var lock = maintListLive ? '' : ' disabled title="รอโหลดข้อมูลล่าสุดก่อน"';
       box.innerHTML = rows.map(function (r, i) {
-        var t = thDT(r.time);
         var pdf = safeUrl(r.pdf), photo = safeUrl(r.photo);
         var acts = pdf
-          ? '<a href="' + esc(pdf) + '" target="_blank" rel="noopener">📄 เปิด PDF</a>'
-          : '<button type="button" data-regen="' + i + '"' + lock + '>📄 สร้าง PDF</button>';
-        if (photo) acts += '<a href="' + esc(photo) + '" target="_blank" rel="noopener">📷 รูป</a>';
-        if (r.cancelled && r.pdf) acts += '<button type="button" data-regen="' + i + '"' + lock + '>🔄 PDF ใหม่</button>';
-        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-edit-btn" data-edit="' + i + '"' + lock + '>✏️ แก้ไข</button>';
-        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-cancel-btn" data-cancel="' + i + '"' + lock + '>✖ ยกเลิก</button>';
+          ? '<a href="' + esc(pdf) + '" target="_blank" rel="noopener">' + ico('file-text') + ' เปิด PDF</a>'
+          : '<button type="button" data-regen="' + i + '"' + lock + '>' + ico('file-plus') + ' สร้าง PDF</button>';
+        if (photo) acts += '<a href="' + esc(photo) + '" target="_blank" rel="noopener">' + ico('image') + ' รูป</a>';
+        if (r.cancelled && r.pdf) acts += '<button type="button" data-regen="' + i + '"' + lock + '>' + ico('refresh-cw') + ' PDF ใหม่</button>';
+        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-edit-btn" data-edit="' + i + '"' + lock + '>' + ico('pencil') + ' แก้ไข</button>';
+        if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-cancel-btn" data-cancel="' + i + '"' + lock + '>' + ico('ban') + ' ยกเลิก</button>';
         var panel = '';
         if (!r.cancelled && maintCancelOpen === i) {
           panel = '<div class="ml-cancel">' +
@@ -4136,14 +4165,14 @@
             '<button type="button" class="ok" data-cancel-ok="' + i + '">ยืนยันยกเลิก</button></div></div>';
         }
         var note = r.cancelled
-          ? '<div class="ml-cnote">✖ ยกเลิกโดย ' + esc(r.cancelledBy || '-') + (r.cancelReason ? ' · ' + esc(r.cancelReason) : '') + (r.cancelledAt ? ' · ' + esc(r.cancelledAt) : '') + '</div>'
+          ? '<div class="ml-cnote">✖ ยกเลิกโดย ' + esc(r.cancelledBy || '-') + (r.cancelReason ? ' · ' + esc(r.cancelReason) : '') + (r.cancelledAt ? ' · ' + esc(dtTH(r.cancelledAt)) : '') + '</div>'
           : '';
         return '<div class="ml-row' + (r.cancelled ? ' cancelled' : '') + '">' +
           '<div class="ml-top"><span>' + esc(r.mrNo) + '</span>' + (r.cancelled ? '<span class="ml-badge">ยกเลิกแล้ว</span>' : '') +
-          '<span class="t" style="margin-left:auto;">' + esc(t.date + ' ' + t.time) + '</span></div>' +
+          '<span class="t" style="margin-left:auto;">' + esc(dtTH(r.time)) + '</span></div>' +
           '<div class="ml-sub">🏭 ' + esc(r.site) + ' · 🛠 ' + esc(r.machine) + (r.machineCode ? ' [' + esc(r.machineCode) + ']' : '') + '</div>' +
           '<div class="ml-sym">🩺 ' + esc(r.symptom) + ' · 👤 ' + esc(r.reporter) + '</div>' +
-          note + (r.editedBy ? '<div class="ml-enote">✏️ แก้ไขล่าสุดโดย ' + esc(r.editedBy) + (r.editedAt ? ' · ' + esc(r.editedAt) : '') + '</div>' : '') +
+          note + (r.editedBy ? '<div class="ml-enote">✏️ แก้ไขล่าสุดโดย ' + esc(r.editedBy) + (r.editedAt ? ' · ' + esc(dtTH(r.editedAt)) : '') + '</div>' : '') +
           '<div class="ml-act">' + acts + '</div>' + panel + '</div>';
       }).join('');
     }
@@ -4165,7 +4194,7 @@
       if (!reason) { errEl.textContent = 'ระบุเหตุผลที่ยกเลิก'; document.getElementById('mCancelReason').focus(); return; }
       if (!by) { errEl.textContent = 'ระบุชื่อผู้ยกเลิก'; document.getElementById('mCancelBy').focus(); return; }
       errEl.textContent = '';
-      btn.disabled = true; btn.textContent = '⏳ กำลังยกเลิก...';
+      btn.disabled = true; setBtn(btn, 'loader-circle', 'กำลังยกเลิก...');
       google.script.run
         .withSuccessHandler(function (res) {
           if (!(res && res.ok)) { btn.disabled = false; btn.textContent = 'ยืนยันยกเลิก'; showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
@@ -4243,7 +4272,7 @@
     function regenMaintPdf(r, btn) {
       if (!r) return;
       var label = btn.textContent;
-      btn.disabled = true; btn.textContent = '⏳ กำลังสร้าง...';
+      btn.disabled = true; setBtn(btn, 'loader-circle', 'กำลังสร้าง...');
       rebuildMaintPdf(r, function (res) {
         if (!(res && res.ok)) { btn.disabled = false; btn.textContent = label; showMAlert('error', '❌ ' + (res ? res.message : 'ผิดพลาด')); return; }
         if (!res.pdfUrl) { btn.disabled = false; btn.textContent = label; showMAlert('info', '📥 ' + res.message); return; }
