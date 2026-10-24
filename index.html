@@ -991,7 +991,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v69 · 2026-10-24</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v70 · 2026-10-24</span></div>
   </div>
 
   <script>
@@ -3677,7 +3677,7 @@
         if (bg) { ctx.fillStyle = bg; ctx.fillRect(x, y, w, h); }
         ctx.strokeStyle = LINE; ctx.lineWidth = 1.5; ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5);
       }
-      // เซลล์ = { w, text, bold, blue, bg, center } — แถวสูงตามบรรทัดที่ยาวที่สุด
+      // เซลล์ = { w, text, bold, blue, bg, center, top, guides } — แถวสูงตามบรรทัดที่ยาวที่สุด
       function rowHeight(cells) {
         var n = 1;
         cells.forEach(function (cl) {
@@ -3690,8 +3690,14 @@
       function drawRow(x, y, cells, h) {
         cells.forEach(function (cl) {
           box(x, y, cl.w, h, cl.bg);
+          if (cl.guides) {   // เส้นจุดจางๆ ให้เขียนมือเป็นบรรทัด (ห่าง 36 px ≈ 6 มม.)
+            ctx.save(); ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+            for (var gy = y + 36; gy < y + h - 12; gy += 36) { ctx.beginPath(); ctx.moveTo(x + PADX, gy + 0.5); ctx.lineTo(x + cl.w - PADX, gy + 0.5); ctx.stroke(); }
+            ctx.restore();
+          }
           font(cl.bold); ctx.fillStyle = cl.blue ? BLUE : INK;
-          var ty = y + PADY + FS;
+          var nl = (cl.lines || []).length;
+          var ty = (cl.top ? y + PADY : y + Math.max(PADY, (h - nl * LH) / 2)) + FS;   // กลางแนวตั้ง (แถวปกติ = ตำแหน่งเดิม)
           (cl.lines || []).forEach(function (ln) {
             if (cl.center) { ctx.textAlign = 'center'; ctx.fillText(ln, x + cl.w / 2, ty); ctx.textAlign = 'left'; }
             else ctx.fillText(ln, x + PADX, ty);
@@ -3708,26 +3714,48 @@
         ctx.fillText(title, W / 2, y + 25); ctx.textAlign = 'left';
         return y + 34;
       }
-      // ข้อความหลายสีในบรรทัดเดียว: parts = [{ t, bold, blue }]
-      function runs(x, y, parts) {
+      // เส้นจุดยาวประมาณ px (ใช้ในข้อความของตาราง)
+      function dots(px) { font(false); return new Array(Math.max(4, Math.round(px / ctx.measureText('.').width)) + 1).join('.'); }
+      // ข้อความหลายสีในบรรทัดเดียว: parts = [{ t, bold, blue } | { fill: น้ำหนัก }] — fill = เส้นจุดยืดเต็มที่เหลือ
+      // ยาวเกินช่อง → ย่อตัวอักษรลง (ไม่ต่ำกว่า 14 px) แล้วบีบแนวนอน — ข้อความครบเสมอ ไม่ล้นไปช่องข้าง
+      function runs(x, y, parts, maxW) {
+        var size = FS, fixed, fills;
+        function measure() {
+          fixed = 0; fills = 0;
+          parts.forEach(function (pt) { if (pt.fill) fills += pt.fill; else { font(pt.bold, size); fixed += ctx.measureText(pt.t).width; } });
+        }
+        measure();
+        var MINDOT = 60 * parts.filter(function (pt) { return pt.fill; }).length;   // เส้นจุดแต่ละเส้นยาวอย่างน้อย 60 px
+        if (maxW && fixed + MINDOT > maxW) { size = Math.max(14, Math.floor(size * (maxW - MINDOT) / fixed)); measure(); }
+        var squeeze = (maxW && fixed + MINDOT > maxW) ? (maxW - MINDOT) / fixed : 1;
+        var free = maxW ? maxW - fixed * squeeze : 0;
+        ctx.save(); ctx.translate(x, y); ctx.scale(squeeze, 1);
+        var cx = 0;
         parts.forEach(function (pt) {
-          font(pt.bold); ctx.fillStyle = pt.blue ? BLUE : INK;
-          ctx.fillText(pt.t, x, y); x += ctx.measureText(pt.t).width;
+          var t = pt.t;
+          font(pt.bold, size); ctx.fillStyle = pt.blue ? BLUE : INK;
+          if (pt.fill) { t = new Array(Math.max(4, Math.floor(free * pt.fill / fills / squeeze / ctx.measureText('.').width)) + 1).join('.'); }
+          ctx.fillText(t, cx, 0); cx += ctx.measureText(t).width;
         });
+        ctx.restore();
       }
+      // ช่องลงชื่อ: บรรทัดวันที่ · เว้นที่ให้เซ็นเหนือเส้น "ลงชื่อ" · ตำแหน่งงานใต้เส้น
       function sigBlock(y, leftLines, rightLines, leftRole, rightRole) {
-        var half = CW / 2, SH = 118;
+        var half = CW / 2, SH = 130, IW = half - PADX * 2;
         box(M, y, half, SH); box(M + half, y, half, SH);
-        runs(M + PADX, y + 32, leftLines[0]); runs(M + PADX, y + 76, leftLines[1]);
-        runs(M + half + PADX, y + 32, rightLines[0]); runs(M + half + PADX, y + 76, rightLines[1]);
+        runs(M + PADX, y + 34, leftLines[0], IW); runs(M + PADX, y + 90, leftLines[1], IW);
+        runs(M + half + PADX, y + 34, rightLines[0], IW); runs(M + half + PADX, y + 90, rightLines[1], IW);
         font(false); ctx.fillStyle = INK; ctx.textAlign = 'center';
-        ctx.fillText(leftRole, M + half / 2, y + 108); ctx.fillText(rightRole, M + half + half / 2, y + 108);
+        ctx.fillText(leftRole, M + half / 2, y + 120); ctx.fillText(rightRole, M + half + half / 2, y + 120);
         ctx.textAlign = 'left';
         return y + SH;
       }
+      // วลีเดียวกันห้ามขาดกลาง (ตัดบรรทัดได้แค่ระหว่างวลี) — ช่องว่างในวลี → no-break space
+      function keep(t) { return String(t).replace(/ /g, '\u00A0'); }
+      function items(list) { return list.map(keep).join('    '); }
       // เว้นวรรคหลังกล่องเป็น no-break space → กล่องกับคำของมันไม่ถูกตัดคนละบรรทัด
       function cbx(on) { return on ? '■\u00A0' : '□\u00A0'; }
-      var DOT = '..............', DOTL = '........................';
+      var DOT = dots(120), DOTL = dots(200);
 
       // ---------- หัวกระดาษ ----------
       var y = M;
@@ -3754,32 +3782,40 @@
         [{ w: L, text: 'โรงงาน', bold: true }, { w: CW - L, text: d.site || '', blue: true }],
         [{ w: L, text: 'วันที่แจ้งซ่อม', bold: true }, { w: V, text: dt.date, blue: true }, { w: L2, text: 'เวลา', bold: true }, { w: V2, text: dt.time, blue: true }],
         [{ w: L, text: 'เครื่องจักร/อุปกรณ์', bold: true }, { w: V, text: d.machine || '', blue: true }, { w: L2, text: 'รหัสเครื่อง', bold: true }, { w: V2, text: d.machineCode || '', blue: true }],
-        mrow([{ w: L, text: 'อาการเบื้องต้น', bold: true }, { w: CW - L, text: d.symptom || '', blue: true }], 70),
-        [{ w: L, text: 'ผลกระทบต่อผลิตภัณฑ์', bold: true }, { w: CW - L, text: cbx(!d.productImpact) + 'ไม่มี    ' + cbx(d.productImpact) + 'มี → ผลิตภัณฑ์/ล็อต ' + ((d.productImpact && d.impactDetail) ? d.impactDetail : DOTL) + '    ' + cbx(d.productImpact && d.quarantined) + 'กักสินค้าแล้ว    เลข NCR (FM-QC-14) ' + ((d.productImpact && d.ncrNo) ? d.ncrNo : DOT) }],
-        [{ w: L, text: 'ต้องการให้ซ่อมเสร็จวันที่/เวลา', bold: true }, { w: CW - L, text: need ? (need.date + '  ' + need.time) : '', blue: true }]
+        mrow([{ w: L, text: 'อาการเบื้องต้น', bold: true }, { w: CW - L, text: d.symptom || '', blue: true, top: true }], 70),
+        [{ w: L, text: 'ผลกระทบต่อผลิตภัณฑ์', bold: true }, { w: CW - L, text: items([
+          cbx(!d.productImpact) + 'ไม่มี',
+          cbx(d.productImpact) + 'มี → ผลิตภัณฑ์/ล็อต ' + ((d.productImpact && d.impactDetail) ? d.impactDetail : DOTL),
+          cbx(d.productImpact && d.quarantined) + 'กักสินค้าแล้ว',
+          'เลข NCR (FM-QC-14) ' + ((d.productImpact && d.ncrNo) ? d.ncrNo : DOT)]) }],
+        // ผู้แจ้งไม่ได้ระบุ → เว้นเส้นจุดให้เขียนเอง
+        [{ w: L, text: 'ต้องการให้ซ่อมเสร็จวันที่/เวลา', bold: true }, need
+          ? { w: CW - L, text: need.date + '  ' + need.time, blue: true }
+          : { w: CW - L, text: items(['วันที่ ' + dots(170), 'เวลา ' + dots(120)]) }]
       ]);
       y = sigBlock(y,
         [[{ t: 'วันที่แจ้งซ่อม ' }, { t: dt.date, blue: true }, { t: '   เวลา ' }, { t: dt.time, blue: true }],
-         [{ t: 'ลงชื่อ ' }, { t: d.reporter || '', blue: true }, { t: '   ตำแหน่ง ' }, { t: d.position || '', blue: true }]],
-        [[{ t: 'วันที่รับแจ้งซ่อม ' + DOT + '   เวลา ' + DOT }],
-         [{ t: 'ลงชื่อ ' + DOTL + '   ตำแหน่ง ' + DOTL }]],
+         [{ t: 'ลงชื่อ ' }, d.reporter ? { t: d.reporter, blue: true } : { fill: 5 }, { t: '   ตำแหน่ง ' }, d.position ? { t: d.position, blue: true } : { fill: 4 }]],
+        [[{ t: 'วันที่รับแจ้งซ่อม ' }, { fill: 3 }, { t: '   เวลา ' }, { fill: 2 }],
+         [{ t: 'ลงชื่อ ' }, { fill: 5 }, { t: '   ตำแหน่ง ' }, { fill: 4 }]],
         'ผู้แจ้งซ่อม', 'ผู้รับแจ้งซ่อม');
 
       // ---------- ส่วนที่ 2 (เว้นว่างให้ช่างเขียน) ----------
       y += 10;
       y = section(y, 'ส่วนที่ 2 การซ่อม (ช่างซ่อมบำรุงกรอก)');
       y = table(M, y, [
-        [{ w: CW, text: '□\u00A0ซ่อมภายใน    □\u00A0หน่วยงานภายนอก ' + DOTL + DOTL + '    การเบรคดาวน์ (เครื่องหยุดจนต้องหยุดผลิต)  □\u00A0มี  □\u00A0ไม่มี    เวลาที่ใช้ซ่อม ........ ชม. ........ นาที' }],
-        [{ w: L, text: 'สาเหตุที่พบ', bold: true }, { w: CW - L, text: '□\u00A0สึกหรอตามอายุ    □\u00A0ขาดการบำรุงรักษา/หล่อลื่น    □\u00A0ใช้งานผิดวิธี    □\u00A0ไฟฟ้า/ระบบควบคุม    □\u00A0อื่น ๆ ' + DOT }],
-        mrow([{ w: L, text: 'รายละเอียดการซ่อม', bold: true }, { w: CW - L, text: '' }], 90)
+        [{ w: CW, text: items(['□ ซ่อมภายใน', '□ หน่วยงานภายนอก ' + dots(300), 'การเบรคดาวน์ (เครื่องหยุดจนต้องหยุดผลิต)  □ มี  □ ไม่มี',
+          'เวลาที่ใช้ซ่อม ' + dots(70) + ' ชม. ' + dots(70) + ' นาที']) }],
+        [{ w: L, text: 'สาเหตุที่พบ', bold: true }, { w: CW - L, text: items(['□ สึกหรอตามอายุ', '□ ขาดการบำรุงรักษา/หล่อลื่น', '□ ใช้งานผิดวิธี', '□ ไฟฟ้า/ระบบควบคุม', '□ อื่น ๆ ' + dots(220)]) }],
+        mrow([{ w: L, text: 'รายละเอียดการซ่อม', bold: true }, { w: CW - L, text: '', guides: true }], 110)
       ]);
       var P1 = 430, P2 = 140;
       y = table(M, y, [
         [{ w: P1, text: 'อะไหล่ที่ถอดออก', bold: true, bg: HEAD, center: true }, { w: P2, text: 'จำนวน', bold: true, bg: HEAD, center: true },
          { w: P1, text: 'อะไหล่ที่ใส่กลับ', bold: true, bg: HEAD, center: true }, { w: P2, text: 'จำนวน', bold: true, bg: HEAD, center: true }],
-        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 34),
-        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 34),
-        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 34)
+        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 44),
+        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 44),
+        mrow([{ w: P1, text: '' }, { w: P2, text: '' }, { w: P1, text: '' }, { w: P2, text: '' }], 44)
       ]);
 
       // ---------- ส่วนที่ 3 ----------
@@ -3787,16 +3823,16 @@
       y = section(y, 'ส่วนที่ 3 การปล่อยเครื่องกลับใช้งานด้านสุขลักษณะ (ช่าง + QC/หัวหน้าผลิต)');
       var half = CW / 2;
       y = table(M, y, [
-        [{ w: half, text: '□\u00A0นับเครื่องมือ/อะไหล่/น็อต ครบ ไม่ตกค้างในพื้นที่ผลิต' }, { w: half, text: '□\u00A0ทำความสะอาดและฆ่าเชื้อเครื่อง/พื้นที่หลังซ่อมแล้ว (ตาม SD-PD-01)' }],
-        [{ w: half, text: '□\u00A0สารหล่อลื่นที่ใช้เป็น Food grade  /  □\u00A0ไม่ได้ใช้สารหล่อลื่น' }, { w: half, text: '□\u00A0ทดสอบเดินเครื่องแล้วทำงานปกติ    □\u00A0ต้องตรวจสอบเทียบ/Validation ก่อนใช้ (เครื่องจุด CCP)' }]
+        [{ w: half, text: '□\u00A0นับเครื่องมือ/อะไหล่/น็อต ครบ ไม่ตกค้างในพื้นที่ผลิต' }, { w: half, text: '□\u00A0ทำความสะอาดและฆ่าเชื้อเครื่อง/พื้นที่หลังซ่อมแล้ว ' + keep('(ตาม SD-PD-01)') }],
+        [{ w: half, text: items(['□ สารหล่อลื่นที่ใช้เป็น Food grade', '/  □ ไม่ได้ใช้สารหล่อลื่น']) }, { w: half, text: items(['□ ทดสอบเดินเครื่องแล้วทำงานปกติ', '□ ต้องตรวจสอบเทียบ/Validation ก่อนใช้ (เครื่องจุด CCP)']) }]
       ]);
       y += 8;
       y = sigBlock(y,
-        [[{ t: 'วันที่ซ่อมเสร็จ ' + DOT }], [{ t: 'ลงชื่อ ' + DOTL + '   ตำแหน่ง ' + DOTL }]],
-        [[{ t: 'วันที่ตรวจรับงานซ่อม ' + DOT }], [{ t: 'ลงชื่อ ' + DOTL + '   ตำแหน่ง ' + DOTL }]],
+        [[{ t: 'วันที่ซ่อมเสร็จ ' }, { fill: 1 }], [{ t: 'ลงชื่อ ' }, { fill: 5 }, { t: '   ตำแหน่ง ' }, { fill: 4 }]],
+        [[{ t: 'วันที่ตรวจรับงานซ่อม ' }, { fill: 1 }], [{ t: 'ลงชื่อ ' }, { fill: 5 }, { t: '   ตำแหน่ง ' }, { fill: 4 }]],
         'ผู้ซ่อม', 'ผู้ตรวจรับงานซ่อม (หัวหน้าฝ่ายที่แจ้ง)');
       y += 8;
-      y = table(M, y, [[{ w: CW, text: '□\u00A0ลงบันทึกประวัติการซ่อม FM-MT-04 แล้ว วันที่ ' + DOT + ' ผู้บันทึก ' + DOT + '    □\u00A0ต้องทบทวนแผน PM (SD-MT-02)    □\u00A0ออก CAR (FM-DC-03) เลขที่ ' + DOT }]]);
+      y = table(M, y, [[{ w: CW, text: items(['□ ลงบันทึกประวัติการซ่อม FM-MT-04 แล้ว วันที่ ' + DOT + ' ผู้บันทึก ' + DOT, '□ ต้องทบทวนแผน PM (SD-MT-02)', '□ ออก CAR (FM-DC-03) เลขที่ ' + DOT]) }]]);
 
       // ---------- รูปประกอบ (ถ้ามีและยังมีที่ว่าง) + ท้ายกระดาษ ----------
       var footY = H - 28;
@@ -3822,12 +3858,14 @@
         font(true, 20); ctx.fillStyle = '#b91c1c';
         var note = '✖ ใบนี้ถูกยกเลิก โดย ' + (d.cancelledBy || '-') + (d.cancelReason ? ' · เหตุผล: ' + d.cancelReason : '') +
                    (at ? ' · ' + at.date + ' ' + at.time : '');
-        ctx.fillText(wrapTh(ctx, note, CW)[0], M, footY);
+        var nl = wrapTh(ctx, note, CW);
+        if (nl.length > 2) nl = [nl[0], nl[1].replace(/.$/, '') + '…'];
+        nl.forEach(function (ln, i) { ctx.fillText(ln, M, footY - (nl.length - 1 - i) * 26); });
       }
       function finish(imgs) {
         if (imgs.length) {
-          var maxH = footY - (d.cancelled ? 32 : 0) - (y + 48);
-          if (maxH >= 100) {
+          var maxH = footY - (d.cancelled ? 56 : 0) - (y + 48);
+          if (maxH >= 80) {
             var GAP = 12, cellW = Math.floor((CW - GAP * (imgs.length - 1)) / imgs.length), cellH = Math.min(maxH, 260);
             font(true, 20); ctx.fillStyle = INK;
             ctx.fillText('รูปประกอบการแจ้งซ่อม (จากผู้แจ้ง)' + (imgs.length > 1 ? ' · ' + imgs.length + ' รูป' : ''), M, y + 36);
