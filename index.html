@@ -442,8 +442,14 @@
     }
     .btn-photo:active { background: var(--accent-soft); }
     #photoPreview { width: 100%; border-radius: 8px; border: 1.5px solid var(--line); display: block; }
-    /* รูปแจ้งซ่อม: ย่อให้อยู่ในจอเสมอ — กว้างไม่เกินการ์ด สูงไม่เกิน 60% ของจอ (รูปแนวตั้งไม่ล้นจอมือถือ) */
-    #mPhotoPreview { display: block; max-width: 100%; max-height: 60vh; width: auto; height: auto; margin: 0 auto; border-radius: 8px; border: 1.5px solid var(--line); }
+    /* รูปแจ้งซ่อม (สูงสุด 3): ตาราง 2 คอลัมน์ · แตะ ✕ ที่มุมรูปเพื่อเอาออก */
+    .photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+    .photo-grid .pg-item { position: relative; }
+    .photo-grid img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--line); }
+    .photo-grid .pg-del { position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+      border: none; border-radius: 22px; background: var(--ink); color: #fff; opacity: 0.85; cursor: pointer; }
+    .photo-grid .pg-count { grid-column: 1 / -1; font-size: var(--fs-xs); color: var(--muted); }
+    .edit-photo-note .t { display: flex; flex-wrap: wrap; gap: 6px; }
     .btn-remove {
       margin-top: 8px; width: 100%; min-height: 44px; padding: 9px;
       background: var(--danger-soft); color: var(--danger-ink);
@@ -674,17 +680,14 @@
           </div>
 
           <div class="field">
-            <label id="mPhotoLbl">📷 รูปถ่ายจุดเสีย <span class="req" id="mPhotoReq">*</span></label>
+            <label id="mPhotoLbl">📷 รูปถ่ายจุดเสีย <span class="req" id="mPhotoReq">*</span> <span class="mt-hint">(สูงสุด 3 รูป)</span></label>
             <input type="file" id="mPhotoCam" accept="image/*" capture="environment" style="display:none">
-            <input type="file" id="mPhotoGal" accept="image/*" style="display:none">
+            <input type="file" id="mPhotoGal" accept="image/*" multiple style="display:none">
             <div id="mEditPhotoNote" class="edit-photo-note" style="display:none"></div>
+            <div id="mPhotoGrid" class="photo-grid" style="display:none"></div>
             <div id="mPhotoControls" style="display:flex; gap:8px;">
               <button type="button" class="btn-photo" id="mPhotoCamBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-camera"/></svg> ถ่ายรูป</button>
               <button type="button" class="btn-photo" id="mPhotoGalBtn" style="flex:1;"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg> จากเครื่อง</button>
-            </div>
-            <div id="mPhotoPreviewWrap" style="display:none; margin-top:10px;">
-              <img id="mPhotoPreview" alt="รูปที่แนบ">
-              <button type="button" class="btn-remove" id="mPhotoRemoveBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash-2"/></svg> ลบรูป</button>
             </div>
           </div>
 
@@ -750,7 +753,7 @@
           <div class="field" id="mEditorField" style="display:none">
             <label for="mEditor">✍️ ผู้แก้ไข <span class="req">*</span></label>
             <input type="text" id="mEditor" placeholder="ชื่อผู้แก้ไข">
-            <div style="font-size: var(--fs-xs); color:var(--muted); margin-top:4px;">เลขที่และเวลาที่แจ้งไม่เปลี่ยน · เลือกรูปใหม่ = เพิ่ม/แทนที่รูป (รูปเดิมยังเก็บใน Drive) · ทุกช่องที่แก้ถูกบันทึกไว้ตรวจย้อนหลัง</div>
+            <div style="font-size: var(--fs-xs); color:var(--muted); margin-top:4px;">เลขที่และเวลาที่แจ้งไม่เปลี่ยน · เลือกรูปใหม่ = แทนที่รูปเดิมทั้งชุด (รูปเดิมยังเก็บไว้) · ทุกช่องที่แก้ถูกบันทึกไว้ตรวจย้อนหลัง</div>
           </div>
         </div>
 
@@ -988,7 +991,7 @@
     </div>
 
     <div id="statusBar" class="status-bar" role="status" aria-live="polite" hidden><div class="sb-msg"></div><button type="button" class="sb-close" aria-label="ปิดข้อความ"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v68 · 2026-10-21</span></div>
+    <div class="footer">QCControl · พัฒนาโดย ช่างซ่อมบำรุงประจำโรงงาน (KungRC)<br><span id="verBadge" style="display:inline-block;margin-top:6px;padding:2px 10px;background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;font-weight:700;font-size: var(--fs-xs);">เวอร์ชัน v69 · 2026-10-24</span></div>
   </div>
 
   <script>
@@ -2736,7 +2739,7 @@
               if (res.mrNo) {
                 mrs.push(res.mrNo);
                 // รูปที่แนบตอนแจ้งยังอยู่ในคิว → ใช้ทำ PDF ได้เลย ไม่ต้องดึงจาก Drive
-                if (item.kind === 'maint') pdfJobs.push({ mrNo: res.mrNo, photo: item.data && item.data.photo && item.data.photo.dataUrl });
+                if (item.kind === 'maint') pdfJobs.push({ mrNo: res.mrNo, photos: typeof maintPhotoSrcs === 'function' ? maintPhotoSrcs(item.data) : [] });
               }
             }
             if (--waiting === 0 && sent) {
@@ -3307,7 +3310,7 @@
       'quantity', 'unit', 'unitNew', 'note', 'foundAt',
       'mReporterNew', 'mMachine', 'mMachineNew', 'mMachineCode', 'mSymptom', 'mImpactDetail', 'mNcrNo', 'mNeedBy', 'mReportedAt', 'mCancelReason'];
     function hasUnsavedWork() {
-      if (photoDataUrl || (typeof mPhotoDataUrl !== 'undefined' && mPhotoDataUrl)) return true;
+      if (photoDataUrl || (typeof mPhotos !== 'undefined' && mPhotos.length)) return true;
       if (DRAFT_FIELDS.some(function (id) { var el = document.getElementById(id); return el && String(el.value || '').trim() !== ''; })) return true;
       if (document.querySelector('#categoriesTop input:checked, #categories input:checked')) return true;
       if (typeof maintEditing !== 'undefined' && maintEditing) return true;
@@ -3377,7 +3380,8 @@
     var MAINT_FORM_REV = { code: 'FM-MT-02', rev: '03', effective: '24/09/69' };
     var maintForm = document.getElementById('maintForm');
     var mSubmitBtn = document.getElementById('mSubmitBtn');
-    var mPhotoDataUrl = null;
+    var MAINT_MAX_PHOTOS = 3;
+    var mPhotos = [];   // data URL ของรูปจุดเสีย (สูงสุด 3) — รูปแรก = รูปหลัก
     var lastMaint = null;
     var maintMachines = [];   // [{name, code}] จากทะเบียน
     var maintRoles = {};      // {ชื่อพนักงาน: ตำแหน่ง}
@@ -3390,33 +3394,53 @@
     var mPhotoCamBtn = document.getElementById('mPhotoCamBtn');
     var mPhotoGalBtn = document.getElementById('mPhotoGalBtn');
     var mPhotoControls = document.getElementById('mPhotoControls');
-    var mPhotoPreview = document.getElementById('mPhotoPreview');
-    var mPhotoPreviewWrap = document.getElementById('mPhotoPreviewWrap');
+    var mPhotoGrid = document.getElementById('mPhotoGrid');
     mPhotoCamBtn.addEventListener('click', function () { mPhotoCam.click(); });
     mPhotoGalBtn.addEventListener('click', function () { mPhotoGal.click(); });
-    document.getElementById('mPhotoRemoveBtn').addEventListener('click', clearMPhoto);
+    // รูปที่แนบ: ตาราง + ปุ่ม ✕ ต่อรูป · ครบแล้วซ่อนปุ่มถ่าย/เลือก
+    function renderMPhotos() {
+      mPhotoGrid.innerHTML = mPhotos.map(function (u, i) {
+        return '<div class="pg-item"><img src="' + u + '" alt="รูปจุดเสียที่ ' + (i + 1) + '">' +
+          '<button type="button" class="pg-del" data-del="' + i + '" aria-label="ลบรูปที่ ' + (i + 1) + '">' + ico('x') + '</button></div>';
+      }).join('') + (mPhotos.length ? '<div class="pg-count">แนบแล้ว ' + mPhotos.length + '/' + MAINT_MAX_PHOTOS + ' รูป</div>' : '');
+      mPhotoGrid.style.display = mPhotos.length ? '' : 'none';
+      mPhotoControls.style.display = mPhotos.length < MAINT_MAX_PHOTOS ? 'flex' : 'none';
+    }
+    mPhotoGrid.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-del]');
+      if (!b) return;
+      mPhotos.splice(Number(b.getAttribute('data-del')), 1);
+      renderMPhotos();
+    });
+    // เลือกจากเครื่องได้หลายรูปพร้อมกัน — เกินที่เหลือ ใช้เท่าที่ใส่ได้แล้วบอก
     function mHandlePick(input, btn) {
-      var file = input.files && input.files[0];
-      if (!file) return;
-      var orig = btn.innerHTML;
+      var picked = input.files ? input.files.length : 0;
+      var files = Array.prototype.slice.call(input.files || [], 0, MAINT_MAX_PHOTOS - mPhotos.length);
+      if (!files.length) { input.value = ''; return; }
+      var orig = btn.innerHTML, bad = 0;
       setBtn(btn, 'loader-circle', 'กำลังย่อรูป...');
-      resizeImage(file, 1280, 0.7, function (dataUrl) {
-        btn.innerHTML = orig;
-        if (!dataUrl) { showMAlert('error', 'อ่านรูปไม่ได้ ลองใหม่'); return; }
-        mPhotoDataUrl = dataUrl;
-        mPhotoPreview.src = dataUrl;
-        mPhotoPreviewWrap.style.display = '';
-        mPhotoControls.style.display = 'none';
-      });
+      (function next(i) {
+        if (i >= files.length) {
+          btn.innerHTML = orig; input.value = '';
+          renderMPhotos();
+          if (bad) showMAlert('error', 'อ่านรูปไม่ได้ ' + bad + ' รูป ลองใหม่');
+          else if (picked > files.length) showMAlert('info', 'แนบรูปได้สูงสุด ' + MAINT_MAX_PHOTOS + ' รูป — ใช้ ' + files.length + ' รูปแรกที่เลือก');
+          return;
+        }
+        resizeImage(files[i], 1280, 0.7, function (dataUrl) { if (dataUrl) mPhotos.push(dataUrl); else bad++; next(i + 1); });
+      })(0);
     }
     mPhotoCam.addEventListener('change', function () { mHandlePick(mPhotoCam, mPhotoCamBtn); });
     mPhotoGal.addEventListener('change', function () { mHandlePick(mPhotoGal, mPhotoGalBtn); });
     function clearMPhoto() {
-      mPhotoDataUrl = null;
+      mPhotos = [];
       mPhotoCam.value = ''; mPhotoGal.value = '';
-      mPhotoPreview.src = '';
-      mPhotoPreviewWrap.style.display = 'none';
-      mPhotoControls.style.display = 'flex';
+      renderMPhotos();
+    }
+    // รูปของใบ (ใหม่: photos · ข้อมูลรุ่นก่อน: photo) → รายการ data URL ไม่เกิน MAINT_MAX_PHOTOS
+    function maintPhotoSrcs(d) {
+      var p = (d && d.photos && d.photos.length) ? d.photos : ((d && d.photo) ? [d.photo] : []);
+      return p.map(function (x) { return x && x.dataUrl; }).filter(Boolean).slice(0, MAINT_MAX_PHOTOS);
     }
 
     // ----- ปุ่มเลือกแบบชิป (radio) — ไฮไลต์ตัวที่เลือกทั้งกลุ่ม -----
@@ -3539,7 +3563,7 @@
         needBy: document.getElementById('mNeedBy').value,
         reportedAt: repAt,
         time: repAt ? fmtFoundAt(repAt) : fmtNow(),
-        photo: mPhotoDataUrl ? { dataUrl: mPhotoDataUrl } : null
+        photos: mPhotos.map(function (u) { return { dataUrl: u }; })
       };
     }
 
@@ -3800,26 +3824,31 @@
                    (at ? ' · ' + at.date + ' ' + at.time : '');
         ctx.fillText(wrapTh(ctx, note, CW)[0], M, footY);
       }
-      function finish(photoImg) {
-        if (photoImg) {
+      function finish(imgs) {
+        if (imgs.length) {
           var maxH = footY - (d.cancelled ? 32 : 0) - (y + 48);
           if (maxH >= 100) {
-            var ph = Math.min(maxH, 260), pw = Math.round(ph * photoImg.width / photoImg.height);
-            if (pw > CW) { pw = CW; ph = Math.round(pw * photoImg.height / photoImg.width); }
-            font(true, 20); ctx.fillStyle = INK; ctx.fillText('รูปประกอบการแจ้งซ่อม (จากผู้แจ้ง)', M, y + 36);
-            ctx.drawImage(photoImg, M, y + 46, pw, ph);
+            var GAP = 12, cellW = Math.floor((CW - GAP * (imgs.length - 1)) / imgs.length), cellH = Math.min(maxH, 260);
+            font(true, 20); ctx.fillStyle = INK;
+            ctx.fillText('รูปประกอบการแจ้งซ่อม (จากผู้แจ้ง)' + (imgs.length > 1 ? ' · ' + imgs.length + ' รูป' : ''), M, y + 36);
+            imgs.forEach(function (im, i) {   // ย่อให้พอดีช่องตามสัดส่วนเดิม
+              var k = Math.min(cellW / im.width, cellH / im.height);
+              ctx.drawImage(im, M + i * (cellW + GAP), y + 46, Math.round(im.width * k), Math.round(im.height * k));
+            });
           }
         }
         // ไม่มีบรรทัดท้ายกระดาษ (ผู้ใช้ให้ตัดออก) — ใบที่ยกเลิกใช้บรรทัดล่างสุดแสดงสรุปการยกเลิกแทน
         if (d.cancelled) drawCancelStamp();
         cb(c);
       }
-      if (d.photo && d.photo.dataUrl) {
+      var srcs = maintPhotoSrcs(d), imgs = [], left = srcs.length;
+      if (!left) return finish([]);
+      srcs.forEach(function (src, i) {   // โหลดครบทุกรูปก่อนวาด · รูปที่เสียข้ามไป
         var im = new Image();
-        im.onload = function () { finish(im); };
-        im.onerror = function () { finish(null); };
-        im.src = d.photo.dataUrl;
-      } else { finish(null); }
+        im.onload = function () { imgs[i] = im; if (--left === 0) finish(imgs.filter(Boolean)); };
+        im.onerror = function () { if (--left === 0) finish(imgs.filter(Boolean)); };
+        im.src = src;
+      });
     }
 
     // silentOnFail: แชร์อัตโนมัติหลังบันทึก — ถ้าไม่ได้ให้เงียบ ปล่อยให้กดปุ่มเอง
@@ -3845,9 +3874,10 @@
         catch (e) { return fallback('error', '⚠️ แปลงรูปเป็นไฟล์ไม่สำเร็จ: ' + e.message); }
         // แนบรูปต้นฉบับจากผู้แจ้งไปด้วยเป็นไฟล์ที่ 2 (ใบฟอร์มมีแค่รูปย่อ) — ถ้าแอปปลายทางรับหลายไฟล์ไม่ได้ ก็ส่งเฉพาะใบฟอร์ม
         var files = [file];
-        if (d.photo && d.photo.dataUrl) {
-          try { files.push(new File([dataURLtoBlob(d.photo.dataUrl)], (d.mrNo || 'MR') + '_photo.jpg', { type: 'image/jpeg' })); } catch (e) {}
-        }
+        var srcs = maintPhotoSrcs(d);
+        srcs.forEach(function (u, i) {
+          try { files.push(new File([dataURLtoBlob(u)], (d.mrNo || 'MR') + '_photo' + (srcs.length > 1 ? i + 1 : '') + '.jpg', { type: 'image/jpeg' })); } catch (e) {}
+        });
         var canShareFile;
         try { canShareFile = navigator.canShare({ files: files }); } catch (e) { canShareFile = false; }
         if (!canShareFile && files.length > 1) {
@@ -3873,7 +3903,7 @@
       var data = maintCurrentData();
       // เตือนเรียงตามลำดับช่องบนจอ · รูปบังคับเฉพาะใบใหม่ (แก้ใบเดิมที่ยังไม่มีรูปได้ ไม่ต้องเพิ่มรูป)
       var errs = [];
-      if (!data.photo && !maintEditing) errs.push({ id: 'mPhotoCamBtn', label: 'รูปถ่าย', msg: 'ถ่ายรูปหรือเลือกรูปจุดเสียก่อนส่ง' });
+      if (!data.photos.length && !maintEditing) errs.push({ id: 'mPhotoCamBtn', label: 'รูปถ่าย', msg: 'ถ่ายรูปหรือเลือกรูปจุดเสียก่อนส่ง' });
       if (!data.site) errs.push({ id: 'mSiteChips', label: 'โรงงาน', msg: 'เลือกโรงงานที่แจ้งซ่อม' });
       if (!data.machine) errs.push({ id: 'mMachine', label: 'เครื่องจักร/อุปกรณ์', msg: document.getElementById('mMachine').value === NEW_VALUE ? 'พิมพ์ชื่อเครื่องจักร/อุปกรณ์' : 'เลือกเครื่องจักร/อุปกรณ์' });
       if (!data.symptom) errs.push({ id: 'mSymptom', label: 'อาการเบื้องต้น', msg: 'กรุณาระบุอาการเบื้องต้น' });
@@ -3883,7 +3913,7 @@
 
       mSubmitBtn.disabled = true;
       setBtn(mSubmitBtn, 'loader-circle', 'กำลังส่ง...');
-      showMAlert('info', data.photo ? 'กำลังส่งใบแจ้งซ่อม + อัปโหลดรูป...' : 'กำลังส่งใบแจ้งซ่อม...');
+      showMAlert('info', data.photos.length ? 'กำลังส่งใบแจ้งซ่อม + อัปโหลดรูป ' + data.photos.length + ' รูป...' : 'กำลังส่งใบแจ้งซ่อม...');
       var payload = {};
       Object.keys(data).forEach(function (k) { if (k !== 'time') payload[k] = data[k]; });
       submitMaint(payload, data);
@@ -3933,15 +3963,18 @@
     function showEditPhotoNote(r) {
       var note = document.getElementById('mEditPhotoNote');
       note.style.display = '';
-      if (!r.photo) { note.textContent = '📷 ใบนี้ยังไม่มีรูป — ถ่ายหรือเลือกรูปเพื่อเพิ่มได้'; return; }
-      note.innerHTML = '📷 มีรูปเดิมแล้ว — ถ่าย/เลือกรูปใหม่เพื่อแทนที่ (รูปเดิมยังเก็บใน Drive)<div class="t">กำลังโหลดรูปปัจจุบัน...</div>';
+      var had = (r.photos && r.photos.length) || (r.photo ? 1 : 0);
+      if (!had) { note.textContent = '📷 ใบนี้ยังไม่มีรูป — ถ่ายหรือเลือกรูปเพื่อเพิ่มได้ (สูงสุด ' + MAINT_MAX_PHOTOS + ' รูป)'; return; }
+      note.innerHTML = '📷 มีรูปเดิม ' + had + ' รูป — ถ่าย/เลือกรูปใหม่เพื่อแทนที่ทั้งชุด (รูปเดิมยังเก็บไว้)<div class="t">กำลังโหลดรูปปัจจุบัน...</div>';
       var forNo = r.mrNo;
       google.script.run
         .withSuccessHandler(function (res) {
           if (!maintEditing || maintEditing.mrNo !== forNo) return; // ออกจากโหมดแก้ไข/เปลี่ยนใบไปแล้ว
           var t = note.querySelector('.t'); if (!t) return;
-          if (res && res.ok && res.dataUrl) { var im = document.createElement('img'); im.src = res.dataUrl; im.alt = 'รูปปัจจุบัน'; t.replaceWith(im); }
-          else t.textContent = '(โหลดรูปปัจจุบันไม่ได้ — กด 📷 รูป ในรายการเพื่อดู)';
+          var urls = (res && res.ok && (res.dataUrls || (res.dataUrl ? [res.dataUrl] : []))) || [];
+          if (!urls.length) { t.textContent = '(โหลดรูปปัจจุบันไม่ได้ — กด รูป ในรายการเพื่อดู)'; return; }
+          t.textContent = '';
+          urls.forEach(function (u, i) { var im = document.createElement('img'); im.src = u; im.alt = 'รูปปัจจุบันที่ ' + (i + 1); t.appendChild(im); });
         })
         .withFailureHandler(function () { var t = note.querySelector('.t'); if (t) t.textContent = '(โหลดรูปปัจจุบันไม่ได้)'; })
         .getMaintPhoto({ mrNo: r.mrNo });
@@ -3987,7 +4020,7 @@
           if (!res.changed || !res.changed.length) { showMAlert('info', 'ℹ️ ' + res.mrNo + ' ไม่มีอะไรเปลี่ยน'); loadMaintList(); return; }
           var what = res.changed.join(', ');
           showMAlert('info', '💾 บันทึก ' + res.mrNo + ' แล้ว (' + what + ') — กำลังสร้างใบ PDF ใหม่...');
-          if (data.photo && res.row) res.row._photoDataUrl = data.photo.dataUrl; // มีรูปใหม่ในมือแล้ว ไม่ต้องดึงจาก Drive
+          if (data.photos.length && res.row) res.row._photoDataUrls = maintPhotoSrcs(data); // มีรูปใหม่ในมือแล้ว ไม่ต้องดึงจากเซิร์ฟเวอร์
           rebuildMaintPdf(res.row, function (pr) {
             if (pr && pr.ok && pr.pdfUrl) showMAlert('success', '💾 แก้ไข ' + res.mrNo + ' แล้ว (' + what + ') · ใบ PDF อัปเดตแล้ว');
             else if (pr && pr.ok) showMAlert('info', '💾 แก้ไข ' + res.mrNo + ' แล้ว · ใบ PDF ใหม่เก็บไว้ในคิว จะส่งเมื่อเน็ตกลับมา');
@@ -3999,7 +4032,7 @@
         .updateMaintRequest({ mrNo: r.mrNo, by: by, site: data.site, reporter: data.reporter, position: data.position,
           machine: data.machine, machineCode: data.machineCode, symptom: data.symptom, productImpact: data.productImpact,
           impactDetail: data.impactDetail, quarantined: data.quarantined, ncrNo: data.ncrNo, needBy: data.needBy,
-          photo: data.photo || null, reqId: reqId, expectEditedTs: r.editedTs || 0 });
+          photos: data.photos.length ? data.photos : null, reqId: reqId, expectEditedTs: r.editedTs || 0 });
     }
 
     function resetMaintForm(keepReporter, keepSite) {
@@ -4185,11 +4218,11 @@
       if (!rows.length) { box.innerHTML = '<div class="dash-empty">ยังไม่มีใบแจ้งซ่อม</div>'; return; }
       var lock = maintListLive ? '' : ' disabled title="รอโหลดข้อมูลล่าสุดก่อน"';
       box.innerHTML = rows.map(function (r, i) {
-        var pdf = safeUrl(r.pdf), photo = safeUrl(r.photo);
+        var pdf = safeUrl(r.pdf), photoLinks = (r.photos && r.photos.length ? r.photos : [r.photo]).map(safeUrl).filter(Boolean);
         var acts = pdf
           ? '<a href="' + esc(pdf) + '" target="_blank" rel="noopener">' + ico('file-text') + ' เปิด PDF</a>'
           : '<button type="button" data-regen="' + i + '"' + lock + '>' + ico('file-plus') + ' สร้าง PDF</button>';
-        if (photo) acts += '<a href="' + esc(photo) + '" target="_blank" rel="noopener">' + ico('image') + ' รูป</a>';
+        photoLinks.forEach(function (u, k) { acts += '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + ico('image') + ' รูป' + (photoLinks.length > 1 ? ' ' + (k + 1) : '') + '</a>'; });
         if (r.cancelled && r.pdf) acts += '<button type="button" data-regen="' + i + '"' + lock + '>' + ico('refresh-cw') + ' PDF ใหม่</button>';
         if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-edit-btn" data-edit="' + i + '"' + lock + '>' + ico('pencil') + ' แก้ไข</button>';
         if (!r.cancelled && maintCancelOpen !== i) acts += '<button type="button" class="ml-cancel-btn" data-cancel="' + i + '"' + lock + '>' + ico('ban') + ' ยกเลิก</button>';
@@ -4283,15 +4316,19 @@
     function maintRowToData(r) {
       return { mrNo: r.mrNo, site: r.site, reporter: r.reporter, position: r.position, machine: r.machine, machineCode: r.machineCode,
                symptom: r.symptom, productImpact: !!r.productImpact, impactDetail: r.impactDetail, quarantined: !!r.quarantined, ncrNo: r.ncrNo,
-               needBy: toLocalInput(r.needBy), time: r.time, photo: null,
+               needBy: toLocalInput(r.needBy), time: r.time, photos: [],
                cancelled: !!r.cancelled, cancelledBy: r.cancelledBy || '', cancelReason: r.cancelReason || '', cancelledAt: r.cancelledAt || '' };
     }
     // ดึงรูปจุดเสียจาก Drive ผ่าน backend (เบราว์เซอร์ดึงข้ามโดเมนเองไม่ได้) — ดึงไม่ได้ก็วาดใบแบบไม่มีรูป
     function withMaintPhoto(r, d, cb) {
-      if (r._photoDataUrl) { d.photo = { dataUrl: r._photoDataUrl }; return cb(d); }
+      var asPhotos = function (urls) { return urls.map(function (u) { return { dataUrl: u }; }); };
+      if (r._photoDataUrls && r._photoDataUrls.length) { d.photos = asPhotos(r._photoDataUrls); return cb(d); }
       if (!r.photo) return cb(d);
       google.script.run
-        .withSuccessHandler(function (res) { if (res && res.ok && res.dataUrl) d.photo = { dataUrl: res.dataUrl }; cb(d); })
+        .withSuccessHandler(function (res) {
+          if (res && res.ok) d.photos = asPhotos(res.dataUrls || (res.dataUrl ? [res.dataUrl] : []));
+          cb(d);
+        })
         .withFailureHandler(function () { cb(d); })
         .getMaintPhoto({ mrNo: r.mrNo });
     }
@@ -4324,7 +4361,7 @@
           jobs.forEach(function (j) {
             var r = rows.filter(function (x) { return x.mrNo === j.mrNo; })[0];
             if (!r) { failList.push(j.mrNo); return done(); }
-            if (j.photo) r._photoDataUrl = j.photo;
+            if (j.photos && j.photos.length) r._photoDataUrls = j.photos;
             rebuildMaintPdf(r, function (pr) {
               if (pr && pr.ok && pr.pdfUrl) okList.push(j.mrNo);
               else if (pr && pr.ok && pr.queued) waitList.push(j.mrNo);
